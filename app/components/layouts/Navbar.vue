@@ -8,7 +8,6 @@ import { Mail } from 'lucide-vue-next';
   >
     <div class="flex items-center space-x-2">
       <img src="" alt="Logo" class="w-6 h-6" />
-      <span class="text-green-600 font-bold text-xl">Toko</span>
     </div>
     <div class="flex items-center space-x-8">
       <div
