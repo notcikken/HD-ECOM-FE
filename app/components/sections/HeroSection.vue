@@ -22,7 +22,7 @@ function handleBlur() {
 <template>
   <div class="flex space-x-4 justify-between items-center">
     <div>
-      <h1>
+      <h1 class="text-5xl font-bold">
         Selamat Siang, M <br />
         Ada yang bisa kami bantu?
       </h1>

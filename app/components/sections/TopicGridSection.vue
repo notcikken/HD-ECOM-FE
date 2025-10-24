@@ -1,6 +1,8 @@
 <template>
   <div class="">
-    <h1 class="text-center">Pilih topik sesuai kendala pembelianmu</h1>
+    <h1 class="text-center text-2xl font-bold mt-8">
+      Pilih topik sesuai kendala pembelianmu
+    </h1>
     <div class="grid grid-cols-4 gap-4 mt-6">
       <div
         v-for="(topic, index) in Array.from({ length: 8 }).map((_, i) => i + 1)"
