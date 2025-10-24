@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <h1 class="text-center text-2xl font-bold mt-8">
+    <h1 class="text-center text-2xl font-bold mt-12">
       Pilih topik sesuai kendala pembelianmu
     </h1>
     <div class="grid grid-cols-4 gap-4 mt-6">
