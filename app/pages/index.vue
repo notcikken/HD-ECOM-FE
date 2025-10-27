@@ -1,11 +1,20 @@
 <template>
-  <section class=" items-center justify-center mx-auto  ">
-    <HeroSection />
-  </section>
-  <section class="items-center max-w-[1728px] justify-center mx-auto bg-[#FFF7EA] px-40 py-12 ">
-    <TopicGridSection />
-    <FaqSection />
-  </section>
+  <div class="min-h-screen">
+    <!-- Hero section with full width -->
+    <section class="w-full">
+      <HeroSection />
+    </section>
+
+    <!-- Main content section with proper container -->
+    <section class="w-full bg-[#FFF7EA]">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-20">
+        <TopicGridSection />
+        <div class="mt-16 lg:mt-20">
+          <FaqSection />
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script setup>
