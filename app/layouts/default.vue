@@ -1,14 +1,19 @@
 <template>
-  <div>
-    <div class="sticky top-0 left-0 w-full z-50 ">
+  <div class="min-h-screen flex flex-col">
+    <!-- Sticky navigation header -->
+    <header class="sticky top-0 left-0 w-full z-50">
       <Navbar />
-    </div>
-    <div class="w-full  items-center justify-center mx-auto ">
-      <NuxtPage />      
-    </div>
-    <div>
+    </header>
+
+    <!-- Main content area with proper spacing -->
+    <main class="flex-1 w-full">
+      <NuxtPage />
+    </main>
+
+    <!-- Footer section -->
+    <footer class="mt-auto">
       <Footer />
-    </div>
+    </footer>
   </div>
 </template>
 
