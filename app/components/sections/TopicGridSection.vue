@@ -25,7 +25,7 @@
         <!-- Background decoration -->
         <div
           class="absolute top-0 right-0 w-20 h-20 bg-linear-to-br from-[#F79E0E]/5 to-transparent rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        ></div>
+        />
 
         <div class="relative flex items-center space-x-4">
           <!-- Icon container with enhanced styling -->
@@ -38,7 +38,7 @@
             <!-- Icon glow effect -->
             <div
               class="absolute inset-0 w-14 h-14 bg-[#F79E0E] rounded-2xl opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"
-            ></div>
+            />
           </div>
 
           <!-- Content -->

@@ -172,7 +172,7 @@
                 placeholder="Masukkan email Anda"
                 class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-[#F79E0E]/20 focus:border-[#F79E0E] transition-all duration-200 shadow-sm"
                 required
-              />
+              >
             </div>
             <button
               type="submit"
