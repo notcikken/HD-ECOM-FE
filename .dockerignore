@@ -1,0 +1,50 @@
+# Node modules and package manager caches
+node_modules
+.pnpm-store
+.pnpm-debug.log
+pnpm-debug.log
+npm-debug.log
+yarn-error.log
+
+# Local env files
+.env
+.env.* 
+
+# Nuxt / build outputs
+.nuxt
+.output
+dist
+.build
+coverage
+.cache
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Logs and runtime files
+*.log
+*.pid
+*.seed
+
+# Keys, certs, and secrets
+*.pem
+*.key
+*.crt
+
+# Ignore git metadata and docker artifacts
+.git
+.gitignore
+.dockerignore
+
+# Optional: ignore local static generated files if you rebuild inside image
+/public/static
+/static
+
+# Keep package manifest (so image can install deps)
+!package.json
+!pnpm-lock.yaml
+!package-lock.json
+!yarn.lock
