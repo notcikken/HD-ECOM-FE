@@ -1,16 +1,16 @@
 <template>
-  <section class="max-w-2xl mx-auto py-12">
-    <h2 class="text-center text-2xl font-bold mb-10">Yang sering ditanyakan</h2>
-    <div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+  <section class="max-w-3xl mx-auto py-12">
+    <h2 class="text-center text-2xl font-bold mb-10 text-[#F79E0E]">Yang sering ditanyakan</h2>
+    <div class="bg-[#FFF1C1] rounded-xl shadow-sm divide-y  divide-gray-100">
       <div
         v-for="(faq, i) in faqs"
         :key="i"
-        class="px-6 py-4 cursor-pointer transition-colors"
+        @click="toggle(i)"
+        class="px-6 py-4 cursor-pointer hover:bg-[#f1e3b2] transition-colors"
       >
         <button
-          @click="toggle(i)"
           :aria-expanded="openIndex === i"
-          class="flex justify-between w-full text-left font-medium text-gray-800 focus:outline-none"
+          class="flex justify-between w-full  cursor-pointer text-left font-medium text-gray-800 focus:outline-none"
         >
           {{ faq.question }}
           <span

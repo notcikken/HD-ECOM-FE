@@ -20,13 +20,13 @@ function handleBlur() {
 </script>
 
 <template>
-  <div class="flex space-x-4 justify-between items-center">
-    <div>
-      <h1 class="text-5xl font-bold">
+  <div class="flex space-x-40 justify-center items-center bg-gradient bg-linear-to-b from-[#F8D46F] to-[#E1AE42] px-20 py-12 rounded-b-md">
+    <div class="flex flex-col space-y-6 items-end">
+      <h1 class="flex text-5xl font-bold text-white">
         Selamat Siang, M <br />
         Ada yang bisa kami bantu?
       </h1>
-      <div class="mt-6">
+      <div class="flex mt-6">
         <div class="w-[600px] transition-all duration-200 ease-in-out">
           <div
             class="flex items-center bg-white rounded-lg shadow-sm px-4 py-3 border border-gray-200 hover:shadow-md focus-within:shadow-md"
@@ -74,11 +74,11 @@ function handleBlur() {
         </div>
       </div>
     </div>
-    <div class="flex justify-center">
+    <div class="flex h-full items-start">
       <img
-        src="/images/images.png"
+        src="/images/header.png"
         alt="Hero"
-        class="w-full h-auto max-h-[600px]"
+        class="flex w-full max-h-96 object-contain "
       />
     </div>
   </div>
