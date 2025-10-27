@@ -21,8 +21,8 @@
           :id="`faq-button-${index}`"
           :aria-expanded="openIndex === index"
           :aria-controls="`faq-content-${index}`"
-          @click="toggle(index)"
           class="w-full px-6 lg:px-8 py-6 text-left hover:bg-orange-50/50 focus:bg-orange-50/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F79E0E]/20 focus:ring-inset"
+          @click="toggle(index)"
         >
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-gray-800 text-lg leading-tight pr-4">
