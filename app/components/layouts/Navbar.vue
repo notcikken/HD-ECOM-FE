@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Mail, Store, User } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted } from "vue";
+import { Mail, Store, User } from "lucide-vue-next";
 
 // Track scroll state for enhanced navbar styling
 const isScrolled = ref(false);
@@ -12,11 +12,11 @@ const handleScroll = () => {
 onMounted(() => {
   // Initialize scroll state and attach listener
   handleScroll();
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener("scroll", handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener("scroll", handleScroll);
 });
 </script>
 
@@ -56,14 +56,14 @@ onUnmounted(() => {
             <span>Pesan Bantuan</span>
           </button>
 
-          <div class="relative">
+          <RouterLink class="relative cursor-pointer" to="/login">
             <button
-              class="w-9 h-9 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
+              class="w-9 h-9 bg-gray-800 hover:bg-gray-700 cursor-pointer text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
               aria-label="Menu profil pengguna"
             >
               <User class="w-4 h-4" />
             </button>
-          </div>
+          </RouterLink>
         </div>
       </div>
     </div>
