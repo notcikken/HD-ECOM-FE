@@ -14,8 +14,6 @@ const suggestions = [
   'batalkan pesanan',
   'blm terima pesanan',
   'status pengiriman',
-  'tagihan cc masih muncul',
-  'cara pembayaran',
 ];
 
 // Handle blur with delay to allow for suggestion clicks
@@ -135,7 +133,7 @@ function handleBlur() {
                     aria-label="Cari bantuan atau informasi"
                     @focus="isFocused = true"
                     @blur="handleBlur"
-                  >
+                  />
                   <button
                     v-if="query"
                     class="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -184,13 +182,13 @@ function handleBlur() {
         <!-- Illustration Section -->
         <div class="relative flex justify-center lg:justify-end">
           <div class="relative">
-            <div/>
+            <div />
             <img
               src="/images/header.png"
               alt="Ilustrasi bantuan pelanggan"
               class="relative w-full max-w-xs lg:max-w-sm xl:max-w-md h-auto object-contain"
               loading="eager"
-            >
+            />
           </div>
         </div>
       </div>
