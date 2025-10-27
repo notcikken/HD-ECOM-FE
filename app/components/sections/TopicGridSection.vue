@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-center text-2xl font-bold mt-12">
+    <h1 class="text-center text-2xl font-bold mt-12 text-[#F79E0E]">
       Pilih topik sesuai kendala pembelianmu
     </h1>
 
@@ -8,7 +8,7 @@
       <div
         v-for="topic in topics"
         :key="topic.id"
-        class="py-4 px-4 w-full bg-white rounded-md flex items-center space-x-4 shadow-md"
+        class="py-4 px-4 w-full bg-[#FFF1C1] rounded-md flex items-center space-x-4 cursor-pointer hover:shadow-md hover:scale-105 transition"
       >
         <img :src="topic.icon" :alt="topic.title" class="w-12 h-12" />
         <h1>{{ topic.title }}</h1>

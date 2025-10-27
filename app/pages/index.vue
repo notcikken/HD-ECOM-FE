@@ -1,6 +1,8 @@
 <template>
-  <section class="px-60 py-40">
+  <section class=" items-center justify-center mx-auto  ">
     <HeroSection />
+  </section>
+  <section class="items-center max-w-[1728px] justify-center mx-auto bg-[#FFF7EA] px-40 py-12 ">
     <TopicGridSection />
     <FaqSection />
   </section>
