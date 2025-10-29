@@ -191,7 +191,7 @@
 
 <script setup lang="ts">
 import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
-import type { Ticket as TicketType } from "~/types/ticket";
+import type { Ticket as TicketType } from "~/types/ticket.ts";
 
 definePageMeta({
   layout: "dashboard",

@@ -177,7 +177,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Inbox } from "lucide-vue-next";
-import type { Ticket } from "~/types/ticket";
+import type { Ticket } from "~/types/ticket.ts";
 
 definePageMeta({
   layout: "dashboard",
