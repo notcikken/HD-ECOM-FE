@@ -13,9 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
   showRole: false,
 });
 
-const emit = defineEmits<{
-  (e: "view-ticket", id: string): void;
-}>();
+const router = useRouter();
 
 const getStatusBadgeClass = (status: string) => {
   const classes = {
@@ -53,8 +51,10 @@ const formatDate = (date: string) => {
   });
 };
 
-const handleViewTicket = (id: string) => {
-  emit("view-ticket", id);
+const handleViewTicket = (ticket: Ticket) => {
+  // Navigate based on role
+  const route = `/dashboard/${ticket.role}/${ticket.id}`;
+  router.push(route);
 };
 </script>
 
@@ -152,8 +152,8 @@ const handleViewTicket = (id: string) => {
               </td>
               <td class="px-6 py-4">
                 <button
-                  class="text-green-600 hover:text-green-700 font-medium text-sm"
-                  @click="handleViewTicket(ticket.id)"
+                  class="text-green-600 hover:text-green-700 font-medium text-sm cursor-pointer"
+                  @click="handleViewTicket(ticket)"
                 >
                   Detail
                 </button>

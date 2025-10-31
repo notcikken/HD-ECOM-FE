@@ -19,7 +19,6 @@ const router = useRouter();
 const { fetchTicketById, updateTicket } = useTicketApi();
 
 const ticketId = computed(() => route.params.id as string);
-
 const loading = ref(false);
 const updating = ref(false);
 const error = ref<string | null>(null);
@@ -109,18 +108,6 @@ const getStatusBadgeClass = (status: string) => {
   return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
 };
 
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-orange-100 text-orange-700",
-    urgent: "bg-red-100 text-red-700",
-  };
-  return (
-    classes[priority as keyof typeof classes] || "bg-gray-100 text-gray-700"
-  );
-};
-
 const getRoleBadgeClass = (role: string) => {
   return role === "pelanggan"
     ? "bg-purple-100 text-purple-700"
@@ -135,26 +122,6 @@ const formatDate = (date: string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: "Open",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-    closed: "Closed",
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    urgent: "Urgent",
-  };
-  return labels[priority as keyof typeof labels] || priority;
 };
 
 onMounted(() => {
@@ -277,29 +244,12 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Left Column -->
         <div class="space-y-6">
-          <!-- Priority & Category -->
+          <!-- Category -->
           <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">
               Informasi Tiket
             </h2>
             <div class="space-y-4">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center"
-                >
-                  <AlertCircle class="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 mb-1">Prioritas</p>
-                  <span
-                    class="px-3 py-1 rounded-full text-xs font-semibold"
-                    :class="getPriorityBadgeClass(ticket.priority)"
-                  >
-                    {{ getPriorityLabel(ticket.priority) }}
-                  </span>
-                </div>
-              </div>
-
               <div class="flex items-center gap-3">
                 <div
                   class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center"
@@ -313,25 +263,39 @@ onMounted(() => {
                   </p>
                 </div>
               </div>
-
-              <div class="flex items-center gap-3">
+              <!-- Dates -->
+              <div class="flex items-start gap-3">
                 <div
-                  class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center"
+                  class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0"
                 >
-                  <User class="w-5 h-5 text-green-600" />
+                  <Calendar class="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p class="text-xs text-gray-500 mb-1">Role</p>
-                  <span
-                    class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-                    :class="getRoleBadgeClass(ticket.role)"
-                  >
-                    {{ ticket.role }}
-                  </span>
+                  <p class="text-xs text-gray-500 mb-1">Dibuat</p>
+                  <p class="text-sm font-medium text-gray-800">
+                    {{ formatDate(ticket.createdAt) }}
+                  </p>
+                </div>
+              </div>
+              <!-- Last Updated -->
+              <div class="flex items-start gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"
+                >
+                  <Clock class="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 mb-1">Terakhir Diperbarui</p>
+                  <p class="text-sm font-medium text-gray-800">
+                    {{ formatDate(ticket.updatedAt) }}
+                  </p>
                 </div>
               </div>
 
-              <div v-if="ticket.assignedTo" class="flex items-center gap-3">
+              <div
+                v-if="ticket.status !== 'open'"
+                class="flex items-center gap-3"
+              >
                 <div
                   class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center"
                 >
@@ -350,40 +314,6 @@ onMounted(() => {
 
         <!-- Right Column -->
         <div class="space-y-6">
-          <!-- Timeline -->
-          <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Timeline</h2>
-            <div class="space-y-4">
-              <div class="flex items-start gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0"
-                >
-                  <Calendar class="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 mb-1">Dibuat</p>
-                  <p class="text-sm font-medium text-gray-800">
-                    {{ formatDate(ticket.createdAt) }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <div
-                  class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"
-                >
-                  <Clock class="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 mb-1">Terakhir Diperbarui</p>
-                  <p class="text-sm font-medium text-gray-800">
-                    {{ formatDate(ticket.updatedAt) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Actions -->
           <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Aksi</h2>
