@@ -124,11 +124,6 @@ const handleViewTicket = (id: string) => {
               <th
                 class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
               >
-                Prioritas
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
                 Tanggal
               </th>
               <th
@@ -172,14 +167,6 @@ const handleViewTicket = (id: string) => {
                   :class="getStatusBadgeClass(ticket.status)"
                 >
                   {{ getStatusLabel(ticket.status) }}
-                </span>
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  class="px-3 py-1 rounded-full text-xs font-semibold"
-                  :class="getPriorityBadgeClass(ticket.priority)"
-                >
-                  {{ getPriorityLabel(ticket.priority) }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">
