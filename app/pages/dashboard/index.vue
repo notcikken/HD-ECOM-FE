@@ -190,12 +190,24 @@
 </template>
 
 <script setup lang="ts">
-import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
-import type { Ticket as TicketType } from "~/types/ticket";
-
 definePageMeta({
   layout: "dashboard",
+  middleware: "auth",
 });
+
+import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
+
+type TicketType = {
+  id: string;
+  title: string;
+  description?: string;
+  status: "open" | "in-progress" | "resolved" | "closed";
+  priority: "low" | "medium" | "high" | "urgent";
+  role: string;
+  createdAt: string;
+  updatedAt?: string;
+  category?: string;
+};
 
 const statistics = [
   {

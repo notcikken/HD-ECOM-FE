@@ -181,6 +181,7 @@ import type { Ticket } from "~/types/ticket";
 
 definePageMeta({
   layout: "dashboard",
+  middleware: "auth",
 });
 
 const filters = ref({

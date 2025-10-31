@@ -62,6 +62,7 @@ import {
   Store,
   User,
   Headphones,
+  MessageCircle,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 
@@ -85,6 +86,12 @@ const menuItems = [
     label: "Penjual",
     icon: Store,
     badge: "8",
+  },
+  {
+    path: "/dashboard/chat",
+    label: "Customer Chat",
+    icon: MessageCircle,
+    badge: "3",
   },
 ];
 
