@@ -27,18 +27,6 @@ const getStatusBadgeClass = (status: string) => {
   return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
 };
 
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-orange-100 text-orange-700",
-    urgent: "bg-red-100 text-red-700",
-  };
-  return (
-    classes[priority as keyof typeof classes] || "bg-gray-100 text-gray-700"
-  );
-};
-
 const getRoleBadgeClass = (role: string) => {
   return role === "pelanggan"
     ? "bg-purple-100 text-purple-700"
@@ -53,16 +41,6 @@ const getStatusLabel = (status: string) => {
     closed: "Closed",
   };
   return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    urgent: "Urgent",
-  };
-  return labels[priority as keyof typeof labels] || priority;
 };
 
 const formatDate = (date: string) => {

@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import type { Ticket } from "~/types/ticket";
 import { useTicketApi } from "~/composables/useTicketApi";
 import TicketFilter from "~/components/dashboard/TicketFilter.vue";
-import TicketTable from "~/components/dashboard/Table.vue";
+import TicketTable from "~/components/dashboard/TicketTable.vue";
 
 definePageMeta({
   layout: "dashboard",
