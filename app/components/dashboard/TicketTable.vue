@@ -124,9 +124,6 @@ const handleViewTicket = (ticket: Ticket) => {
                 <div class="text-sm font-medium text-gray-800">
                   {{ ticket.title }}
                 </div>
-                <div class="text-xs text-gray-500 mt-1">
-                  {{ ticket.description }}
-                </div>
               </td>
               <td v-if="showRole" class="px-6 py-4 text-sm">
                 <span
