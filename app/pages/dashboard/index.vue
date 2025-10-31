@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
 import type { Ticket as TicketType } from "~/types/ticket.ts";
+import TicketTable from "~/components/dashboard/TicketTable.vue";
 
 definePageMeta({
   layout: "dashboard",
@@ -85,7 +86,7 @@ const priorityDistribution = [
 const recentTickets: TicketType[] = [
   {
     id: "TKT-001",
-    title: "Tidak bisa login ke akun",
+    title: "Tidak bisa logi ke akun",
     description: "User mengalami kesulitan login",
     status: "open",
     priority: "high",
@@ -140,62 +141,9 @@ const recentTickets: TicketType[] = [
   },
 ];
 
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    open: "bg-blue-100 text-blue-700",
-    "in-progress": "bg-yellow-100 text-yellow-700",
-    resolved: "bg-green-100 text-green-700",
-    closed: "bg-gray-100 text-gray-700",
-  };
-  return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
-};
-
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-orange-100 text-orange-700",
-    urgent: "bg-red-100 text-red-700",
-  };
-  return (
-    classes[priority as keyof typeof classes] || "bg-gray-100 text-gray-700"
-  );
-};
-
-const getRoleBadgeClass = (role: string) => {
-  return role === "pelanggan"
-    ? "bg-purple-100 text-purple-700"
-    : "bg-indigo-100 text-indigo-700";
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: "Open",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-    closed: "Closed",
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    urgent: "Urgent",
-  };
-  return labels[priority as keyof typeof labels] || priority;
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const viewTicket = (id: string) => {
+  console.log("View ticket:", id);
+  // TODO: Navigate to ticket detail page
 };
 </script>
 
@@ -307,85 +255,12 @@ const formatDate = (date: string) => {
           </button>
         </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                ID
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Judul
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Role
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Status
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Prioritas
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Tanggal
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr
-              v-for="ticket in recentTickets"
-              :key="ticket.id"
-              class="hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-6 py-4 text-sm font-medium text-gray-800">
-                {{ ticket.id }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-700">
-                {{ ticket.title }}
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getRoleBadgeClass(ticket.role)"
-                >
-                  {{ ticket.role }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getStatusBadgeClass(ticket.status)"
-                >
-                  {{ getStatusLabel(ticket.status) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getPriorityBadgeClass(ticket.priority)"
-                >
-                  {{ getPriorityLabel(ticket.priority) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">
-                {{ formatDate(ticket.createdAt) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <TicketTable
+        :tickets="recentTickets"
+        :show-role="true"
+        @view-ticket="viewTicket"
+      />
     </div>
   </div>
 </template>
