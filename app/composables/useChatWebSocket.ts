@@ -2,6 +2,12 @@ import { ref, onUnmounted } from "vue";
 
 interface WebSocketMessage {
   type: string;
+  payload?: {
+    text?: string;
+    conversation_id?: string | number;
+    is_typing?: boolean;
+    [key: string]: any;
+  };
   message?: string;
   userId?: string;
   timestamp?: string;
@@ -107,17 +113,20 @@ export const useChatWebSocket = (url: string) => {
           const data = JSON.parse(event.data) as WebSocketMessage;
           addDebugLog("info", "Message received from server", {
             type: data.type,
-            message: data.message,
+            payload: data.payload,
             fullData: data,
           });
 
           // Handle authentication response from server
           if (data.type === "auth_success") {
             isAuthenticated.value = true;
-            addDebugLog("success", "Authentication successful");
+            addDebugLog("success", "Authentication successful", {
+              payload: data.payload,
+            });
           } else if (data.type === "auth_error" || data.type === "error") {
             isAuthenticated.value = false;
-            const errorMsg = data.message || "Authentication failed";
+            const errorMsg =
+              data.payload?.message || data.message || "Authentication failed";
             connectionError.value = errorMsg;
             addDebugLog("error", "Authentication error from server", {
               message: errorMsg,
@@ -138,7 +147,7 @@ export const useChatWebSocket = (url: string) => {
           messageHandlers.forEach((handler) => handler(data));
         } catch (error) {
           addDebugLog("error", "Error parsing server message", {
-            error: error.message,
+            error: error instanceof Error ? error.message : String(error),
             rawData: event.data,
           });
         }
@@ -194,8 +203,8 @@ export const useChatWebSocket = (url: string) => {
       };
     } catch (error) {
       addDebugLog("error", "Error creating WebSocket", {
-        error: error.message,
-        stack: error.stack,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       connectionError.value = "Failed to establish connection";
     }
@@ -244,7 +253,7 @@ export const useChatWebSocket = (url: string) => {
       const jsonData = JSON.stringify(data);
       addDebugLog("info", "Sending message to server", {
         type: data.type,
-        messagePreview: data.message?.substring(0, 50),
+        payload: data.payload,
         fullData: data,
       });
       ws.value.send(jsonData);
@@ -257,14 +266,48 @@ export const useChatWebSocket = (url: string) => {
     }
   };
 
-  const sendChatMessage = async (data: WebSocketMessage) => {
+  const sendChatMessage = async (
+    text: string,
+    conversationId?: string | number
+  ) => {
     return new Promise((resolve, reject) => {
       try {
-        sendMessage(data);
+        // Convert conversation_id to number if it's a string
+        const convId = conversationId
+          ? typeof conversationId === "string"
+            ? parseInt(conversationId, 10)
+            : conversationId
+          : undefined;
+
+        const message = {
+          type: "send_message",
+          payload: {
+            text: text,
+            ...(convId && { conversation_id: convId }),
+          },
+        };
+
+        addDebugLog("info", "Sending chat message", {
+          type: message.type,
+          payload: message.payload,
+          textPreview: text.substring(0, 50),
+          conversationId: convId || "auto-create (backend will create)",
+        });
+
+        sendMessage(message);
+
+        // Log that we're waiting for conversation_created event if no ID
+        if (!convId) {
+          addDebugLog(
+            "info",
+            "No conversation_id provided - backend should create conversation and send conversation_created event"
+          );
+        }
+
         resolve(true);
       } catch (error) {
         addDebugLog("error", "Failed to send chat message", {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         });
         reject(error);
       }
