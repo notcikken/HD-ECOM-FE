@@ -81,14 +81,20 @@ jobs:
           IMAGE_FULL="${{ needs.build.outputs.image-name }}:${{ needs.build.outputs.image-tag }}"
           
           echo "Updating Dokploy application with image: $IMAGE_FULL"
+          echo "Image name: ${{ needs.build.outputs.image-name }}"
+          echo "Image tag: ${{ needs.build.outputs.image-tag }}"
+          echo "Dokploy URL: ${{ env.DOKPLOY_URL }}"
+          echo "App ID: ${{ env.DOKPLOY_APP_ID }}"
           
-          # Update the application image
-          curl -X POST "${{ env.DOKPLOY_URL }}/api/application.update" \
+          # Update the application image (tRPC endpoint)
+          curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.update" \
             -H "Authorization: Bearer ${{ env.DOKPLOY_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\",
-              \"dockerImage\": \"$IMAGE_FULL\"
+              \"json\": {
+                \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\",
+                \"dockerImage\": \"$IMAGE_FULL\"
+              }
             }" \
             --fail --show-error && echo "✅ Image updated successfully" || (echo "❌ Failed to update image" && exit 1)
 
@@ -96,12 +102,14 @@ jobs:
         run: |
           echo "Triggering deployment..."
           
-          # Trigger deployment
-          curl -X POST "${{ env.DOKPLOY_URL }}/api/application.deploy" \
+          # Trigger deployment (tRPC endpoint)
+          curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.deploy" \
             -H "Authorization: Bearer ${{ env.DOKPLOY_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\"
+              \"json\": {
+                \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\"
+              }
             }" \
             --fail --show-error && echo "✅ Deployment triggered successfully" || (echo "❌ Deployment failed" && exit 1)
           
