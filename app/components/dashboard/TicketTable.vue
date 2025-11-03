@@ -8,7 +8,8 @@ interface Props {
   showRole?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+// Remove the props variable, just use defineProps
+withDefaults(defineProps<Props>(), {
   loading: false,
   showRole: false,
 });
@@ -59,12 +60,13 @@ const handleViewTicket = (ticket: Ticket) => {
 </script>
 
 <template>
+  <!-- Same template as before -->
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div
         class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"
-      ></div>
+      />
     </div>
 
     <!-- Table Content -->

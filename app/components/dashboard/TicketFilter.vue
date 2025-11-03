@@ -12,8 +12,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: Filters): void;
-  (e: "change"): void;
-  (e: "reset"): void;
+  (e: "change" | "reset"): void;
 }>();
 
 const updateFilter = (key: keyof Filters, value: string) => {
@@ -38,10 +37,10 @@ const handleReset = () => {
         >
         <select
           :value="modelValue.status"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           @change="
             updateFilter('status', ($event.target as HTMLSelectElement).value)
           "
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
         >
           <option value="">Semua Status</option>
           <option value="open">Open</option>
@@ -57,10 +56,10 @@ const handleReset = () => {
         >
         <select
           :value="modelValue.category"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           @change="
             updateFilter('category', ($event.target as HTMLSelectElement).value)
           "
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
         >
           <option value="">Semua Kategori</option>
           <option value="Akun & Keamanan">Akun & Keamanan</option>
@@ -74,8 +73,8 @@ const handleReset = () => {
 
       <div class="flex items-end">
         <button
-          @click="handleReset"
           class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          @click="handleReset"
         >
           Reset Filter
         </button>

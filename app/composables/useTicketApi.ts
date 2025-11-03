@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Ticket } from "~/types/ticket";
 import ticketsData from "~/data/tickets.json";
 
