@@ -72,6 +72,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Validate image name
+        run: |
+          if [ -z "${{ steps.image.outputs.name }}" ]; then
+            echo "❌ Image name is empty. Ensure DOCKER_USERNAME secret is set."
+            exit 1
+          fi
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -86,9 +93,9 @@ jobs:
           echo "Dokploy URL: ${{ env.DOKPLOY_URL }}"
           echo "App ID: ${{ env.DOKPLOY_APP_ID }}"
           
-          # Update the application image (tRPC endpoint)
+          # Update the application image (tRPC endpoint, try without Bearer prefix)
           curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.update" \
-            -H "Authorization: Bearer ${{ env.DOKPLOY_API_TOKEN }}" \
+            -H "Authorization: ${{ env.DOKPLOY_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
               \"json\": {
@@ -102,9 +109,9 @@ jobs:
         run: |
           echo "Triggering deployment..."
           
-          # Trigger deployment (tRPC endpoint)
+          # Trigger deployment (tRPC endpoint, try without Bearer prefix)
           curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.deploy" \
-            -H "Authorization: Bearer ${{ env.DOKPLOY_API_TOKEN }}" \
+            -H "Authorization: ${{ env.DOKPLOY_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
               \"json\": {
