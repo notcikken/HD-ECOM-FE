@@ -128,7 +128,7 @@ const submitForm = async () => {
 
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 py-8 px-4 sm:px-6 lg:px-8"
+    class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 py-24 px-4"
   >
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
@@ -149,11 +149,11 @@ const submitForm = async () => {
         <div class="lg:col-span-2">
           <div class="sticky top-8">
             <!-- Support Image -->
-            <div class="mb-8">
+            <div class="">
               <img
                 src="/images/support.png"
                 alt="Customer Support"
-                class="w-full rounded-2xl shadow-lg"
+                class="w-full rounded-2xl"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
               />
               <!-- Fallback Icon if image fails -->
@@ -165,9 +165,7 @@ const submitForm = async () => {
             </div>
 
             <!-- Info Card -->
-            <div
-              class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-            >
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
               <h3 class="text-2xl font-bold text-gray-800 mb-2">
                 Kami Siap Membantu!
               </h3>
@@ -232,9 +230,7 @@ const submitForm = async () => {
 
         <!-- Form Side - Larger -->
         <div class="lg:col-span-3">
-          <div
-            class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100"
-          >
+          <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-100">
             <form class="space-y-6" @submit.prevent="submitForm">
               <!-- Title Field -->
               <div>
@@ -257,9 +253,9 @@ const submitForm = async () => {
                 </label>
                 <textarea
                   v-model="description"
-                  rows="12"
+                  rows="11"
                   required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E]  transition h-full"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] transition h-full"
                   placeholder="Jelaskan detail masalah atau langkah reproduksi..."
                 />
               </div>
