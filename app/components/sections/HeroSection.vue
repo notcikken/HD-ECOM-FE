@@ -133,7 +133,7 @@ function handleBlur() {
                     aria-label="Cari bantuan atau informasi"
                     @focus="isFocused = true"
                     @blur="handleBlur"
-                  />
+                  >
                   <button
                     v-if="query"
                     class="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -188,7 +188,7 @@ function handleBlur() {
               alt="Ilustrasi bantuan pelanggan"
               class="relative w-full max-w-xs lg:max-w-sm xl:max-w-md h-auto object-contain"
               loading="eager"
-            />
+            >
           </div>
         </div>
       </div>
