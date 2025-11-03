@@ -86,9 +86,15 @@ jobs:
     steps:
       - name: Update Dokploy application image
         run: |
-          IMAGE_FULL="${{ needs.build.outputs.image-name }}:${{ needs.build.outputs.image-tag }}"
+          # Reconstruct image name in case it's not passed correctly
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
+          DOCKER_USER=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${DOCKER_USER}/${REPO_NAME}"
+          IMAGE_FULL="${IMAGE_NAME}:${{ needs.build.outputs.image-tag }}"
           
           echo "Updating Dokploy application with image: $IMAGE_FULL"
+          echo "Constructed image name: $IMAGE_NAME"
+          echo "Image tag from build: ${{ needs.build.outputs.image-tag }}"
           echo "App ID: ${{ env.DOKPLOY_APP_ID }}"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ env.DOKPLOY_URL }}/api/application.update" \
