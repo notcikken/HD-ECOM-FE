@@ -168,9 +168,7 @@ const submitForm = async () => {
         </div>
 
         <div>
-          <label
-            class="block text-xs font-semibold tracking-wide text-gray-700 mb-2 uppercase"
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-2">
             Supporting Documents <span class="text-red-500">*</span>
           </label>
           <div class="space-y-3">
