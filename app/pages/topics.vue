@@ -157,7 +157,7 @@ const displayedQuestions = computed(() => {
 <template>
   <div class="container mx-auto py-8 px-4">
     <nav class="text-sm text-gray-500 mb-4">
-      <NuxtLink to="/" class="text-blue-600 hover:underline"
+      <NuxtLink to="/" class="text-[#F79E0E] hover:underline"
         >Help Center</NuxtLink
       >
       <span class="mx-2">/</span>
@@ -184,12 +184,12 @@ const displayedQuestions = computed(() => {
       </svg>
       <input
         v-model="query"
+        placeholder="Ketik kata kunci (misal: promosi berlangsung)"
+        type="text"
+        class="w-full outline-none text-gray-700 placeholder-gray-500"
         @focus="isFocused = true"
         @blur="handleBlur"
-        type="text"
-        placeholder="Ketik kata kunci (misal: promosi berlangsung)"
-        class="w-full outline-none text-gray-700 placeholder-gray-500"
-      />
+      >
     </div>
 
     <div class="flex gap-8">
@@ -209,19 +209,19 @@ const displayedQuestions = computed(() => {
             currentTopic.subtopics.length
           "
           class="w-64 hidden lg:block"
-        ></aside>
-        <div class="bg-white rounded-lg shadow-sm p-4">
+        />
+        <div class="bg-[#FFF1C1] rounded-lg shadow-sm p-4">
           <ul class="space-y-2">
             <li
               v-for="(s, i) in currentTopic.subtopics"
               :key="i"
-              @click="selectSubtopic(s.slug)"
               :class="[
                 'cursor-pointer px-3 py-2 rounded',
                 selectedSubtopic === s.slug
                   ? 'bg-gray-100 font-medium'
                   : 'text-gray-600 hover:bg-gray-50',
               ]"
+              @click="selectSubtopic(s.slug)"
             >
               {{ s.title }}
             </li>
@@ -237,23 +237,28 @@ const displayedQuestions = computed(() => {
 
         <div
           v-if="displayedQuestions.length"
-          class="bg-white rounded-lg shadow-sm divide-y"
+          class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
           <!-- Accordion list -->
           <div v-for="q in displayedQuestions" :key="q.id" class="px-6 py-2">
             <button
               type="button"
-              @click="toggleQuestion(q.id)"
-              class="w-full flex items-center justify-between py-4 text-left"
               :aria-expanded="openQuestion === q.id"
+              class="w-full flex items-center justify-between py-4 text-left"
+              @click="toggleQuestion(q.id)"
             >
               <span class="text-base font-medium text-gray-800">{{
                 q.question
               }}</span>
-              <span class="ml-4 text-gray-500">
+              <div class="flex items-center space-x-2 shrink-0">
+                <span
+                  class="text-xs px-2 py-1 bg-[#F79E0E]/10 text-[#F79E0E] rounded-full font-medium"
+                >
+                  Detail
+                </span>
                 <ChevronDown v-if="openQuestion !== q.id" />
                 <ChevronUp v-else />
-              </span>
+              </div>
             </button>
 
             <div
@@ -278,11 +283,11 @@ const displayedQuestions = computed(() => {
           <button
             v-for="s in currentTopic.subtopics"
             :key="s.slug"
-            @click="selectSubtopic(s.slug)"
             :class="[
               'whitespace-nowrap px-4 py-2 rounded',
               selectedSubtopic === s.slug ? 'bg-yellow-200' : 'bg-gray-100',
             ]"
+            @click="selectSubtopic(s.slug)"
           >
             {{ s.title }}
           </button>
