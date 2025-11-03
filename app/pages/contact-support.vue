@@ -172,8 +172,8 @@ const submitForm = async () => {
                 Kami Siap Membantu!
               </h3>
               <p class="text-gray-600 mb-6">
-                Tim support kami akan merespons pertanyaan Anda dalam waktu
-                1x24 jam
+                Tim support kami akan merespons pertanyaan Anda dalam waktu 1x24
+                jam
               </p>
 
               <!-- Features List -->
@@ -251,15 +251,15 @@ const submitForm = async () => {
               </div>
 
               <!-- Description Field -->
-              <div>
+              <div class="h-full">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
                   Description <span class="text-red-500">*</span>
                 </label>
                 <textarea
                   v-model="description"
-                  rows="5"
+                  rows="12"
                   required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] resize-y transition"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E]  transition h-full"
                   placeholder="Jelaskan detail masalah atau langkah reproduksi..."
                 />
               </div>
