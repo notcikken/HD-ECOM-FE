@@ -125,26 +125,26 @@ const submitForm = async () => {
       <form class="space-y-4" @submit.prevent="submitForm">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Title *</label
+            >Title <span class="text-red-500">*</span></label
           >
           <input
             v-model="title"
             type="text"
             required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E]"
             placeholder="Ringkasan singkat masalah"
           />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Description *</label
-          >
+            >Description <span class="text-red-500">*</span>
+          </label>
           <textarea
             v-model="description"
             rows="6"
             required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-y"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] resize-y"
             placeholder="Jelaskan detail masalah atau langkah reproduksi..."
           />
         </div>
@@ -152,12 +152,12 @@ const submitForm = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Category *</label
+              >Category <span class="text-red-500">*</span></label
             >
             <select
               v-model="category"
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E]"
             >
               <option value="">Pilih Kategori</option>
               <option v-for="c in categories" :key="c" :value="c">
@@ -171,7 +171,7 @@ const submitForm = async () => {
           <label
             class="block text-xs font-semibold tracking-wide text-gray-700 mb-2 uppercase"
           >
-            Supporting Document (opsional)
+            Supporting Documents <span class="text-red-500">*</span>
           </label>
           <div class="space-y-3">
             <div class="relative">
@@ -314,7 +314,7 @@ const submitForm = async () => {
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            class="px-4 py-2 bg-[#F79E0E] text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50"
           >
             <span v-if="!loading">Kirim Pesan</span>
             <span v-else>Mengirim...</span>
