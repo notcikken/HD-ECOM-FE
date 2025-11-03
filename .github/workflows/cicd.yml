@@ -11,6 +11,7 @@ env:
   DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
   DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
   DOKPLOY_APP_ID: ${{ secrets.DOKPLOY_APP_ID }}
+  DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -88,37 +89,36 @@ jobs:
           IMAGE_FULL="${{ needs.build.outputs.image-name }}:${{ needs.build.outputs.image-tag }}"
           
           echo "Updating Dokploy application with image: $IMAGE_FULL"
-          echo "Image name: ${{ needs.build.outputs.image-name }}"
-          echo "Image tag: ${{ needs.build.outputs.image-tag }}"
-          echo "Dokploy URL: ${{ env.DOKPLOY_URL }}"
           echo "App ID: ${{ env.DOKPLOY_APP_ID }}"
           
-          # Update the application image (tRPC endpoint, try without Bearer prefix)
-          curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.update" \
-            -H "Authorization: ${{ env.DOKPLOY_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ env.DOKPLOY_URL }}/api/application.update" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H "x-api-key: ${{ env.DOKPLOY_API_TOKEN }}" \
             -d "{
-              \"json\": {
-                \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\",
-                \"dockerImage\": \"$IMAGE_FULL\"
-              }
-            }" \
-            --fail --show-error && echo "✅ Image updated successfully" || (echo "❌ Failed to update image" && exit 1)
-
-      - name: Deploy application
-        run: |
-          echo "Triggering deployment..."
+              \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\",
+              \"dockerImage\": \"$IMAGE_FULL\"
+            }")
           
-          # Trigger deployment (tRPC endpoint, try without Bearer prefix)
-          curl -X POST "${{ env.DOKPLOY_URL }}/api/trpc/application.deploy" \
-            -H "Authorization: ${{ env.DOKPLOY_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"json\": {
-                \"applicationId\": \"${{ env.DOKPLOY_APP_ID }}\"
-              }
-            }" \
-            --fail --show-error && echo "✅ Deployment triggered successfully" || (echo "❌ Deployment failed" && exit 1)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Response: $BODY"
+          echo "HTTP Code: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Image updated successfully"
+          else
+            echo "❌ Failed to update image"
+            exit 1
+          fi
+
+      - name: Trigger deployment webhook
+        run: |
+          echo "Triggering deployment webhook..."
+          
+          curl -X POST "${{ env.DOKPLOY_WEBHOOK_URL }}" \
+            --fail --show-error --silent --output /dev/null && echo "✅ Deployment webhook triggered successfully" || echo "❌ Deployment webhook failed"
           
           echo "Deployed commit: ${{ github.sha }}"
           echo "Deployed by: ${{ github.actor }}"
