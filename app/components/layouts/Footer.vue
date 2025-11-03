@@ -1,3 +1,21 @@
+<script setup>
+// Import Lucide Vue icons for modern, consistent iconography
+import {
+  Store,
+  Mail,
+  Send,
+  Copyright,
+  FileText,
+  Shield,
+  Twitter,
+  Facebook,
+  Instagram,
+  ShoppingBag,
+  HelpCircle,
+  ChevronRight,
+} from "lucide-vue-next";
+</script>
+
 <template>
   <footer class="bg-[#F8D46F] border-t border-orange-200/30">
     <div class="max-w-7xl mx-auto px-6 lg:px-8 py-16">
@@ -172,7 +190,7 @@
                 placeholder="Masukkan email Anda"
                 class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm placeholder-gray-500 focus:ring-2 focus:ring-[#F79E0E]/20 focus:border-[#F79E0E] transition-all duration-200 shadow-sm"
                 required
-              >
+              />
             </div>
             <button
               type="submit"
@@ -222,24 +240,6 @@
     </div>
   </footer>
 </template>
-
-<script setup>
-// Import Lucide Vue icons for modern, consistent iconography
-import {
-  Store,
-  Mail,
-  Send,
-  Copyright,
-  FileText,
-  Shield,
-  Twitter,
-  Facebook,
-  Instagram,
-  ShoppingBag,
-  HelpCircle,
-  ChevronRight,
-} from 'lucide-vue-next';
-</script>
 
 <style scoped>
 /* Minimal scoped styles for enhanced interactions */
