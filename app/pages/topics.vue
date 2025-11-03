@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronDown, ChevronUp } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -189,7 +189,7 @@ const displayedQuestions = computed(() => {
         class="w-full outline-none text-gray-700 placeholder-gray-500"
         @focus="isFocused = true"
         @blur="handleBlur"
-      />
+      >
     </div>
 
     <div class="flex gap-8">
