@@ -1,3 +1,44 @@
+<script setup lang="ts">
+import {
+  LayoutDashboard,
+  Users,
+  Store,
+  User,
+  Headphones,
+} from "lucide-vue-next";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+
+const menuItems = [
+  {
+    path: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    badge: null,
+  },
+  {
+    path: "/dashboard/pelanggan",
+    label: "Pelanggan",
+    icon: Users,
+    badge: "12",
+  },
+  {
+    path: "/dashboard/penjual",
+    label: "Penjual",
+    icon: Store,
+    badge: "8",
+  },
+];
+
+const isActive = (path: string) => {
+  if (path === "/dashboard") {
+    return route.path === "/dashboard";
+  }
+  return route.path.startsWith(path);
+};
+</script>
+
 <template>
   <aside class="relativew-64 bg-white border-r border-gray-200 min-h-screen">
     <div class="p-6">
@@ -54,44 +95,3 @@
     </div>
   </aside>
 </template>
-
-<script setup lang="ts">
-import {
-  LayoutDashboard,
-  Users,
-  Store,
-  User,
-  Headphones,
-} from "lucide-vue-next";
-import { useRoute } from "vue-router";
-
-const route = useRoute();
-
-const menuItems = [
-  {
-    path: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    badge: null,
-  },
-  {
-    path: "/dashboard/pelanggan",
-    label: "Pelanggan",
-    icon: Users,
-    badge: "12",
-  },
-  {
-    path: "/dashboard/penjual",
-    label: "Penjual",
-    icon: Store,
-    badge: "8",
-  },
-];
-
-const isActive = (path: string) => {
-  if (path === "/dashboard") {
-    return route.path === "/dashboard";
-  }
-  return route.path.startsWith(path);
-};
-</script>

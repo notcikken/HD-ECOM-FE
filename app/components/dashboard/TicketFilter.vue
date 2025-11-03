@@ -1,7 +1,6 @@
 <script setup lang="ts">
 interface Filters {
   status: string;
-  priority: string;
   category: string;
 }
 
@@ -49,25 +48,6 @@ const handleReset = () => {
           <option value="in-progress">In Progress</option>
           <option value="resolved">Resolved</option>
           <option value="closed">Closed</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Prioritas</label
-        >
-        <select
-          :value="modelValue.priority"
-          @change="
-            updateFilter('priority', ($event.target as HTMLSelectElement).value)
-          "
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-        >
-          <option value="">Semua Prioritas</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
         </select>
       </div>
 
