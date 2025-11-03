@@ -189,7 +189,7 @@ const displayedQuestions = computed(() => {
         class="w-full outline-none text-gray-700 placeholder-gray-500"
         @focus="isFocused = true"
         @blur="handleBlur"
-      />
+      >
     </div>
 
     <div class="flex gap-8">
