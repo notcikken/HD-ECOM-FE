@@ -11,58 +11,55 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+<NuxtLink
+  v-for="topic in topics"
+  :key="topic.id"
+  :to="`/topics`"
+  class="group relative bg-[#FFF1C1] hover:bg-white rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-100/50 hover:-translate-y-1 border border-orange-100/50 hover:border-[#F79E0E]/20"
+  :aria-label="`Lihat bantuan untuk ${topic.title}`"
+  tabindex="0"
+>
+  <!-- Background decoration -->
+  <div
+    class="absolute top-0 right-0 w-20 h-20 bg-linear-to-br from-[#F79E0E]/5 to-transparent rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+  ></div>
+
+  <div class="relative flex items-center space-x-4">
+    <!-- Icon container with enhanced styling -->
+    <div class="relative">
       <div
-        v-for="topic in topics"
-        :key="topic.id"
-        class="group relative bg-[#FFF1C1] hover:bg-white rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-100/50 hover:-translate-y-1 border border-orange-100/50 hover:border-[#F79E0E]/20"
-        role="button"
-        :aria-label="`Lihat bantuan untuk ${topic.title}`"
-        tabindex="0"
-        @keydown.enter="$emit('topic-selected', topic)"
-        @keydown.space.prevent="$emit('topic-selected', topic)"
-        @click="$emit('topic-selected', topic)"
+        class="w-14 h-14 bg-[#F79E0E] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300"
       >
-        <!-- Background decoration -->
-        <div
-          class="absolute top-0 right-0 w-20 h-20 bg-linear-to-br from-[#F79E0E]/5 to-transparent rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        />
-
-        <div class="relative flex items-center space-x-4">
-          <!-- Icon container with enhanced styling -->
-          <div class="relative">
-            <div
-              class="w-14 h-14 bg-[#F79E0E] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300"
-            >
-              <component :is="topic.icon" class="w-7 h-7 text-white" />
-            </div>
-            <!-- Icon glow effect -->
-            <div
-              class="absolute inset-0 w-14 h-14 bg-[#F79E0E] rounded-2xl opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"
-            />
-          </div>
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <h3
-              class="font-semibold text-gray-800 text-lg group-hover:text-[#F79E0E] transition-colors duration-200 leading-tight"
-            >
-              {{ topic.title }}
-            </h3>
-            <p
-              class="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors duration-200"
-            >
-              {{ topic.description || 'Lihat panduan lengkap' }}
-            </p>
-          </div>
-
-          <!-- Arrow indicator -->
-          <div
-            class="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-0 group-hover:translate-x-1"
-          >
-            <ChevronRight class="w-5 h-5 text-[#F79E0E]" />
-          </div>
-        </div>
+        <component :is="topic.icon" class="w-7 h-7 text-white" />
       </div>
+      <!-- Icon glow effect -->
+      <div
+        class="absolute inset-0 w-14 h-14 bg-[#F79E0E] rounded-2xl opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"
+      ></div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+      <h3
+        class="font-semibold text-gray-800 text-lg group-hover:text-[#F79E0E] transition-colors duration-200 leading-tight"
+      >
+        {{ topic.title }}
+      </h3>
+      <p
+        class="text-sm text-gray-500 mt-1 group-hover:text-gray-600 transition-colors duration-200"
+      >
+        {{ topic.description || 'Lihat panduan lengkap' }}
+      </p>
+    </div>
+
+    <!-- Arrow indicator -->
+    <div
+      class="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-0 group-hover:translate-x-1"
+    >
+      <ChevronRight class="w-5 h-5 text-[#F79E0E]" />
+    </div>
+  </div>
+</NuxtLink>
     </div>
   </section>
 </template>

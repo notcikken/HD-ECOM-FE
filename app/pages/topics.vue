@@ -219,7 +219,7 @@ const displayedQuestions = computed(() => {
                 'cursor-pointer px-3 py-2 rounded',
                 selectedSubtopic === s.slug
                   ? 'bg-gray-100 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50',
+                  : 'text-gray-600 hover:bg-white/40',
               ]"
               @click="selectSubtopic(s.slug)"
             >
@@ -240,14 +240,14 @@ const displayedQuestions = computed(() => {
           class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
           <!-- Accordion list -->
-          <div v-for="q in displayedQuestions" :key="q.id" class="px-6 py-2">
+          <div v-for="q in displayedQuestions" :key="q.id" class="px-6 py-2 hover:bg-white/40">
             <button
               type="button"
               :aria-expanded="openQuestion === q.id"
               class="w-full flex items-center justify-between py-4 text-left"
               @click="toggleQuestion(q.id)"
             >
-              <span class="text-base font-medium text-gray-800">{{
+              <span class="text-lg font-medium text-gray-800">{{
                 q.question
               }}</span>
               <div class="flex items-center space-x-2 shrink-0">
@@ -256,8 +256,13 @@ const displayedQuestions = computed(() => {
                 >
                   Detail
                 </span>
-                <ChevronDown v-if="openQuestion !== q.id" />
-                <ChevronUp v-else />
+
+                <!-- single icon that rotates when open -->
+                <ChevronDown
+                  class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                  :class="{ 'rotate-180': openQuestion === q.id }"
+                  aria-hidden="true"
+                />
               </div>
             </button>
 
