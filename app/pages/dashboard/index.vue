@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
+import { Ticket, TrendingUp, CheckCircle } from "lucide-vue-next";
 import type { Ticket as TicketType } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard/TicketTable.vue";
 
@@ -18,19 +18,19 @@ const statistics = [
     badgeClass: "bg-green-100 text-green-700",
   },
   {
-    label: "Tiket Aktif",
-    value: "89",
+    label: "Open",
+    value: "45",
     change: "+8%",
-    icon: TrendingUp,
+    icon: Ticket,
     bgColor: "bg-blue-50",
     iconColor: "text-blue-600",
     badgeClass: "bg-blue-100 text-blue-700",
   },
   {
-    label: "Pending",
-    value: "34",
+    label: "In Progress",
+    value: "44",
     change: "-5%",
-    icon: Clock,
+    icon: TrendingUp,
     bgColor: "bg-yellow-50",
     iconColor: "text-yellow-600",
     badgeClass: "bg-yellow-100 text-yellow-700",

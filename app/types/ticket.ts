@@ -1,4 +1,4 @@
-export type TicketStatus = "open" | "in-progress" | "resolved" | "closed";
+export type TicketStatus = "open" | "in-progress" | "resolved";
 export type TicketPriority = "low" | "medium" | "high" | "urgent";
 export type TicketRole = "pelanggan" | "penjual";
 
@@ -13,4 +13,6 @@ export interface Ticket {
   updatedAt: string;
   assignedTo?: string;
   category: string;
+  resolvedAt?: string;
+  lastResponseAt?: string;
 }
