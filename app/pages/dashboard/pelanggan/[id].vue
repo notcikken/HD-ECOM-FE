@@ -253,11 +253,15 @@ const ticketSteps = computed(() => {
 
 const getStepColorClass = (step: any) => {
   if (step && step.isCompleted) {
-    if (step.status === "open") return "bg-blue-500 border-blue-500";
-    if (step.status === "in-progress") return "bg-yellow-500 border-yellow-500";
-    if (step.status === "resolved") return "bg-green-500 border-green-500";
+    if (step.isCurrent) {
+      if (step.status === "open") return "bg-blue-500 border-blue-500";
+      if (step.status === "in-progress")
+        return "bg-yellow-500 border-yellow-500";
+      if (step.status === "resolved") return "bg-green-500 border-green-500";
+    }
+    return "bg-green-500 border-green-400";
   }
-  return "bg-gray-200 border-gray-300";
+  return "bg-gray-200 border-gray-400";
 };
 
 const getStepTextColor = (step: any) => {
@@ -270,10 +274,14 @@ const getStepTextColor = (step: any) => {
 };
 
 const getStepBgColor = (step: any) => {
-  if (step.isCurrent) {
-    if (step.status === "open") return "bg-blue-50 border-blue-200";
-    if (step.status === "in-progress") return "bg-yellow-50 border-yellow-200";
-    if (step.status === "resolved") return "bg-green-50 border-green-200";
+  if (step && step.isCompleted) {
+    if (step.isCurrent) {
+      if (step.status === "open") return "bg-blue-50 border-blue-200";
+      if (step.status === "in-progress")
+        return "bg-yellow-50 border-yellow-200";
+      if (step.status === "resolved") return "bg-green-50 border-green-200";
+    }
+    return "bg-green-50 border-green-200";
   }
   return "";
 };
@@ -438,7 +446,7 @@ onMounted(() => {
         </div>
 
         <!-- Resolution Info (only for resolved tickets) -->
-        <Transition
+        <!-- <Transition
           enter-active-class="transition ease-out duration-300"
           enter-from-class="transform scale-95 opacity-0"
           enter-to-class="transform scale-100 opacity-100"
@@ -462,7 +470,7 @@ onMounted(() => {
               </div>
             </div>
           </div>
-        </Transition>
+        </Transition> -->
 
         <!-- Process Info Card -->
         <!-- <div
@@ -726,8 +734,8 @@ onMounted(() => {
 
                 <!-- Connector Line (except for last item) -->
                 <div
-                  v-if="index < ticketSteps.length - 1"
-                  class="absolute left-6 top-12 w-0.5 h-6 transition-colors duration-300"
+                  v-if="index < ticketSteps.length - 1 && step.isCompleted"
+                  class="absolute left-6 top-12 w-0.5 h-full transition-colors duration-300"
                   :class="
                     ticketSteps[index + 1]?.isCompleted
                       ? 'bg-green-400'
