@@ -46,7 +46,6 @@ const handleReset = () => {
           <option value="open">Open</option>
           <option value="in-progress">In Progress</option>
           <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
         </select>
       </div>
 
@@ -71,7 +70,7 @@ const handleReset = () => {
         </select>
       </div>
 
-      <div class="flex items-end">
+      <div class="flex items-end md:col-span-2">
         <button
           class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
           @click="handleReset"

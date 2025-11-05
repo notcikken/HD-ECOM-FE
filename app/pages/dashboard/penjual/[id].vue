@@ -37,7 +37,6 @@ const statusOptions: { value: TicketStatus; label: string; color: string }[] = [
     label: "Resolved",
     color: "bg-green-100 text-green-700",
   },
-  { value: "closed", label: "Closed", color: "bg-gray-100 text-gray-700" },
 ];
 
 const loadTicketDetail = async () => {

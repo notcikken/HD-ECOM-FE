@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Ticket } from "~/types/ticket";
+import type { Ticket, TicketPriority } from "~/types/ticket";
 import ticketsData from "~/data/tickets.json";
 
 interface TicketFilters {
@@ -16,14 +16,9 @@ interface ApiResponse<T> {
 }
 
 export const useTicketApi = () => {
-  // Simulate API delay
   const delay = (ms: number = 500) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-  /**
-   * GET /api/tickets
-   * Fetch all tickets with optional filters
-   */
   const fetchTickets = async (
     filters?: TicketFilters
   ): Promise<ApiResponse<Ticket[]>> => {
@@ -32,20 +27,17 @@ export const useTicketApi = () => {
     try {
       let tickets: Ticket[] = [];
 
-      // Get tickets based on role - with type assertion
       if (filters?.role === "pelanggan") {
         tickets = ticketsData.pelanggan as Ticket[];
       } else if (filters?.role === "penjual") {
         tickets = ticketsData.penjual as Ticket[];
       } else {
-        // Get all tickets
         tickets = [
           ...(ticketsData.pelanggan as Ticket[]),
           ...(ticketsData.penjual as Ticket[]),
         ];
       }
 
-      // Apply filters
       if (filters) {
         tickets = tickets.filter((ticket) => {
           if (filters.status && ticket.status !== filters.status) return false;
@@ -70,10 +62,6 @@ export const useTicketApi = () => {
     }
   };
 
-  /**
-   * GET /api/tickets/:id
-   * Fetch a single ticket by ID
-   */
   const fetchTicketById = async (
     id: string
   ): Promise<ApiResponse<Ticket | null>> => {
@@ -107,10 +95,6 @@ export const useTicketApi = () => {
     }
   };
 
-  /**
-   * GET /api/tickets/stats
-   * Fetch ticket statistics
-   */
   const fetchTicketStats = async () => {
     await delay(300);
 
@@ -125,7 +109,6 @@ export const useTicketApi = () => {
         open: allTickets.filter((t) => t.status === "open").length,
         inProgress: allTickets.filter((t) => t.status === "in-progress").length,
         resolved: allTickets.filter((t) => t.status === "resolved").length,
-        closed: allTickets.filter((t) => t.status === "closed").length,
         urgent: allTickets.filter((t) => t.priority === "urgent").length,
         high: allTickets.filter((t) => t.priority === "high").length,
         medium: allTickets.filter((t) => t.priority === "medium").length,
@@ -145,10 +128,6 @@ export const useTicketApi = () => {
     }
   };
 
-  /**
-   * POST /api/tickets
-   * Create a new ticket (mock)
-   */
   const createTicket = async (
     ticket: Omit<Ticket, "id" | "createdAt" | "updatedAt">
   ): Promise<ApiResponse<Ticket>> => {
@@ -158,6 +137,8 @@ export const useTicketApi = () => {
       const newTicket: Ticket = {
         ...ticket,
         id: `TKT-${Date.now()}`,
+        status: "open",
+        priority: null, // Priority akan diset oleh admin
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -176,10 +157,6 @@ export const useTicketApi = () => {
     }
   };
 
-  /**
-   * PUT /api/tickets/:id
-   * Update a ticket (mock)
-   */
   const updateTicket = async (
     id: string,
     updates: Partial<Ticket>
@@ -217,10 +194,6 @@ export const useTicketApi = () => {
     }
   };
 
-  /**
-   * DELETE /api/tickets/:id
-   * Delete a ticket (mock)
-   */
   const deleteTicket = async (id: string): Promise<ApiResponse<boolean>> => {
     await delay(500);
 
@@ -249,6 +222,107 @@ export const useTicketApi = () => {
     }
   };
 
+  /**
+   * Assign ticket to employee and set priority - changes status to in-progress
+   */
+  const assignTicket = async (
+    ticketId: string,
+    employeeName: string,
+    priority: TicketPriority
+  ): Promise<ApiResponse<Ticket>> => {
+    await delay(500);
+
+    try {
+      const response = await fetchTicketById(ticketId);
+
+      if (!response.success || !response.data) {
+        return {
+          success: false,
+          data: {} as Ticket,
+          message: "Ticket not found",
+        };
+      }
+
+      if (response.data.status !== "open") {
+        return {
+          success: false,
+          data: response.data,
+          message: "Only open tickets can be assigned",
+        };
+      }
+
+      const updatedTicket: Ticket = {
+        ...response.data,
+        status: "in-progress",
+        assignedTo: employeeName,
+        priority: priority,
+        updatedAt: new Date().toISOString(),
+      };
+
+      return {
+        success: true,
+        data: updatedTicket,
+        message: "Ticket assigned successfully",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: {} as Ticket,
+        message: "Failed to assign ticket",
+      };
+    }
+  };
+
+  /**
+   * Resolve ticket with resolution text
+   */
+  const resolveTicket = async (
+    ticketId: string,
+    resolution: string
+  ): Promise<ApiResponse<Ticket>> => {
+    await delay(500);
+
+    try {
+      const response = await fetchTicketById(ticketId);
+
+      if (!response.success || !response.data) {
+        return {
+          success: false,
+          data: {} as Ticket,
+          message: "Ticket not found",
+        };
+      }
+
+      if (response.data.status !== "in-progress") {
+        return {
+          success: false,
+          data: response.data,
+          message: "Only in-progress tickets can be resolved",
+        };
+      }
+
+      const updatedTicket: Ticket = {
+        ...response.data,
+        status: "resolved",
+        resolution: resolution,
+        resolvedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      return {
+        success: true,
+        data: updatedTicket,
+        message: "Ticket resolved successfully",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: {} as Ticket,
+        message: "Failed to resolve ticket",
+      };
+    }
+  };
+
   return {
     fetchTickets,
     fetchTicketById,
@@ -256,5 +330,7 @@ export const useTicketApi = () => {
     createTicket,
     updateTicket,
     deleteTicket,
+    assignTicket,
+    resolveTicket,
   };
 };

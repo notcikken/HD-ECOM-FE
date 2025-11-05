@@ -6,7 +6,7 @@
         <h3 class="text-xl font-semibold text-[#F79E0E] mb-4">
           Masuk ke SecondCycle Help Center
         </h3>
-        <form @submit.prevent="login" class="space-y-4">
+        <form class="space-y-4" @submit.prevent="login">
           <div>
             <label class="block text-sm text-gray-700 mb-1">Email</label>
             <input
@@ -68,10 +68,9 @@
 </template>
 
 <script setup>
-definePageMeta({ layout: "auth" });
-
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+definePageMeta({ layout: "auth" });
 
 const email = ref("");
 const password = ref("");
