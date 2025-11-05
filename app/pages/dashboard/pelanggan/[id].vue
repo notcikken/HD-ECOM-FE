@@ -13,7 +13,6 @@ import {
   XCircle,
   FileText,
   Bell,
-  Shield,
   MessageSquare,
 } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
@@ -563,28 +562,6 @@ onMounted(() => {
                 </p>
               </div>
             </div>
-
-            <!-- Priority Info (only if assigned) -->
-            <div
-              v-if="ticket.priority"
-              class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-            >
-              <div
-                class="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center shadow-sm"
-              >
-                <Shield class="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p class="text-xs text-purple-600 font-medium mb-1">
-                  Prioritas
-                </p>
-                <p class="text-sm font-bold text-gray-800 capitalize">
-                  {{ getPriorityLabel(ticket.priority) }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Assigned To (only if assigned) -->
             <div
               v-if="ticket.assignedTo"
               class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
