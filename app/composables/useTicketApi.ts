@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Ticket } from "~/types/ticket";
+import type { Ticket, TicketPriority } from "~/types/ticket";
 import ticketsData from "~/data/tickets.json";
 
 interface TicketFilters {
@@ -137,6 +137,8 @@ export const useTicketApi = () => {
       const newTicket: Ticket = {
         ...ticket,
         id: `TKT-${Date.now()}`,
+        status: "open",
+        priority: null, // Priority akan diset oleh admin
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -221,11 +223,12 @@ export const useTicketApi = () => {
   };
 
   /**
-   * Assign ticket to admin - changes status to in-progress
+   * Assign ticket to employee and set priority - changes status to in-progress
    */
   const assignTicket = async (
     ticketId: string,
-    assigneeEmail: string
+    employeeName: string,
+    priority: TicketPriority
   ): Promise<ApiResponse<Ticket>> => {
     await delay(500);
 
@@ -240,10 +243,19 @@ export const useTicketApi = () => {
         };
       }
 
+      if (response.data.status !== "open") {
+        return {
+          success: false,
+          data: response.data,
+          message: "Only open tickets can be assigned",
+        };
+      }
+
       const updatedTicket: Ticket = {
         ...response.data,
         status: "in-progress",
-        assignedTo: assigneeEmail,
+        assignedTo: employeeName,
+        priority: priority,
         updatedAt: new Date().toISOString(),
       };
 
@@ -262,11 +274,11 @@ export const useTicketApi = () => {
   };
 
   /**
-   * Send email reply - can optionally resolve ticket
+   * Resolve ticket with resolution text
    */
-  const sendEmailReply = async (
+  const resolveTicket = async (
     ticketId: string,
-    shouldResolve: boolean = false
+    resolution: string
   ): Promise<ApiResponse<Ticket>> => {
     await delay(500);
 
@@ -281,33 +293,32 @@ export const useTicketApi = () => {
         };
       }
 
-      const updates: Partial<Ticket> = {
-        updatedAt: new Date().toISOString(),
-        lastResponseAt: new Date().toISOString(),
-      };
-
-      if (shouldResolve) {
-        updates.status = "resolved";
-        updates.resolvedAt = new Date().toISOString();
+      if (response.data.status !== "in-progress") {
+        return {
+          success: false,
+          data: response.data,
+          message: "Only in-progress tickets can be resolved",
+        };
       }
 
       const updatedTicket: Ticket = {
         ...response.data,
-        ...updates,
+        status: "resolved",
+        resolution: resolution,
+        resolvedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       return {
         success: true,
         data: updatedTicket,
-        message: shouldResolve
-          ? "Email sent and ticket resolved"
-          : "Email sent successfully",
+        message: "Ticket resolved successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: {} as Ticket,
-        message: "Failed to send email",
+        message: "Failed to resolve ticket",
       };
     }
   };
@@ -320,6 +331,6 @@ export const useTicketApi = () => {
     updateTicket,
     deleteTicket,
     assignTicket,
-    sendEmailReply,
+    resolveTicket,
   };
 };

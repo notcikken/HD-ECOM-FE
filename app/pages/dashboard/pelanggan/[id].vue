@@ -9,13 +9,12 @@ import {
   Tag,
   Calendar,
   AlertCircle,
-  Mail,
-  UserPlus,
   CheckCircle,
   XCircle,
   FileText,
   Bell,
-  Plus,
+  Shield,
+  MessageSquare,
 } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
 
@@ -25,7 +24,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
-const { fetchTicketById, assignTicket, sendEmailReply } = useTicketApi();
+const { fetchTicketById, assignTicket, resolveTicket } = useTicketApi();
 
 const ticketId = computed(() => route.params.id as string);
 const loading = ref(false);
@@ -46,23 +45,17 @@ const toast = ref<{
 
 // Modal states
 const showAssignModal = ref(false);
-const showEmailModal = ref(false);
-const showNewTicketModal = ref(false);
+const showResolveModal = ref(false);
 
 // Form data
-const assigneeEmail = ref("");
-const shouldResolveAfterEmail = ref(false);
+const assigneeForm = ref({
+  assignedTo: "",
+  priority: "medium" as "low" | "medium" | "high" | "urgent",
+});
 
-// Activity log (mock data - in real app, fetch from API)
-const activityLog = ref([
-  {
-    id: 1,
-    action: "Ticket Created",
-    user: "System",
-    timestamp: new Date().toISOString(),
-    icon: FileText,
-  },
-]);
+const resolveForm = ref({
+  resolution: "",
+});
 
 const showToast = (message: string, type: "success" | "error" = "success") => {
   toast.value = { show: true, message, type };
@@ -92,29 +85,31 @@ const loadTicketDetail = async () => {
 };
 
 const handleAssignTicket = async () => {
-  if (!assigneeEmail.value.trim()) {
-    showToast("Silakan masukkan email admin", "error");
+  if (!assigneeForm.value.assignedTo.trim()) {
+    showToast("Silakan masukkan nama pegawai", "error");
     return;
   }
 
   updating.value = true;
 
   try {
-    const response = await assignTicket(ticketId.value, assigneeEmail.value);
+    const response = await assignTicket(
+      ticketId.value,
+      assigneeForm.value.assignedTo,
+      assigneeForm.value.priority
+    );
 
     if (response.success) {
       ticket.value = response.data;
       showAssignModal.value = false;
-      assigneeEmail.value = "";
-      showToast("Tiket berhasil ditugaskan dan status berubah ke In Progress");
-
-      activityLog.value.unshift({
-        id: Date.now(),
-        action: `Assigned to ${assigneeEmail.value}`,
-        user: "Admin",
-        timestamp: new Date().toISOString(),
-        icon: UserPlus,
-      });
+      assigneeForm.value = {
+        assignedTo: "",
+        priority: "medium",
+      };
+      showToast(
+        "Tiket berhasil ditugaskan dengan prioritas " +
+          assigneeForm.value.priority.toUpperCase()
+      );
     } else {
       showToast(response.message || "Failed to assign ticket", "error");
     }
@@ -126,48 +121,34 @@ const handleAssignTicket = async () => {
   }
 };
 
-const handleSendEmail = async () => {
+const handleResolveTicket = async () => {
+  if (!resolveForm.value.resolution.trim()) {
+    showToast("Silakan masukkan resolusi masalah", "error");
+    return;
+  }
+
   updating.value = true;
 
   try {
-    const response = await sendEmailReply(
+    const response = await resolveTicket(
       ticketId.value,
-      shouldResolveAfterEmail.value
+      resolveForm.value.resolution
     );
 
     if (response.success) {
       ticket.value = response.data;
-      showEmailModal.value = false;
-      shouldResolveAfterEmail.value = false;
-
-      if (response.data.status === "resolved") {
-        showToast(
-          "Email terkirim dan tiket di-resolve. Jika masih ada masalah, customer dapat membuat tiket baru."
-        );
-      } else {
-        showToast("Email berhasil dikirim");
-      }
-
-      activityLog.value.unshift({
-        id: Date.now(),
-        action: "Email sent to customer",
-        user: "Admin",
-        timestamp: new Date().toISOString(),
-        icon: Mail,
-      });
+      showResolveModal.value = false;
+      resolveForm.value.resolution = "";
+      showToast("Tiket berhasil di-resolve dengan solusi yang diberikan");
     } else {
-      showToast(response.message || "Failed to send email", "error");
+      showToast(response.message || "Failed to resolve ticket", "error");
     }
   } catch (err) {
-    showToast("An error occurred while sending email", "error");
+    showToast("An error occurred while resolving ticket", "error");
     console.error(err);
   } finally {
     updating.value = false;
   }
-};
-
-const handleCreateNewTicket = () => {
-  router.push("/contact-support");
 };
 
 const goBack = () => {
@@ -248,9 +229,9 @@ const ticketSteps = computed(() => {
       id: 2,
       label: "In Progress",
       status: "in-progress",
-      icon: UserPlus,
+      icon: User,
       description: ticket.value.assignedTo
-        ? `Ditugaskan ke ${ticket.value.assignedTo}`
+        ? `Ditangani oleh ${ticket.value.assignedTo}`
         : "Menunggu admin ditugaskan",
       timestamp: ticket.value.assignedTo ? ticket.value.updatedAt : null,
       isCompleted: ["in-progress", "resolved"].includes(ticket.value.status),
@@ -403,7 +384,9 @@ onMounted(() => {
               >
                 {{ getStatusLabel(ticket.status) }}
               </span>
+              <!-- Show Priority only if assigned -->
               <span
+                v-if="ticket.priority"
                 class="px-3 py-1 rounded-full text-xs font-semibold"
                 :class="getPriorityBadgeClass(ticket.priority)"
               >
@@ -416,17 +399,47 @@ onMounted(() => {
             <p class="text-gray-600 leading-relaxed">
               {{ ticket.description }}
             </p>
+            <!-- Supporting Documents (if any) -->
+            <div
+              v-if="
+                ticket.supportingDocuments &&
+                ticket.supportingDocuments.length > 0
+              "
+              class="flex max-w-1/4 mt-3 items-start gap-3 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            >
+              <div
+                class="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center shadow-sm"
+              >
+                <FileText class="w-5 h-5 text-white" />
+              </div>
+              <div class="flex-1">
+                <p class="text-xs text-indigo-600 font-medium mb-2">
+                  Dokumen Pendukung
+                </p>
+                <div class="space-y-1">
+                  <a
+                    v-for="(doc, index) in ticket.supportingDocuments"
+                    :key="index"
+                    :href="doc"
+                    target="_blank"
+                    class="text-xs text-indigo-700 hover:text-indigo-900 underline block truncate"
+                  >
+                    Dokumen {{ index + 1 }}
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Resolved Info -->
+        <!-- Resolution Info (only for resolved tickets) -->
         <Transition
           enter-active-class="transition ease-out duration-300"
           enter-from-class="transform scale-95 opacity-0"
           enter-to-class="transform scale-100 opacity-100"
         >
           <div
-            v-if="ticket.status === 'resolved'"
+            v-if="ticket.status === 'resolved' && ticket.resolution"
             class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-lg shadow-sm"
           >
             <div class="flex items-start gap-3">
@@ -435,28 +448,19 @@ onMounted(() => {
               >
                 <CheckCircle class="w-5 h-5 text-white" />
               </div>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-green-800 mb-1">
+              <div class="flex-1 justify-center">
+                <p
+                  class="flex items-centertext-sm font-semibold text-green-800 mb-2"
+                >
                   ✓ Tiket Telah Di-resolve
                 </p>
-                <p class="text-xs text-green-700 mb-2">
-                  Masalah telah diselesaikan. Jika masih ada keluhan atau
-                  pertanyaan baru, silakan buat tiket baru.
-                </p>
-                <button
-                  class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow-md"
-                  @click="showNewTicketModal = true"
-                >
-                  <Plus class="w-4 h-4" />
-                  Buat Tiket Baru
-                </button>
               </div>
             </div>
           </div>
         </Transition>
 
         <!-- Process Info Card -->
-        <div
+        <!-- <div
           class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl"
         >
           <h3
@@ -475,7 +479,7 @@ onMounted(() => {
               <div>
                 <span class="font-semibold text-blue-800">Open:</span>
                 <span class="text-blue-700">
-                  Tiket dibuat dan menunggu penugasan</span
+                  Admin menugaskan pegawai dan set prioritas</span
                 >
               </div>
             </div>
@@ -488,7 +492,7 @@ onMounted(() => {
               <div>
                 <span class="font-semibold text-yellow-800">In Progress:</span>
                 <span class="text-yellow-700">
-                  Admin menangani dan mengirim solusi</span
+                  Pegawai menangani masalah customer</span
                 >
               </div>
             </div>
@@ -501,12 +505,12 @@ onMounted(() => {
               <div>
                 <span class="font-semibold text-green-800">Resolved:</span>
                 <span class="text-green-700">
-                  Masalah selesai, buat tiket baru jika perlu</span
+                  Masalah selesai dengan solusi</span
                 >
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Main Content Grid -->
@@ -554,8 +558,29 @@ onMounted(() => {
               </div>
             </div>
 
+            <!-- Priority Info (only if assigned) -->
             <div
-              v-if="ticket.status !== 'open'"
+              v-if="ticket.priority"
+              class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <div
+                class="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center shadow-sm"
+              >
+                <Shield class="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p class="text-xs text-purple-600 font-medium mb-1">
+                  Prioritas
+                </p>
+                <p class="text-sm font-bold text-gray-800 capitalize">
+                  {{ getPriorityLabel(ticket.priority) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Assigned To (only if assigned) -->
+            <div
+              v-if="ticket.assignedTo"
               class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
             >
               <div
@@ -565,14 +590,15 @@ onMounted(() => {
               </div>
               <div>
                 <p class="text-xs text-orange-600 font-medium mb-1">
-                  Ditugaskan ke
+                  Ditangani oleh
                 </p>
                 <p class="text-sm font-bold text-gray-800">
-                  {{ ticket.assignedTo || "-" }}
+                  {{ ticket.assignedTo }}
                 </p>
               </div>
             </div>
 
+            <!-- Resolved At (only if resolved) -->
             <div
               v-if="ticket.resolvedAt"
               class="flex items-center gap-3 p-3 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
@@ -583,7 +609,9 @@ onMounted(() => {
                 <CheckCircle class="w-5 h-5 text-white" />
               </div>
               <div>
-                <p class="text-xs text-teal-600 font-medium mb-1">Di-resolve</p>
+                <p class="text-xs text-teal-600 font-medium mb-1">
+                  Di-resolve pada
+                </p>
                 <p class="text-sm font-bold text-gray-800">
                   {{ formatDate(ticket.resolvedAt) }}
                 </p>
@@ -685,7 +713,7 @@ onMounted(() => {
                           Saat Ini
                         </span>
                         <CheckCircle
-                          v-else-if="step.isCompleted"
+                          v-else-if="step.isCompleted && !step.isCurrent"
                           class="w-4 h-4 text-green-600"
                         />
                       </div>
@@ -726,41 +754,6 @@ onMounted(() => {
               </div>
             </div>
           </div>
-
-          <!-- Activity Log -->
-          <!-- <div class="mt-8 pt-6 border-t border-gray-200">
-            <h3
-              class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2"
-            >
-              <Bell class="w-4 h-4" />
-              Riwayat Aktivitas
-            </h3>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-              <div
-                v-for="activity in activityLog"
-                :key="activity.id"
-                class="flex items-start gap-2 text-xs"
-              >
-                <div
-                  class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0"
-                >
-                  <component
-                    :is="activity.icon"
-                    class="w-3 h-3 text-gray-600"
-                  />
-                </div>
-                <div class="flex-1">
-                  <p class="text-gray-800 font-medium">
-                    {{ activity.action }}
-                  </p>
-                  <p class="text-gray-500">
-                    {{ activity.user }} •
-                    {{ formatDate(activity.timestamp) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div> -->
         </div>
 
         <!-- Right Column - Quick Actions -->
@@ -776,37 +769,50 @@ onMounted(() => {
               Aksi Cepat
             </h2>
             <div class="space-y-3">
-              <!-- Assign Ticket (only for open status) -->
+              <!-- Assign Ticket & Set Priority (only for open status) -->
               <button
                 v-if="ticket.status === 'open'"
                 class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 :disabled="updating"
                 @click="showAssignModal = true"
               >
-                <UserPlus class="w-5 h-5" />
-                <span>Tugaskan ke Admin</span>
+                <User class="w-5 h-5" />
+                <span>Tugaskan & Set Prioritas</span>
               </button>
 
-              <!-- Send Email (only for in-progress) -->
+              <!-- Resolve Ticket (only for in-progress) -->
               <button
                 v-if="ticket.status === 'in-progress'"
                 class="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 :disabled="updating"
-                @click="showEmailModal = true"
+                @click="showResolveModal = true"
               >
-                <Mail class="w-5 h-5" />
-                <span>Kirim Email</span>
+                <CheckCircle class="w-5 h-5" />
+                <span>Resolve Tiket</span>
               </button>
 
-              <!-- Create New Ticket (only for resolved) -->
-              <button
+              <!-- Info for Resolved Status -->
+              <div
                 v-if="ticket.status === 'resolved'"
-                class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                @click="showNewTicketModal = true"
+                class="p-4 bg-white rounded-xl border-2 border-green-200"
               >
-                <Plus class="w-5 h-5" />
-                <span>Buat Tiket Baru</span>
-              </button>
+                <div class="flex items-start gap-3">
+                  <div
+                    class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
+                    <CheckCircle class="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-800 mb-1">
+                      Tiket Selesai
+                    </p>
+                    <p class="text-xs text-gray-600">
+                      Tiket ini sudah diselesaikan. Tidak ada aksi lebih lanjut
+                      yang diperlukan.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <!-- Divider -->
               <div class="border-t border-green-200 my-4"></div>
@@ -824,7 +830,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Assign Modal -->
+    <!-- Assign & Set Priority Modal -->
     <Transition
       enter-active-class="transition ease-out duration-200"
       enter-from-class="opacity-0"
@@ -846,20 +852,68 @@ onMounted(() => {
             <div
               class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center"
             >
-              <UserPlus class="w-6 h-6 text-white" />
+              <User class="w-6 h-6 text-white" />
             </div>
-            <h3 class="text-xl font-bold text-gray-800">Tugaskan Tiket</h3>
+            <h3 class="text-xl font-bold text-gray-800">
+              Tugaskan & Set Prioritas
+            </h3>
           </div>
           <p class="text-sm text-gray-600 mb-4">
-            Masukkan email admin yang akan menangani tiket ini. Status akan
-            otomatis berubah menjadi "In Progress".
+            Masukkan nama pegawai yang akan menangani tiket ini dan tentukan
+            prioritas kasusnya. Status akan otomatis berubah menjadi "In
+            Progress".
           </p>
-          <input
-            v-model="assigneeEmail"
-            type="email"
-            placeholder="admin@example.com"
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-4 transition-all"
-          />
+
+          <!-- Assignee Input -->
+          <div class="mb-4">
+            <label
+              class="block text-sm font-medium text-gray-700 mb-2"
+              for="assignee"
+            >
+              Nama Pegawai <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="assignee"
+              v-model="assigneeForm.assignedTo"
+              type="text"
+              placeholder="Contoh: John Doe"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+          </div>
+
+          <!-- Priority Select -->
+          <div class="mb-4">
+            <label
+              class="block text-sm font-medium text-gray-700 mb-2"
+              for="priority"
+            >
+              Prioritas <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="priority"
+              v-model="assigneeForm.priority"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            >
+              <option value="low">Low - Tidak Mendesak</option>
+              <option value="medium">Medium - Normal</option>
+              <option value="high">High - Mendesak</option>
+              <option value="urgent">Urgent - Sangat Mendesak</option>
+            </select>
+          </div>
+
+          <!-- Info Box -->
+          <div
+            class="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4 text-xs text-blue-800"
+          >
+            <div class="flex items-start gap-2">
+              <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Prioritas akan membantu tim untuk mengatur urutan penanganan
+                tiket
+              </span>
+            </div>
+          </div>
+
           <div class="flex gap-3">
             <button
               class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
@@ -870,7 +924,7 @@ onMounted(() => {
             </button>
             <button
               class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 shadow-md"
-              :disabled="updating"
+              :disabled="updating || !assigneeForm.assignedTo.trim()"
               @click="handleAssignTicket"
             >
               {{ updating ? "Memproses..." : "Tugaskan" }}
@@ -880,7 +934,7 @@ onMounted(() => {
       </div>
     </Transition>
 
-    <!-- Email Modal -->
+    <!-- Resolve Ticket Modal -->
     <Transition
       enter-active-class="transition ease-out duration-200"
       enter-from-class="opacity-0"
@@ -890,9 +944,9 @@ onMounted(() => {
       leave-to-class="opacity-0"
     >
       <div
-        v-if="showEmailModal"
+        v-if="showResolveModal"
         class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        @click.self="showEmailModal = false"
+        @click.self="showResolveModal = false"
       >
         <div
           class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
@@ -902,123 +956,58 @@ onMounted(() => {
             <div
               class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center"
             >
-              <Mail class="w-6 h-6 text-white" />
+              <CheckCircle class="w-6 h-6 text-white" />
             </div>
-            <h3 class="text-xl font-bold text-gray-800">Kirim Email Balasan</h3>
+            <h3 class="text-xl font-bold text-gray-800">Resolve Tiket</h3>
           </div>
           <p class="text-sm text-gray-600 mb-4">
-            Email akan dikirim kepada customer. Anda bisa memilih untuk
-            me-resolve tiket setelah mengirim email.
+            Masalah customer telah diselesaikan. Jelaskan solusi yang diberikan
+            agar customer dapat memahami penyelesaian masalahnya.
           </p>
 
-          <label
-            class="flex items-center gap-3 mb-4 p-3 bg-green-50 rounded-xl cursor-pointer hover:bg-green-100 transition-colors"
-          >
-            <input
-              v-model="shouldResolveAfterEmail"
-              type="checkbox"
-              class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-            />
-            <span class="text-sm font-medium text-gray-700"
-              >Resolve tiket setelah mengirim email</span
+          <!-- Resolution Input -->
+          <div class="mb-4">
+            <label
+              class="block text-sm font-medium text-gray-700 mb-2"
+              for="resolution"
             >
-          </label>
+              Solusi/Resolusi <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              id="resolution"
+              v-model="resolveForm.resolution"
+              rows="5"
+              placeholder="Jelaskan solusi yang telah diberikan untuk menyelesaikan masalah customer..."
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+            ></textarea>
+          </div>
 
-          <Transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="transform scale-95 opacity-0"
-            enter-to-class="transform scale-100 opacity-100"
+          <!-- Info Box -->
+          <div
+            class="p-3 bg-green-50 border border-green-200 rounded-lg mb-4 text-xs text-green-800"
           >
-            <div
-              v-if="shouldResolveAfterEmail"
-              class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-lg mb-4"
-            >
-              <p class="text-xs text-blue-800 flex items-start gap-2">
-                <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span
-                  >Tiket akan di-resolve. Jika customer masih memiliki masalah,
-                  mereka perlu membuat tiket baru.</span
-                >
-              </p>
+            <div class="flex items-start gap-2">
+              <MessageSquare class="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>
+                Customer akan dapat melihat solusi ini di halaman tiket mereka
+              </span>
             </div>
-          </Transition>
+          </div>
 
           <div class="flex gap-3">
             <button
               class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
               :disabled="updating"
-              @click="showEmailModal = false"
+              @click="showResolveModal = false"
             >
               Batal
             </button>
             <button
               class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all font-medium disabled:opacity-50 shadow-md"
-              :disabled="updating"
-              @click="handleSendEmail"
+              :disabled="updating || !resolveForm.resolution.trim()"
+              @click="handleResolveTicket"
             >
-              {{ updating ? "Mengirim..." : "Kirim Email" }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- New Ticket Modal -->
-    <Transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="showNewTicketModal"
-        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        @click.self="showNewTicketModal = false"
-      >
-        <div
-          class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
-          @click.stop
-        >
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center"
-            >
-              <Plus class="w-6 h-6 text-white" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">Buat Tiket Baru</h3>
-          </div>
-          <p class="text-sm text-gray-600 mb-6">
-            Tiket ini sudah di-resolve. Jika Anda masih memiliki masalah atau
-            pertanyaan baru, silakan buat tiket baru untuk penanganan yang lebih
-            baik.
-          </p>
-
-          <div
-            class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-400 rounded-lg mb-6"
-          >
-            <p class="text-xs text-purple-800 flex items-start gap-2">
-              <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span
-                >Tiket yang sudah resolved tidak dapat dibuka kembali untuk
-                menjaga kejelasan dokumentasi.</span
-              >
-            </p>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-              @click="showNewTicketModal = false"
-            >
-              Batal
-            </button>
-            <button
-              class="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md"
-              @click="handleCreateNewTicket"
-            >
-              Buat Tiket Baru
+              {{ updating ? "Memproses..." : "Resolve Tiket" }}
             </button>
           </div>
         </div>

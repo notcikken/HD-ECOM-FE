@@ -5,11 +5,12 @@
       "title": "Tidak bisa login ke akun",
       "description": "Saya lupa password dan tidak bisa reset",
       "status": "open",
-      "priority": "high",
+      "priority": null,
       "role": "pelanggan",
       "createdAt": "2025-01-15T10:30:00",
       "updatedAt": "2025-01-15T10:30:00",
-      "category": "Akun & Keamanan"
+      "category": "Akun & Keamanan",
+      "supportingDocuments": ["screenshot-login-error.png"]
     },
     {
       "id": "TKT-002",
@@ -20,18 +21,21 @@
       "role": "pelanggan",
       "createdAt": "2025-01-15T09:15:00",
       "updatedAt": "2025-01-15T11:20:00",
-      "category": "Pengiriman"
+      "category": "Pengiriman",
+      "assignedTo": "Budi Santoso",
+      "supportingDocuments": ["resi-pengiriman.pdf"]
     },
     {
       "id": "TKT-004",
       "title": "Refund belum masuk",
       "description": "Dana refund belum masuk ke rekening",
       "status": "open",
-      "priority": "urgent",
+      "priority": null,
       "role": "pelanggan",
       "createdAt": "2025-01-15T11:00:00",
       "updatedAt": "2025-01-15T11:00:00",
-      "category": "Pembayaran"
+      "category": "Pembayaran",
+      "supportingDocuments": ["bukti-transfer.jpg", "screenshot-saldo.jpg"]
     },
     {
       "id": "TKT-006",
@@ -42,7 +46,11 @@
       "role": "pelanggan",
       "createdAt": "2025-01-14T16:30:00",
       "updatedAt": "2025-01-15T09:00:00",
-      "category": "Pembayaran"
+      "resolvedAt": "2025-01-15T09:00:00",
+      "category": "Pembayaran",
+      "assignedTo": "Siti Aminah",
+      "resolution": "Voucher sudah diaktifkan kembali. Silakan coba gunakan kembali kode voucher DISKON50. Jika masih ada masalah, hubungi kami kembali.",
+      "supportingDocuments": ["error-voucher.png"]
     },
     {
       "id": "TKT-008",
@@ -53,14 +61,19 @@
       "role": "pelanggan",
       "createdAt": "2025-01-14T13:20:00",
       "updatedAt": "2025-01-15T08:45:00",
-      "category": "Pengembalian"
+      "category": "Pengembalian",
+      "assignedTo": "Ahmad Fauzi",
+      "supportingDocuments": [
+        "foto-produk-diterima.jpg",
+        "foto-deskripsi-toko.jpg"
+      ]
     },
     {
       "id": "TKT-010",
       "title": "Cara membatalkan pesanan",
       "description": "Ingin membatalkan pesanan tapi tidak tahu caranya",
       "status": "open",
-      "priority": "low",
+      "priority": null,
       "role": "pelanggan",
       "createdAt": "2025-01-15T07:15:00",
       "updatedAt": "2025-01-15T07:15:00",
@@ -71,11 +84,12 @@
       "title": "Barang rusak saat diterima",
       "description": "Produk pecah/rusak saat sampai",
       "status": "open",
-      "priority": "urgent",
+      "priority": null,
       "role": "pelanggan",
       "createdAt": "2025-01-15T12:00:00",
       "updatedAt": "2025-01-15T12:00:00",
-      "category": "Pengembalian"
+      "category": "Pengembalian",
+      "supportingDocuments": ["barang-rusak-1.jpg", "barang-rusak-2.jpg"]
     }
   ],
   "penjual": [
@@ -88,7 +102,11 @@
       "role": "penjual",
       "createdAt": "2025-01-14T14:45:00",
       "updatedAt": "2025-01-15T08:30:00",
-      "category": "Teknis Aplikasi"
+      "resolvedAt": "2025-01-15T08:30:00",
+      "category": "Teknis Aplikasi",
+      "assignedTo": "Dewi Lestari",
+      "resolution": "Masalah telah diperbaiki. Ukuran maksimal foto diperbesar menjadi 5MB. Silakan coba upload ulang foto produk Anda.",
+      "supportingDocuments": ["error-log.txt"]
     },
     {
       "id": "TKT-005",
@@ -99,18 +117,21 @@
       "role": "penjual",
       "createdAt": "2025-01-15T08:20:00",
       "updatedAt": "2025-01-15T10:45:00",
-      "category": "Teknis Aplikasi"
+      "category": "Teknis Aplikasi",
+      "assignedTo": "Eko Prasetyo",
+      "supportingDocuments": ["screenshot-error.png"]
     },
     {
       "id": "TKT-007",
       "title": "Pencairan dana tertunda",
       "description": "Dana penjualan belum cair ke rekening",
       "status": "open",
-      "priority": "urgent",
+      "priority": null,
       "role": "penjual",
       "createdAt": "2025-01-15T09:45:00",
       "updatedAt": "2025-01-15T09:45:00",
-      "category": "Pembayaran"
+      "category": "Pembayaran",
+      "supportingDocuments": ["mutasi-rekening.pdf"]
     },
     {
       "id": "TKT-009",
@@ -121,7 +142,10 @@
       "role": "penjual",
       "createdAt": "2025-01-14T11:30:00",
       "updatedAt": "2025-01-14T15:20:00",
-      "category": "Produk"
+      "resolvedAt": "2025-01-14T15:20:00",
+      "category": "Produk",
+      "assignedTo": "Fitri Handayani",
+      "resolution": "Anda bisa edit harga massal melalui menu 'Kelola Produk' > 'Edit Massal' > pilih produk yang ingin diubah > klik 'Ubah Harga'. Panduan lengkap sudah dikirim via email."
     },
     {
       "id": "TKT-011",
@@ -132,25 +156,27 @@
       "role": "penjual",
       "createdAt": "2025-01-15T06:00:00",
       "updatedAt": "2025-01-15T10:30:00",
-      "category": "Akun & Keamanan"
+      "category": "Akun & Keamanan",
+      "assignedTo": "Hendra Wijaya"
     },
     {
       "id": "TKT-013",
       "title": "Notifikasi pesanan tidak masuk",
       "description": "Tidak menerima notifikasi pesanan baru",
       "status": "open",
-      "priority": "medium",
+      "priority": null,
       "role": "penjual",
       "createdAt": "2025-01-15T13:15:00",
       "updatedAt": "2025-01-15T13:15:00",
-      "category": "Teknis Aplikasi"
+      "category": "Teknis Aplikasi",
+      "supportingDocuments": ["screenshot-settings.png"]
     },
     {
       "id": "TKT-014",
       "title": "Cara setting promo flash sale",
       "description": "Butuh bantuan setup flash sale",
       "status": "open",
-      "priority": "low",
+      "priority": null,
       "role": "penjual",
       "createdAt": "2025-01-15T14:30:00",
       "updatedAt": "2025-01-15T14:30:00",

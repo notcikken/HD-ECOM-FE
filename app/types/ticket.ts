@@ -7,12 +7,13 @@ export interface Ticket {
   title: string;
   description: string;
   status: TicketStatus;
-  priority: TicketPriority;
+  priority: TicketPriority | null; // null untuk status open
   role: TicketRole;
   createdAt: string;
   updatedAt: string;
-  assignedTo?: string;
+  assignedTo?: string; // Nama pegawai, bukan email
   category: string;
   resolvedAt?: string;
-  lastResponseAt?: string;
+  resolution?: string; // Solusi yang diberikan saat resolve
+  supportingDocuments?: string[]; // Array nama file
 }
