@@ -1,3 +1,152 @@
+<script setup lang="ts">
+import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
+import type { Ticket as TicketType } from "~/types/ticket.ts";
+import TicketTable from "~/components/dashboard/TicketTable.vue";
+
+definePageMeta({
+  layout: "dashboard",
+});
+
+const statistics = [
+  {
+    label: "Total Tiket",
+    value: "156",
+    change: "+12%",
+    icon: Ticket,
+    bgColor: "bg-green-50",
+    iconColor: "text-green-600",
+    badgeClass: "bg-green-100 text-green-700",
+  },
+  {
+    label: "Tiket Aktif",
+    value: "89",
+    change: "+8%",
+    icon: TrendingUp,
+    bgColor: "bg-blue-50",
+    iconColor: "text-blue-600",
+    badgeClass: "bg-blue-100 text-blue-700",
+  },
+  {
+    label: "Pending",
+    value: "34",
+    change: "-5%",
+    icon: Clock,
+    bgColor: "bg-yellow-50",
+    iconColor: "text-yellow-600",
+    badgeClass: "bg-yellow-100 text-yellow-700",
+  },
+  {
+    label: "Resolved",
+    value: "67",
+    change: "+15%",
+    icon: CheckCircle,
+    bgColor: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    badgeClass: "bg-emerald-100 text-emerald-700",
+  },
+];
+
+const statusDistribution = [
+  { label: "Open", value: 45, percentage: 29, color: "bg-blue-500" },
+  { label: "In Progress", value: 44, percentage: 28, color: "bg-yellow-500" },
+  { label: "Resolved", value: 67, percentage: 43, color: "bg-green-500" },
+];
+
+const priorityDistribution = [
+  {
+    label: "Urgent",
+    value: 12,
+    percentage: 8,
+    color: "bg-red-500",
+    dotColor: "bg-red-500",
+  },
+  {
+    label: "High",
+    value: 34,
+    percentage: 22,
+    color: "bg-orange-500",
+    dotColor: "bg-orange-500",
+  },
+  {
+    label: "Medium",
+    value: 67,
+    percentage: 43,
+    color: "bg-yellow-500",
+    dotColor: "bg-yellow-500",
+  },
+  {
+    label: "Low",
+    value: 43,
+    percentage: 27,
+    color: "bg-green-500",
+    dotColor: "bg-green-500",
+  },
+];
+
+const recentTickets: TicketType[] = [
+  {
+    id: "TKT-001",
+    title: "Tidak bisa logi ke akun",
+    description: "User mengalami kesulitan login",
+    status: "open",
+    priority: "high",
+    role: "pelanggan",
+    createdAt: "2025-01-15T10:30:00",
+    updatedAt: "2025-01-15T10:30:00",
+    category: "Akun & Keamanan",
+  },
+  {
+    id: "TKT-002",
+    title: "Pesanan belum diterima",
+    description: "Pelanggan belum menerima pesanan",
+    status: "in-progress",
+    priority: "medium",
+    role: "pelanggan",
+    createdAt: "2025-01-15T09:15:00",
+    updatedAt: "2025-01-15T11:20:00",
+    category: "Pengiriman",
+  },
+  {
+    id: "TKT-003",
+    title: "Tidak bisa upload produk",
+    description: "Error saat upload foto produk",
+    status: "resolved",
+    priority: "low",
+    role: "penjual",
+    createdAt: "2025-01-14T14:45:00",
+    updatedAt: "2025-01-15T08:30:00",
+    category: "Teknis Aplikasi",
+  },
+  {
+    id: "TKT-004",
+    title: "Refund belum masuk",
+    description: "Dana refund belum masuk ke rekening",
+    status: "open",
+    priority: "urgent",
+    role: "pelanggan",
+    createdAt: "2025-01-15T11:00:00",
+    updatedAt: "2025-01-15T11:00:00",
+    category: "Pembayaran",
+  },
+  {
+    id: "TKT-005",
+    title: "Dashboard penjual tidak loading",
+    description: "Halaman dashboard error",
+    status: "in-progress",
+    priority: "high",
+    role: "penjual",
+    createdAt: "2025-01-15T08:20:00",
+    updatedAt: "2025-01-15T10:45:00",
+    category: "Teknis Aplikasi",
+  },
+];
+
+const viewTicket = (id: string) => {
+  console.log("View ticket:", id);
+  // TODO: Navigate to ticket detail page
+};
+</script>
+
 <template>
   <div>
     <div class="mb-8">
@@ -106,298 +255,12 @@
           </button>
         </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                ID
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Judul
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Role
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Status
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Prioritas
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
-              >
-                Tanggal
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr
-              v-for="ticket in recentTickets"
-              :key="ticket.id"
-              class="hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-6 py-4 text-sm font-medium text-gray-800">
-                {{ ticket.id }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-700">
-                {{ ticket.title }}
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getRoleBadgeClass(ticket.role)"
-                >
-                  {{ ticket.role }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getStatusBadgeClass(ticket.status)"
-                >
-                  {{ getStatusLabel(ticket.status) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm">
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium"
-                  :class="getPriorityBadgeClass(ticket.priority)"
-                >
-                  {{ getPriorityLabel(ticket.priority) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">
-                {{ formatDate(ticket.createdAt) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <TicketTable
+        :tickets="recentTickets"
+        :show-role="true"
+        @view-ticket="viewTicket"
+      />
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-  layout: "dashboard",
-  middleware: "auth",
-});
-
-import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
-
-type TicketType = {
-  id: string;
-  title: string;
-  description?: string;
-  status: "open" | "in-progress" | "resolved" | "closed";
-  priority: "low" | "medium" | "high" | "urgent";
-  role: string;
-  createdAt: string;
-  updatedAt?: string;
-  category?: string;
-};
-
-const statistics = [
-  {
-    label: "Total Tiket",
-    value: "156",
-    change: "+12%",
-    icon: Ticket,
-    bgColor: "bg-green-50",
-    iconColor: "text-green-600",
-    badgeClass: "bg-green-100 text-green-700",
-  },
-  {
-    label: "Tiket Aktif",
-    value: "89",
-    change: "+8%",
-    icon: TrendingUp,
-    bgColor: "bg-blue-50",
-    iconColor: "text-blue-600",
-    badgeClass: "bg-blue-100 text-blue-700",
-  },
-  {
-    label: "Pending",
-    value: "34",
-    change: "-5%",
-    icon: Clock,
-    bgColor: "bg-yellow-50",
-    iconColor: "text-yellow-600",
-    badgeClass: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    label: "Resolved",
-    value: "67",
-    change: "+15%",
-    icon: CheckCircle,
-    bgColor: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    badgeClass: "bg-emerald-100 text-emerald-700",
-  },
-];
-
-const statusDistribution = [
-  { label: "Open", value: 45, percentage: 29, color: "bg-blue-500" },
-  { label: "In Progress", value: 44, percentage: 28, color: "bg-yellow-500" },
-  { label: "Resolved", value: 67, percentage: 43, color: "bg-green-500" },
-];
-
-const priorityDistribution = [
-  {
-    label: "Urgent",
-    value: 12,
-    percentage: 8,
-    color: "bg-red-500",
-    dotColor: "bg-red-500",
-  },
-  {
-    label: "High",
-    value: 34,
-    percentage: 22,
-    color: "bg-orange-500",
-    dotColor: "bg-orange-500",
-  },
-  {
-    label: "Medium",
-    value: 67,
-    percentage: 43,
-    color: "bg-yellow-500",
-    dotColor: "bg-yellow-500",
-  },
-  {
-    label: "Low",
-    value: 43,
-    percentage: 27,
-    color: "bg-green-500",
-    dotColor: "bg-green-500",
-  },
-];
-
-const recentTickets: TicketType[] = [
-  {
-    id: "TKT-001",
-    title: "Tidak bisa login ke akun",
-    description: "User mengalami kesulitan login",
-    status: "open",
-    priority: "high",
-    role: "pelanggan",
-    createdAt: "2025-01-15T10:30:00",
-    updatedAt: "2025-01-15T10:30:00",
-    category: "Akun & Keamanan",
-  },
-  {
-    id: "TKT-002",
-    title: "Pesanan belum diterima",
-    description: "Pelanggan belum menerima pesanan",
-    status: "in-progress",
-    priority: "medium",
-    role: "pelanggan",
-    createdAt: "2025-01-15T09:15:00",
-    updatedAt: "2025-01-15T11:20:00",
-    category: "Pengiriman",
-  },
-  {
-    id: "TKT-003",
-    title: "Tidak bisa upload produk",
-    description: "Error saat upload foto produk",
-    status: "resolved",
-    priority: "low",
-    role: "penjual",
-    createdAt: "2025-01-14T14:45:00",
-    updatedAt: "2025-01-15T08:30:00",
-    category: "Teknis Aplikasi",
-  },
-  {
-    id: "TKT-004",
-    title: "Refund belum masuk",
-    description: "Dana refund belum masuk ke rekening",
-    status: "open",
-    priority: "urgent",
-    role: "pelanggan",
-    createdAt: "2025-01-15T11:00:00",
-    updatedAt: "2025-01-15T11:00:00",
-    category: "Pembayaran",
-  },
-  {
-    id: "TKT-005",
-    title: "Dashboard penjual tidak loading",
-    description: "Halaman dashboard error",
-    status: "in-progress",
-    priority: "high",
-    role: "penjual",
-    createdAt: "2025-01-15T08:20:00",
-    updatedAt: "2025-01-15T10:45:00",
-    category: "Teknis Aplikasi",
-  },
-];
-
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    open: "bg-blue-100 text-blue-700",
-    "in-progress": "bg-yellow-100 text-yellow-700",
-    resolved: "bg-green-100 text-green-700",
-    closed: "bg-gray-100 text-gray-700",
-  };
-  return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
-};
-
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = {
-    low: "bg-green-100 text-green-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-orange-100 text-orange-700",
-    urgent: "bg-red-100 text-red-700",
-  };
-  return (
-    classes[priority as keyof typeof classes] || "bg-gray-100 text-gray-700"
-  );
-};
-
-const getRoleBadgeClass = (role: string) => {
-  return role === "pelanggan"
-    ? "bg-purple-100 text-purple-700"
-    : "bg-indigo-100 text-indigo-700";
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: "Open",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-    closed: "Closed",
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    urgent: "Urgent",
-  };
-  return labels[priority as keyof typeof labels] || priority;
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-</script>

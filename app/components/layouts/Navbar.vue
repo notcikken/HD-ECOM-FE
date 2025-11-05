@@ -1,7 +1,12 @@
 <script setup>
+<<<<<<< HEAD
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Mail, Store, User, LogOut } from "lucide-vue-next";
 import { useRouter } from "vue-router";
+=======
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Mail, Store, User } from 'lucide-vue-next';
+>>>>>>> f49198f3c1bbace221f902c9d3e7979860cc02b9
 
 // Track scroll state for enhanced navbar styling
 const isScrolled = ref(false);
@@ -13,11 +18,11 @@ const handleScroll = () => {
 onMounted(() => {
   // Initialize scroll state and attach listener
   handleScroll();
-  window.addEventListener("scroll", handleScroll, { passive: true });
+  window.addEventListener('scroll', handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
-  window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener('scroll', handleScroll);
 });
 
 const { getUser, getToken } = useAuth();
@@ -68,13 +73,15 @@ const logout = () => {
 
         <!-- Actions section -->
         <div class="flex items-center space-x-4">
-          <button
-            class="inline-flex items-center space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
-            aria-label="Kirim pesan bantuan"
-          >
-            <Mail class="w-4 h-4" />
-            <span>Pesan Bantuan</span>
-          </button>
+          <RouterLink to="/contact-support"
+            ><button
+              class="inline-flex items-center space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
+              aria-label="Kirim pesan bantuan"
+            >
+              <Mail class="w-4 h-4" />
+              <span>Pesan Bantuan</span>
+            </button>
+          </RouterLink>
 
           <!-- User Menu -->
           <div v-if="user" class="flex items-center space-x-2">

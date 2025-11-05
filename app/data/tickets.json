@@ -1,0 +1,160 @@
+{
+  "pelanggan": [
+    {
+      "id": "TKT-001",
+      "title": "Tidak bisa login ke akun",
+      "description": "Saya lupa password dan tidak bisa reset",
+      "status": "open",
+      "priority": "high",
+      "role": "pelanggan",
+      "createdAt": "2025-01-15T10:30:00",
+      "updatedAt": "2025-01-15T10:30:00",
+      "category": "Akun & Keamanan"
+    },
+    {
+      "id": "TKT-002",
+      "title": "Pesanan belum diterima",
+      "description": "Sudah 5 hari pesanan belum sampai",
+      "status": "in-progress",
+      "priority": "medium",
+      "role": "pelanggan",
+      "createdAt": "2025-01-15T09:15:00",
+      "updatedAt": "2025-01-15T11:20:00",
+      "category": "Pengiriman"
+    },
+    {
+      "id": "TKT-004",
+      "title": "Refund belum masuk",
+      "description": "Dana refund belum masuk ke rekening",
+      "status": "open",
+      "priority": "urgent",
+      "role": "pelanggan",
+      "createdAt": "2025-01-15T11:00:00",
+      "updatedAt": "2025-01-15T11:00:00",
+      "category": "Pembayaran"
+    },
+    {
+      "id": "TKT-006",
+      "title": "Voucher tidak bisa digunakan",
+      "description": "Kode voucher error saat checkout",
+      "status": "resolved",
+      "priority": "low",
+      "role": "pelanggan",
+      "createdAt": "2025-01-14T16:30:00",
+      "updatedAt": "2025-01-15T09:00:00",
+      "category": "Pembayaran"
+    },
+    {
+      "id": "TKT-008",
+      "title": "Produk tidak sesuai deskripsi",
+      "description": "Barang yang diterima berbeda dengan foto",
+      "status": "in-progress",
+      "priority": "high",
+      "role": "pelanggan",
+      "createdAt": "2025-01-14T13:20:00",
+      "updatedAt": "2025-01-15T08:45:00",
+      "category": "Pengembalian"
+    },
+    {
+      "id": "TKT-010",
+      "title": "Cara membatalkan pesanan",
+      "description": "Ingin membatalkan pesanan tapi tidak tahu caranya",
+      "status": "open",
+      "priority": "low",
+      "role": "pelanggan",
+      "createdAt": "2025-01-15T07:15:00",
+      "updatedAt": "2025-01-15T07:15:00",
+      "category": "Pengiriman"
+    },
+    {
+      "id": "TKT-012",
+      "title": "Barang rusak saat diterima",
+      "description": "Produk pecah/rusak saat sampai",
+      "status": "open",
+      "priority": "urgent",
+      "role": "pelanggan",
+      "createdAt": "2025-01-15T12:00:00",
+      "updatedAt": "2025-01-15T12:00:00",
+      "category": "Pengembalian"
+    }
+  ],
+  "penjual": [
+    {
+      "id": "TKT-003",
+      "title": "Tidak bisa upload produk",
+      "description": "Error saat upload foto produk",
+      "status": "resolved",
+      "priority": "low",
+      "role": "penjual",
+      "createdAt": "2025-01-14T14:45:00",
+      "updatedAt": "2025-01-15T08:30:00",
+      "category": "Teknis Aplikasi"
+    },
+    {
+      "id": "TKT-005",
+      "title": "Dashboard penjual tidak loading",
+      "description": "Halaman dashboard error",
+      "status": "in-progress",
+      "priority": "high",
+      "role": "penjual",
+      "createdAt": "2025-01-15T08:20:00",
+      "updatedAt": "2025-01-15T10:45:00",
+      "category": "Teknis Aplikasi"
+    },
+    {
+      "id": "TKT-007",
+      "title": "Pencairan dana tertunda",
+      "description": "Dana penjualan belum cair ke rekening",
+      "status": "open",
+      "priority": "urgent",
+      "role": "penjual",
+      "createdAt": "2025-01-15T09:45:00",
+      "updatedAt": "2025-01-15T09:45:00",
+      "category": "Pembayaran"
+    },
+    {
+      "id": "TKT-009",
+      "title": "Cara mengubah harga produk",
+      "description": "Tidak tahu cara edit harga produk massal",
+      "status": "resolved",
+      "priority": "low",
+      "role": "penjual",
+      "createdAt": "2025-01-14T11:30:00",
+      "updatedAt": "2025-01-14T15:20:00",
+      "category": "Produk"
+    },
+    {
+      "id": "TKT-011",
+      "title": "Akun penjual di suspend",
+      "description": "Akun tiba-tiba tidak bisa diakses",
+      "status": "in-progress",
+      "priority": "urgent",
+      "role": "penjual",
+      "createdAt": "2025-01-15T06:00:00",
+      "updatedAt": "2025-01-15T10:30:00",
+      "category": "Akun & Keamanan"
+    },
+    {
+      "id": "TKT-013",
+      "title": "Notifikasi pesanan tidak masuk",
+      "description": "Tidak menerima notifikasi pesanan baru",
+      "status": "open",
+      "priority": "medium",
+      "role": "penjual",
+      "createdAt": "2025-01-15T13:15:00",
+      "updatedAt": "2025-01-15T13:15:00",
+      "category": "Teknis Aplikasi"
+    },
+    {
+      "id": "TKT-014",
+      "title": "Cara setting promo flash sale",
+      "description": "Butuh bantuan setup flash sale",
+      "status": "open",
+      "priority": "low",
+      "role": "penjual",
+      "createdAt": "2025-01-15T14:30:00",
+      "updatedAt": "2025-01-15T14:30:00",
+      "category": "Produk"
+    }
+  ]
+}
