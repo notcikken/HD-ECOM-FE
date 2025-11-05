@@ -393,9 +393,15 @@ onMounted(() => {
                 {{ getPriorityLabel(ticket.priority) }}
               </span>
             </div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-3 leading-tight">
+            <h1 class="text-3xl font-bold text-gray-800 leading-tight">
               {{ ticket.title }}
             </h1>
+            <p class="text-sm text-gray-500 mb-3 mt-2 ml-1 italic">
+              Created by :
+              <span class="text-indigo-400 font-medium">
+                {{ ticket.createdBy || "Unknown User" }}
+              </span>
+            </p>
             <p class="text-gray-600 leading-relaxed">
               {{ ticket.description }}
             </p>

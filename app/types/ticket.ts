@@ -9,6 +9,7 @@ export interface Ticket {
   status: TicketStatus;
   priority: TicketPriority | null; // null untuk status open
   role: TicketRole;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
   assignedTo?: string; // Nama pegawai, bukan email
