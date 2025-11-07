@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useTicketApi } from '~/composables/useTicketApi';
+import SidebarTickets from '~/components/SidebarTickets.vue';
 import type { Ticket } from '~/types/ticket';
 import {
   Upload,
@@ -124,6 +125,14 @@ const submitForm = async () => {
     loading.value = false;
   }
 };
+
+// add userTickets state
+const userTickets = ref<Ticket[]>([]); // array of Ticket, bisa diisi dari API onMounted
+
+function handleDeleteTicket(ticket: Ticket): void {
+  // hapus via API lalu update userTickets
+  userTickets.value = userTickets.value.filter((t) => t.id !== ticket.id);
+}
 </script>
 
 <template>
@@ -153,7 +162,7 @@ const submitForm = async () => {
               <img
                 src="/images/support.png"
                 alt="Customer Support"
-                class="w-full rounded-2xl"
+                class="w-full rounded-2xl -mt-12"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
               />
               <!-- Fallback Icon if image fails -->
@@ -225,6 +234,9 @@ const submitForm = async () => {
                 </div>
               </div>
             </div>
+            <SidebarTickets
+              class="mt-6"
+            />
           </div>
         </div>
 
