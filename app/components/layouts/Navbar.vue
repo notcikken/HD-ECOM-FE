@@ -1,14 +1,8 @@
 <script setup>
-<<<<<<< HEAD
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { Mail, Store, User, LogOut } from "lucide-vue-next";
-import { useRouter } from "vue-router";
-=======
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Mail, Store, User } from 'lucide-vue-next';
->>>>>>> f49198f3c1bbace221f902c9d3e7979860cc02b9
+import { useAuth } from "~/composables/useAuth";
 
-// Track scroll state for enhanced navbar styling
 const isScrolled = ref(false);
 
 const handleScroll = () => {
@@ -16,32 +10,22 @@ const handleScroll = () => {
 };
 
 onMounted(() => {
-  // Initialize scroll state and attach listener
   handleScroll();
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener("scroll", handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener("scroll", handleScroll);
 });
 
-const { getUser, getToken } = useAuth();
-const router = useRouter();
+const { user, logout: authLogout } = useAuth();
 
-const user = computed(() => getUser());
 const isAdmin = computed(
   () => user.value?.role === 0 || user.value?.role === "0"
 );
 
 const logout = () => {
-  // Clear auth cookies
-  const token = useCookie("auth-token");
-  const userData = useCookie("user-data");
-
-  token.value = null;
-  userData.value = null;
-
-  router.push("/login");
+  authLogout();
 };
 </script>
 

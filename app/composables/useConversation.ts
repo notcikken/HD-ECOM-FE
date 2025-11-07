@@ -1,16 +1,26 @@
-export const useConversation = () => {
-  const config = useRuntimeConfig();
-  const apiBase = config.public.apiBase;
+import {
+  getConversation as svcGetConversation,
+  updateConversationStatus as svcUpdateConversationStatus,
+} from "~/services/conversationService";
 
-  const getConversation = async (conversationId: string) => {
+/**
+ * Composable wrapper around conversationService.
+ * Calls to Nuxt composables are done inside the function (setup-time), not at module scope.
+ */
+export const useConversation = () => {
+  // token from cookie (safe to call inside composable factory)
+  const token = useCookie<string | null>("auth-token");
+
+  const fetchConversation = async (conversationId: string) => {
+    if (!conversationId) throw new Error("conversationId is required");
     try {
-      const response = await $fetch(
-        `${apiBase}/api/conversations/${conversationId}`
+      const resp = await svcGetConversation(
+        token.value ?? null,
+        conversationId
       );
-      return response;
-    } catch (error) {
-      console.error("Error fetching conversation:", error);
-      throw error;
+      return resp;
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -18,23 +28,21 @@ export const useConversation = () => {
     conversationId: string,
     status: string
   ) => {
+    if (!conversationId) throw new Error("conversationId is required");
     try {
-      const response = await $fetch(
-        `${apiBase}/api/conversations/${conversationId}`,
-        {
-          method: "PATCH",
-          body: { status },
-        }
+      const resp = await svcUpdateConversationStatus(
+        token.value ?? null,
+        conversationId,
+        status
       );
-      return response;
-    } catch (error) {
-      console.error("Error updating conversation:", error);
-      throw error;
+      return resp;
+    } catch (err) {
+      throw err;
     }
   };
 
   return {
-    getConversation,
+    fetchConversation,
     updateConversationStatus,
   };
 };

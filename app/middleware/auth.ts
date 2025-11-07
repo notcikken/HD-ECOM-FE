@@ -1,20 +1,23 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const { getUser, getToken } = useAuth();
+  const { user, token } = useAuth();
 
-  const token = getToken();
-  const user = getUser();
+  const tokenValue = token?.value ?? null;
+  const userValue = user?.value ?? null;
 
   // If no token, redirect to login
-  if (!token) {
+  if (!tokenValue) {
     return navigateTo("/login");
   }
 
-  // Check if user has superadmin role (role: 0)
-  if (user?.role === 0 || user?.role === "0") {
-    // If trying to access login page, redirect to dashboard
+  const isSuperAdmin = userValue?.role === 0 || userValue?.role === "0";
+
+  if (isSuperAdmin) {
+    // If trying to access login/signup, redirect to dashboard
     if (to.path === "/login" || to.path === "/signup") {
       return navigateTo("/dashboard");
     }
+    // allow access
+    return;
   } else {
     // For non-admin users, prevent access to dashboard
     if (to.path.startsWith("/dashboard")) {

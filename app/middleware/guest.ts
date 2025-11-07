@@ -1,16 +1,21 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const { getToken, getUser } = useAuth();
+  const { user, token } = useAuth();
 
-  const token = getToken();
-  const user = getUser();
+  const tokenValue = token?.value ?? null;
+  const userValue = user?.value ?? null;
 
   // If user is already logged in and is superadmin, redirect to dashboard
-  if (token && (user?.role === 0 || user?.role === "0")) {
+  if (tokenValue && (userValue?.role === 0 || userValue?.role === "0")) {
     return navigateTo("/dashboard");
   }
 
   // If user is logged in but not admin, redirect to home
-  if (token && user?.role !== 0 && user?.role !== "0") {
+  if (
+    tokenValue &&
+    userValue &&
+    userValue?.role !== 0 &&
+    userValue?.role !== "0"
+  ) {
     return navigateTo("/");
   }
 });

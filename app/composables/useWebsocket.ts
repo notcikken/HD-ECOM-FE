@@ -1,19 +1,6 @@
 import { ref, onUnmounted } from "vue";
 
-interface WebSocketMessage {
-  type: string;
-  payload?: {
-    text?: string;
-    conversation_id?: string | number;
-    is_typing?: boolean;
-    [key: string]: any;
-  };
-  message?: string;
-  userId?: string;
-  timestamp?: string;
-  isTyping?: boolean;
-  [key: string]: any;
-}
+import type { WebSocketMessage } from "~/types/websocket";
 
 interface DebugLog {
   timestamp: string;
@@ -22,7 +9,7 @@ interface DebugLog {
   data?: any;
 }
 
-export const useChatWebSocket = (url: string) => {
+export const useWebsocket = (url: string) => {
   const ws = ref<WebSocket | null>(null);
   const isConnected = ref(false);
   const connectionError = ref<string | null>(null);
@@ -69,24 +56,26 @@ export const useChatWebSocket = (url: string) => {
       addDebugLog("info", "Starting WebSocket connection...");
 
       // Get auth token if available
-      const { getToken } = useAuth();
-      const token = getToken();
+      const { token } = useAuth();
+      const tokenValue = token?.value ?? null;
 
-      if (token) {
+      if (tokenValue) {
         addDebugLog("success", "JWT Token found", {
-          tokenPreview: `${token.substring(0, 20)}...`,
-          tokenLength: token.length,
+          tokenPreview: `${tokenValue.substring(0, 20)}...`,
+          tokenLength: tokenValue.length,
         });
       } else {
         addDebugLog("warning", "No JWT token found - connecting as guest");
       }
 
       // Add token as query parameter
-      const wsUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+      const wsUrl = tokenValue
+        ? `${url}?token=${encodeURIComponent(tokenValue)}`
+        : url;
 
       addDebugLog("info", "WebSocket URL prepared", {
         url: wsUrl.replace(/token=[^&]+/, "token=***HIDDEN***"),
-        hasToken: !!token,
+        hasToken: !!tokenValue,
       });
 
       ws.value = new WebSocket(wsUrl);
@@ -112,9 +101,7 @@ export const useChatWebSocket = (url: string) => {
         try {
           const data = JSON.parse(event.data) as WebSocketMessage;
           addDebugLog("info", "Message received from server", {
-            type: data.type,
-            payload: data.payload,
-            fullData: data,
+            data,
           });
 
           // Handle authentication response from server
@@ -252,9 +239,7 @@ export const useChatWebSocket = (url: string) => {
     if (ws.value && isConnected.value) {
       const jsonData = JSON.stringify(data);
       addDebugLog("info", "Sending message to server", {
-        type: data.type,
-        payload: data.payload,
-        fullData: data,
+        data,
       });
       ws.value.send(jsonData);
     } else {

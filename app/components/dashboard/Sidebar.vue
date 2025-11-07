@@ -5,6 +5,7 @@ import {
   Store,
   User,
   Headphones,
+  MessageCircle,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 
@@ -28,6 +29,12 @@ const menuItems = [
     label: "Penjual",
     icon: Store,
     badge: "8",
+  },
+  {
+    path: "/dashboard/chat",
+    label: "Customer Chat",
+    icon: MessageCircle,
+    badge: "3",
   },
 ];
 
@@ -95,51 +102,3 @@ const isActive = (path: string) => {
     </div>
   </aside>
 </template>
-
-<script setup lang="ts">
-import {
-  LayoutDashboard,
-  Users,
-  Store,
-  User,
-  Headphones,
-  MessageCircle,
-} from "lucide-vue-next";
-import { useRoute } from "vue-router";
-
-const route = useRoute();
-
-const menuItems = [
-  {
-    path: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    badge: null,
-  },
-  {
-    path: "/dashboard/pelanggan",
-    label: "Pelanggan",
-    icon: Users,
-    badge: "12",
-  },
-  {
-    path: "/dashboard/penjual",
-    label: "Penjual",
-    icon: Store,
-    badge: "8",
-  },
-  {
-    path: "/dashboard/chat",
-    label: "Customer Chat",
-    icon: MessageCircle,
-    badge: "3",
-  },
-];
-
-const isActive = (path: string) => {
-  if (path === "/dashboard") {
-    return route.path === "/dashboard";
-  }
-  return route.path.startsWith(path);
-};
-</script>

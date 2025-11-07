@@ -1,15 +1,173 @@
+<script setup lang="ts">
+import { ref, nextTick, watch, onMounted, onUnmounted, computed } from "vue";
+import { MessageCircle, X, Send, Headphones, Sparkles } from "lucide-vue-next";
+import { useWebsocket } from "~/composables/useWebsocket";
+import { useMessage } from "~/composables/useMessage";
+
+const isOpen = ref(false);
+const newMessage = ref("");
+const isSending = ref(false);
+const unreadCount = ref(0);
+const showQuickReplies = ref(false);
+const isLoadingHistory = ref(false);
+
+const quickReplies = [
+  "Halo, saya butuh bantuan",
+  "Status pesanan saya?",
+  "Cara refund?",
+  "Masalah pembayaran",
+];
+
+// WebSocket setup
+const config = useRuntimeConfig();
+const wsUrl = `${config.public.wsBase}/api/ws`;
+
+const {
+  isConnected,
+  connectionError,
+  connect,
+  disconnect,
+  sendChatMessage,
+  onMessage,
+  reconnect,
+} = useWebsocket(wsUrl);
+
+// Message management
+const {
+  messages,
+  recentlySentMessages,
+  currentUserId,
+  conversationId,
+  messagesContainer,
+  addMessage,
+  handleWebSocketMessage,
+  createOptimisticMessage,
+  removeOptimisticMessage,
+  initializeFromStorage,
+  addWelcomeMessage,
+  scrollToBottom,
+  formatTime,
+} = useMessage();
+
+const connectionStatus = computed(() => {
+  if (isConnected.value) return "Connected";
+  if (connectionError.value) return "Disconnected";
+  return "Connecting...";
+});
+
+// Handle incoming WebSocket messages
+onMounted(() => {
+  onMessage((data) => {
+    const result = handleWebSocketMessage(data, isOpen.value);
+
+    // Handle specific result types
+    if (result.type === "conversation_loaded") {
+      isLoadingHistory.value = true;
+    }
+
+    if (result.type === "message_history") {
+      isLoadingHistory.value = false;
+    }
+
+    // Update unread count if chat is closed and new message arrives
+    if (!isOpen.value && result.type === "new_message") {
+      if (result.message && !result.message.isUser) {
+        unreadCount.value++;
+      }
+    }
+  });
+
+  // Initialize from localStorage
+  initializeFromStorage();
+
+  // Show welcome message
+  addWelcomeMessage();
+  unreadCount.value = 1;
+});
+
+onUnmounted(() => {
+  disconnect();
+});
+
+const toggleChat = () => {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    unreadCount.value = 0;
+    showQuickReplies.value = true;
+
+    if (!isConnected.value) {
+      connect();
+    }
+
+    nextTick(() => {
+      scrollToBottom();
+    });
+  }
+};
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || isSending.value || !isConnected.value) return;
+
+  const messageText = newMessage.value.trim();
+  const tempId = Date.now();
+
+  // Track recently sent
+  recentlySentMessages.value.add(messageText);
+
+  // Create and add optimistic message
+  const userMessage = createOptimisticMessage(messageText, tempId);
+  messages.value.push(userMessage);
+
+  newMessage.value = "";
+  showQuickReplies.value = false;
+  isSending.value = true;
+
+  await nextTick();
+  scrollToBottom();
+
+  try {
+    await sendChatMessage(messageText, conversationId.value || undefined);
+
+    isSending.value = false;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    isSending.value = false;
+
+    // Remove from recently sent
+    recentlySentMessages.value.delete(messageText);
+
+    // Remove optimistic message
+    removeOptimisticMessage(tempId);
+
+    // Add error message
+    addMessage({
+      id: Date.now(),
+      text: "Maaf, pesan gagal terkirim. Silakan coba lagi.",
+      isUser: false,
+      timestamp: new Date(),
+      isOptimistic: false,
+    });
+  }
+};
+
+const sendQuickReply = (reply: string) => {
+  newMessage.value = reply;
+  sendMessage();
+};
+
+// Auto-scroll on new messages
+watch(
+  () => messages.value.length,
+  () => {
+    nextTick(() => {
+      scrollToBottom();
+    });
+  }
+);
+</script>
+
 <template>
   <div class="fixed bottom-6 right-6 z-50">
-    <!-- Debug Toggle Button -->
-    <button
-      v-if="!isOpen"
-      @click="showDebug = !showDebug"
-      class="absolute -top-12 right-0 bg-gray-900 text-white p-2 rounded-lg shadow-lg hover:bg-gray-800 transition-colors mb-2"
-      title="Toggle Debug Panel"
-    >
-      <Bug class="w-4 h-4" />
-    </button>
-
     <!-- Chat Button -->
     <transition name="bounce">
       <button
@@ -58,13 +216,6 @@
             </div>
           </div>
           <div class="flex items-center space-x-2">
-            <button
-              @click="showDebug = !showDebug"
-              class="hover:bg-white/20 p-2 rounded-lg transition-colors"
-              title="Toggle Debug"
-            >
-              <Bug class="w-4 h-4" />
-            </button>
             <button
               @click="toggleChat"
               class="hover:bg-white/20 p-2 rounded-lg transition-colors"
@@ -120,26 +271,6 @@
                 >
                   {{ formatTime(message.timestamp) }}
                 </span>
-              </div>
-            </div>
-
-            <!-- Typing Indicator -->
-            <div v-if="isTyping" class="flex justify-start">
-              <div class="bg-white rounded-2xl rounded-bl-none p-3 shadow-sm">
-                <div class="flex space-x-2">
-                  <div
-                    class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style="animation-delay: 0ms"
-                  ></div>
-                  <div
-                    class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style="animation-delay: 150ms"
-                  ></div>
-                  <div
-                    class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style="animation-delay: 300ms"
-                  ></div>
-                </div>
               </div>
             </div>
 
@@ -220,581 +351,8 @@
         </div>
       </div>
     </transition>
-
-    <!-- Debug Panel -->
-    <ChatDebugPanel
-      :show-debug="showDebug"
-      :logs="debugLogs"
-      :is-connected="isConnected"
-      :is-authenticated="isAuthenticated"
-      @close="showDebug = false"
-      @clear-logs="clearDebugLogs"
-      @export-logs="exportDebugLogs"
-    />
   </div>
 </template>
-
-<script setup lang="ts">
-// filepath: app/components/chat/ChatPopup.vue
-import { ref, nextTick, watch, onMounted, onUnmounted, computed } from "vue";
-import {
-  MessageCircle,
-  X,
-  Send,
-  Headphones,
-  Sparkles,
-  Bug,
-} from "lucide-vue-next";
-import { useChatWebSocket } from "~/composables/useChatWebSocket";
-import ChatDebugPanel from "./ChatDebugPanel.vue";
-
-interface Message {
-  id: number;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  sender_type?: string;
-  sender_id?: string | number;
-  isOptimistic?: boolean; // Track if message is pending confirmation
-}
-
-const isOpen = ref(false);
-const newMessage = ref("");
-const messages = ref<Message[]>([]);
-const messagesContainer = ref<HTMLElement | null>(null);
-const isTyping = ref(false);
-const isSending = ref(false);
-const unreadCount = ref(0);
-const showQuickReplies = ref(false);
-const showDebug = ref(false);
-const isLoadingHistory = ref(false);
-
-const quickReplies = [
-  "Halo, saya butuh bantuan",
-  "Status pesanan saya?",
-  "Cara refund?",
-  "Masalah pembayaran",
-];
-
-// WebSocket composable with debug capabilities
-const config = useRuntimeConfig();
-const wsUrl = `${config.public.wsBase}/api/ws`;
-
-const {
-  isConnected,
-  isAuthenticated,
-  connectionError,
-  debugLogs,
-  connect,
-  disconnect,
-  sendChatMessage,
-  onMessage,
-  reconnect,
-  clearDebugLogs,
-  exportDebugLogs,
-} = useChatWebSocket(wsUrl);
-
-// Store the user ID from WebSocket connection
-const currentUserId = ref<string | null>(null);
-
-const connectionStatus = computed(() => {
-  if (isConnected.value && isAuthenticated.value) return "Admin Online";
-  if (isConnected.value && !isAuthenticated.value) return "Authenticating...";
-  if (connectionError.value) return "Disconnected";
-  return "Connecting...";
-});
-
-const conversationId = ref<string | null>(null);
-
-// ⭐ NEW: Track recently sent message texts to avoid duplicates from broadcast
-const recentlySentMessages = ref<Set<string>>(new Set());
-
-// Helper function to determine if message is from current user
-const isMessageFromCurrentUser = (msg: any): boolean => {
-  if (msg.sender_id && currentUserId.value) {
-    const isCurrentUser = msg.sender_id.toString() === currentUserId.value;
-    return isCurrentUser;
-  }
-  return msg.sender_type === "customer" || msg.sender_type === "user";
-};
-
-// Helper function to check if message already exists
-const messageExists = (messageId: number | string): boolean => {
-  return messages.value.some(
-    (msg) => msg.id.toString() === messageId.toString()
-  );
-};
-
-// ⭐ NEW: Helper function to check if message text was recently sent
-const isRecentlySentMessage = (
-  text: string,
-  senderId: string | number
-): boolean => {
-  // Only check for recently sent messages from current user
-  if (
-    senderId &&
-    currentUserId.value &&
-    senderId.toString() === currentUserId.value
-  ) {
-    return recentlySentMessages.value.has(text.trim());
-  }
-  return false;
-};
-
-// ⭐ NEW: Helper function to replace optimistic message with real one
-const replaceOptimisticMessage = (text: string, realMessage: Message) => {
-  const optimisticIndex = messages.value.findIndex(
-    (msg) => msg.isOptimistic && msg.text.trim() === text.trim()
-  );
-
-  if (optimisticIndex !== -1) {
-    console.log("Replacing optimistic message with real message", {
-      optimisticId: messages.value[optimisticIndex].id,
-      realId: realMessage.id,
-    });
-
-    // Replace the optimistic message with the real one
-    messages.value[optimisticIndex] = {
-      ...realMessage,
-      isOptimistic: false,
-    };
-
-    // Remove from recently sent after a delay
-    setTimeout(() => {
-      recentlySentMessages.value.delete(text.trim());
-    }, 2000);
-  }
-};
-
-// Helper function to add message with deduplication
-const addMessage = (newMsg: Message, playSound = false) => {
-  // ⭐ NEW: Check if this is a message from current user that was recently sent
-  if (
-    newMsg.sender_id &&
-    currentUserId.value &&
-    newMsg.sender_id.toString() === currentUserId.value
-  ) {
-    // Check if we recently sent this exact message
-    if (isRecentlySentMessage(newMsg.text, newMsg.sender_id)) {
-      console.log(
-        "Skipping duplicate message from current user (broadcast echo):",
-        {
-          text: newMsg.text.substring(0, 50),
-          sender_id: newMsg.sender_id,
-          messageId: newMsg.id,
-        }
-      );
-
-      // Replace optimistic message with real one
-      replaceOptimisticMessage(newMsg.text, newMsg);
-
-      return;
-    }
-  }
-
-  // Check if message already exists by ID
-  if (messageExists(newMsg.id)) {
-    console.log("Message already exists by ID, skipping:", newMsg.id);
-    return;
-  }
-
-  // Add message to array
-  messages.value.push(newMsg);
-
-  console.log("Message added to UI:", {
-    id: newMsg.id,
-    sender_id: newMsg.sender_id,
-    isUser: newMsg.isUser,
-    text: newMsg.text.substring(0, 50),
-    isOptimistic: newMsg.isOptimistic || false,
-  });
-
-  // Update unread count if chat is closed and message is not from user
-  if (!isOpen.value && !newMsg.isUser) {
-    unreadCount.value++;
-  }
-
-  // Scroll to bottom
-  nextTick(() => {
-    scrollToBottom();
-  });
-
-  // Optional: Play notification sound for incoming messages
-  if (playSound && !newMsg.isUser && !newMsg.isOptimistic) {
-    playNotificationSound();
-  }
-};
-
-// Optional notification sound
-const playNotificationSound = () => {
-  try {
-    const audio = new Audio("/sounds/notification.mp3");
-    audio.volume = 0.5;
-    audio.play().catch((err) => console.log("Could not play sound:", err));
-  } catch (err) {
-    console.log("Notification sound not available");
-  }
-};
-
-// Initialize with welcome message
-onMounted(() => {
-  // Handle incoming messages
-  onMessage((data) => {
-    console.log("ChatPopup received message:", data);
-
-    // Handle successful connection - CAPTURE USER ID HERE
-    if (data.type === "connected") {
-      console.log("Connected to WebSocket:", data);
-
-      const userId =
-        data.user_id || data.payload?.user_id || data.fullData?.user_id;
-
-      if (userId) {
-        currentUserId.value = userId.toString();
-        console.log(
-          "User ID set from WebSocket connection:",
-          currentUserId.value
-        );
-        localStorage.setItem("chat_user_id", currentUserId.value);
-      }
-    }
-
-    // Handle conversation loaded
-    else if (data.type === "conversation_loaded") {
-      const convId = data.conversation_id;
-      conversationId.value = convId ? String(convId) : null;
-
-      console.log("Conversation loaded:", {
-        conversationId: conversationId.value,
-        status: data.status,
-      });
-
-      if (conversationId.value) {
-        localStorage.setItem("active_conversation_id", conversationId.value);
-      }
-
-      isLoadingHistory.value = true;
-    }
-
-    // Handle message history
-    else if (data.type === "message_history") {
-      isLoadingHistory.value = false;
-
-      const historyMessages = data.messages || [];
-
-      console.log(`Loading ${historyMessages.length} messages from history`);
-
-      messages.value = [];
-      recentlySentMessages.value.clear(); // ⭐ Clear recently sent on history load
-
-      if (historyMessages.length > 0) {
-        historyMessages.forEach((msg: any) => {
-          const message: Message = {
-            id: msg.id || Date.now() + Math.random(),
-            text: msg.message_text || msg.text || msg.message || "",
-            isUser:
-              msg.sender_id && currentUserId.value
-                ? msg.sender_id.toString() === currentUserId.value
-                : false,
-            timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
-            sender_id: msg.sender_id,
-            sender_type: msg.sender_type,
-            isOptimistic: false,
-          };
-
-          messages.value.push(message);
-        });
-
-        console.log(`Loaded ${messages.value.length} messages from history`);
-
-        nextTick(() => {
-          scrollToBottom();
-        });
-      }
-    }
-
-    // Handle conversation creation
-    else if (data.type === "conversation_created") {
-      const convId = data.payload?.conversation_id || data.conversation_id;
-      conversationId.value = convId ? String(convId) : null;
-
-      console.log("Conversation created and stored:", conversationId.value);
-
-      if (conversationId.value) {
-        localStorage.setItem("active_conversation_id", conversationId.value);
-      }
-
-      if (
-        messages.value.length === 0 ||
-        messages.value.every((m) => !m.isUser)
-      ) {
-        addMessage({
-          id: Date.now(),
-          text: "Percakapan dimulai. Admin akan segera membalas pesan Anda.",
-          isUser: false,
-          timestamp: new Date(),
-          isOptimistic: false,
-        });
-      }
-    }
-
-    // Handle incoming chat messages with type
-    else if (data.type === "message" || data.type === "new_message") {
-      const messageData = data.payload || data;
-
-      const newMsg: Message = {
-        id: messageData.id || Date.now(),
-        text:
-          messageData.message_text ||
-          messageData.text ||
-          messageData.message ||
-          "",
-        isUser:
-          messageData.sender_id && currentUserId.value
-            ? messageData.sender_id.toString() === currentUserId.value
-            : false,
-        timestamp: messageData.created_at
-          ? new Date(messageData.created_at)
-          : new Date(),
-        sender_id: messageData.sender_id,
-        sender_type: messageData.sender_type,
-        isOptimistic: false,
-      };
-
-      addMessage(newMsg, true);
-    }
-
-    // Handle raw message objects from server (without type field)
-    else if (
-      data.id &&
-      data.conversation_id &&
-      data.message_text &&
-      !data.type
-    ) {
-      console.log("Received raw message from server:", data);
-
-      const newMsg: Message = {
-        id: data.id,
-        text: data.message_text,
-        isUser:
-          data.sender_id && currentUserId.value
-            ? data.sender_id.toString() === currentUserId.value
-            : false,
-        timestamp: data.created_at ? new Date(data.created_at) : new Date(),
-        sender_id: data.sender_id,
-        isOptimistic: false,
-      };
-
-      console.log("Processing raw message:", {
-        id: newMsg.id,
-        sender_id: data.sender_id,
-        current_user_id: currentUserId.value,
-        isUser: newMsg.isUser,
-        text: newMsg.text,
-      });
-
-      addMessage(newMsg, true);
-    }
-
-    // Handle typing indicator
-    else if (data.type === "typing") {
-      isTyping.value = data.payload?.is_typing || data.isTyping || false;
-
-      if (isTyping.value) {
-        nextTick(() => scrollToBottom());
-      }
-    }
-
-    // Handle conversation status updates
-    else if (data.type === "conversation_status") {
-      const status = data.payload?.status || data.status;
-      console.log("Conversation status updated:", status);
-
-      if (status === "closed") {
-        addMessage({
-          id: Date.now(),
-          text: "Percakapan ini telah ditutup oleh admin.",
-          isUser: false,
-          timestamp: new Date(),
-          isOptimistic: false,
-        });
-
-        conversationId.value = null;
-        localStorage.removeItem("active_conversation_id");
-      }
-    }
-
-    // Handle error messages
-    else if (data.type === "error") {
-      console.error("WebSocket error:", data);
-
-      addMessage({
-        id: Date.now(),
-        text: `Error: ${data.message || "Terjadi kesalahan pada koneksi"}`,
-        isUser: false,
-        timestamp: new Date(),
-        isOptimistic: false,
-      });
-    }
-
-    // Log unhandled message types
-    else {
-      console.warn("Unhandled WebSocket message type:", {
-        type: data.type,
-        hasId: !!data.id,
-        hasConversationId: !!data.conversation_id,
-        hasMessageText: !!data.message_text,
-        fullData: data,
-      });
-    }
-  });
-
-  // Try to restore user ID and conversation ID from localStorage
-  const savedUserId = localStorage.getItem("chat_user_id");
-  if (savedUserId) {
-    currentUserId.value = savedUserId;
-    console.log("Restored user ID from localStorage:", savedUserId);
-  }
-
-  const savedConvId = localStorage.getItem("active_conversation_id");
-  if (savedConvId) {
-    conversationId.value = savedConvId;
-    console.log("Restored conversation ID from localStorage:", savedConvId);
-  }
-
-  // Show initial welcome message (will be replaced if history loads)
-  if (messages.value.length === 0) {
-    messages.value.push({
-      id: Date.now(),
-      text: "Halo! 👋 Selamat datang di SecondCycle Help Center. Ada yang bisa kami bantu?",
-      isUser: false,
-      timestamp: new Date(),
-      isOptimistic: false,
-    });
-    unreadCount.value = 1;
-  }
-});
-
-onUnmounted(() => {
-  disconnect();
-});
-
-const toggleChat = () => {
-  isOpen.value = !isOpen.value;
-  if (isOpen.value) {
-    unreadCount.value = 0;
-    showQuickReplies.value = true;
-
-    // Connect to WebSocket when chat opens
-    if (!isConnected.value) {
-      connect();
-    }
-
-    nextTick(() => {
-      scrollToBottom();
-    });
-  }
-};
-
-const sendMessage = async () => {
-  if (!newMessage.value.trim() || isSending.value || !isConnected.value) return;
-
-  const messageText = newMessage.value.trim();
-  const tempId = Date.now();
-
-  // ⭐ NEW: Add to recently sent messages set
-  recentlySentMessages.value.add(messageText);
-
-  // Optimistically add user message to UI immediately
-  const userMessage: Message = {
-    id: tempId,
-    text: messageText,
-    isUser: true,
-    timestamp: new Date(),
-    sender_id: currentUserId.value,
-    isOptimistic: true, // ⭐ Mark as optimistic
-  };
-
-  messages.value.push(userMessage);
-  newMessage.value = "";
-  showQuickReplies.value = false;
-  isSending.value = true;
-
-  await nextTick();
-  scrollToBottom();
-
-  try {
-    // Send message via WebSocket
-    await sendChatMessage(messageText, conversationId.value || undefined);
-
-    console.log("Message sent successfully", {
-      conversationId: conversationId.value,
-      messageText: messageText.substring(0, 30) + "...",
-    });
-
-    isSending.value = false;
-
-    // The server will send back the message with the real ID via WebSocket
-    // Our addMessage function will handle replacing the optimistic message
-  } catch (error) {
-    console.error("Error sending message:", error);
-    isSending.value = false;
-
-    // ⭐ Remove from recently sent
-    recentlySentMessages.value.delete(messageText);
-
-    // Remove the optimistic message
-    const msgIndex = messages.value.findIndex((m) => m.id === tempId);
-    if (msgIndex !== -1) {
-      messages.value.splice(msgIndex, 1);
-    }
-
-    // Add error message
-    addMessage({
-      id: Date.now(),
-      text: "Maaf, pesan gagal terkirim. Silakan coba lagi.",
-      isUser: false,
-      timestamp: new Date(),
-      isOptimistic: false,
-    });
-  }
-};
-
-const sendQuickReply = (reply: string) => {
-  newMessage.value = reply;
-  sendMessage();
-};
-
-const scrollToBottom = () => {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-};
-
-const formatTime = (date: Date) => {
-  return date.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// Watch for new messages to auto-scroll
-watch(
-  () => messages.value.length,
-  () => {
-    nextTick(() => {
-      scrollToBottom();
-    });
-  }
-);
-
-// Watch connection status
-watch(isConnected, (newVal, oldVal) => {
-  if (newVal && !oldVal) {
-    console.log("WebSocket reconnected");
-  }
-});
-</script>
 
 <style scoped>
 /* Animations */
