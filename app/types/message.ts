@@ -1,9 +1,17 @@
 export interface Message {
   id: number;
+  conversationId?: number;
+  senderId: number;
   text: string;
-  isUser: boolean;
-  timestamp: Date;
-  sender_type?: string;
-  sender_id?: string | number;
-  isOptimistic?: boolean;
+  createdAt: Date;
+}
+
+export interface UserMessage extends Message {
+  sender: "customer" | "admin";
+}
+
+export interface MessageHistory {
+  messages: UserMessage[];
+  nextCursor?: string | null;
+  limit: number;
 }

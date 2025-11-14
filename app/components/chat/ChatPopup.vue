@@ -3,6 +3,8 @@ import { ref, nextTick, watch, onMounted, onUnmounted, computed } from "vue";
 import { MessageCircle, X, Send, Headphones, Sparkles } from "lucide-vue-next";
 import { useWebsocket } from "~/composables/useWebsocket";
 import { useMessage } from "~/composables/useMessage";
+import { useConversation } from "~/composables/useConversation";
+import { formatTimeToDate } from "~/utils/formatTime";
 
 const isOpen = ref(false);
 const newMessage = ref("");
@@ -10,6 +12,8 @@ const isSending = ref(false);
 const unreadCount = ref(0);
 const showQuickReplies = ref(false);
 const isLoadingHistory = ref(false);
+const isLoadingConversation = ref(false);
+const hasConversation = ref(false);
 
 const quickReplies = [
   "Halo, saya butuh bantuan",
@@ -27,16 +31,17 @@ const {
   connectionError,
   connect,
   disconnect,
-  sendChatMessage,
+  Message,
   onMessage,
   reconnect,
+  subscribe,
 } = useWebsocket(wsUrl);
 
 // Message management
 const {
   messages,
   recentlySentMessages,
-  currentUserId,
+  isMessageFromCurrentUser,
   conversationId,
   messagesContainer,
   addMessage,
@@ -46,8 +51,12 @@ const {
   initializeFromStorage,
   addWelcomeMessage,
   scrollToBottom,
-  formatTime,
+  fetchMessagesHistory,
+  currentUserId,
 } = useMessage();
+
+// Conversation management
+const { fetchConversation, startConversation } = useConversation();
 
 const connectionStatus = computed(() => {
   if (isConnected.value) return "Connected";
@@ -55,23 +64,76 @@ const connectionStatus = computed(() => {
   return "Connecting...";
 });
 
+// Fetch conversation on chat open
+const loadConversation = async () => {
+  isLoadingConversation.value = true;
+
+  try {
+    const conversation = await fetchConversation();
+
+    if (conversation && conversation.data[0].id) {
+      // User has existing conversation
+      hasConversation.value = true;
+      conversationId.value = conversation.data[0].id;
+      localStorage.setItem("conversation_id", conversation.data[0].id);
+
+      if (conversationId.value) {
+        hasConversation.value = true;
+        localStorage.setItem("conversation_id", String(conversationId.value));
+
+        // Connect websocket first
+        if (!isConnected.value) {
+          await connect();
+          // Wait for connection to be ready
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Subscribe to conversation
+        try {
+          subscribe(conversationId.value);
+        } catch (err) {
+          console.error("Error subscribing to conversation:", err);
+        }
+
+        // Then fetch history
+        isLoadingHistory.value = true;
+        try {
+          const result = await fetchMessagesHistory({ limit: 50 });
+          messages.value = result.messages;
+        } catch (err) {
+          console.error("Error loading messages:", err);
+        } finally {
+          isLoadingHistory.value = false;
+        }
+      }
+    } else {
+      // User doesn't have conversation yet
+      hasConversation.value = false;
+
+      // Show welcome message
+      addWelcomeMessage();
+      showQuickReplies.value = true;
+    }
+  } catch (error) {
+    console.error("Error loading conversation:", error);
+
+    // If error, assume no conversation exists
+    hasConversation.value = false;
+    addWelcomeMessage();
+    showQuickReplies.value = true;
+  } finally {
+    isLoadingConversation.value = false;
+  }
+};
+
 // Handle incoming WebSocket messages
 onMounted(() => {
   onMessage((data) => {
-    const result = handleWebSocketMessage(data, isOpen.value);
-
-    // Handle specific result types
-    if (result.type === "conversation_loaded") {
-      isLoadingHistory.value = true;
-    }
-
-    if (result.type === "message_history") {
-      isLoadingHistory.value = false;
-    }
+    const result = handleWebSocketMessage(data);
 
     // Update unread count if chat is closed and new message arrives
     if (!isOpen.value && result.type === "new_message") {
-      if (result.message && !result.message.isUser) {
+      if (result.message && !isMessageFromCurrentUser(result.message)) {
         unreadCount.value++;
       }
     }
@@ -79,25 +141,20 @@ onMounted(() => {
 
   // Initialize from localStorage
   initializeFromStorage();
-
-  // Show welcome message
-  addWelcomeMessage();
-  unreadCount.value = 1;
 });
 
 onUnmounted(() => {
   disconnect();
 });
 
-const toggleChat = () => {
+const toggleChat = async () => {
   isOpen.value = !isOpen.value;
+
   if (isOpen.value) {
     unreadCount.value = 0;
-    showQuickReplies.value = true;
 
-    if (!isConnected.value) {
-      connect();
-    }
+    // Load conversation when opening chat
+    await loadConversation();
 
     nextTick(() => {
       scrollToBottom();
@@ -105,8 +162,8 @@ const toggleChat = () => {
   }
 };
 
-const sendMessage = async () => {
-  if (!newMessage.value.trim() || isSending.value || !isConnected.value) return;
+const sendUserMessage = async () => {
+  if (!newMessage.value.trim() || isSending.value) return;
 
   const messageText = newMessage.value.trim();
   const tempId = Date.now();
@@ -126,7 +183,40 @@ const sendMessage = async () => {
   scrollToBottom();
 
   try {
-    await sendChatMessage(messageText, conversationId.value || undefined);
+    // If no conversation exists, create one first
+    if (!hasConversation.value || !conversationId.value) {
+      const newConversation = await startConversation();
+
+      if (newConversation && newConversation.data.id) {
+        hasConversation.value = true;
+        conversationId.value = newConversation.data.id;
+        localStorage.setItem("conversation_id", newConversation.data.id);
+
+        // Connect to WebSocket with new conversation ID
+        if (!isConnected.value) {
+          await connect();
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Subscribe to the new conversation
+        subscribe(conversationId.value!);
+      } else {
+        throw new Error("Failed to create conversation");
+      }
+    }
+
+    // Wait for connection if not connected yet
+    if (!isConnected.value) {
+      await connect();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if (conversationId.value) {
+        subscribe(conversationId.value);
+      }
+    }
+
+    // Send message via WebSocket
+    await Message(messageText, conversationId.value!);
 
     isSending.value = false;
   } catch (error) {
@@ -142,17 +232,18 @@ const sendMessage = async () => {
     // Add error message
     addMessage({
       id: Date.now(),
+      sender: "admin",
+      senderId: 0,
+      conversationId: conversationId.value,
+      createdAt: new Date(),
       text: "Maaf, pesan gagal terkirim. Silakan coba lagi.",
-      isUser: false,
-      timestamp: new Date(),
-      isOptimistic: false,
     });
   }
 };
 
 const sendQuickReply = (reply: string) => {
   newMessage.value = reply;
-  sendMessage();
+  sendUserMessage();
 };
 
 // Auto-scroll on new messages
@@ -231,16 +322,29 @@ watch(
           ref="messagesContainer"
           class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
         >
-          <!-- Loading History -->
+          <!-- Loading Conversation -->
           <div
-            v-if="isLoadingHistory"
+            v-if="isLoadingConversation"
             class="flex items-center justify-center py-8"
           >
             <div class="text-center">
               <div
                 class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F79E0E] mx-auto mb-2"
               ></div>
-              <p class="text-sm text-gray-600">Loading chat history...</p>
+              <p class="text-sm text-gray-600">Memuat percakapan...</p>
+            </div>
+          </div>
+
+          <!-- Loading History -->
+          <div
+            v-else-if="isLoadingHistory"
+            class="flex items-center justify-center py-8"
+          >
+            <div class="text-center">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F79E0E] mx-auto mb-2"
+              ></div>
+              <p class="text-sm text-gray-600">Memuat riwayat chat...</p>
             </div>
           </div>
 
@@ -251,13 +355,15 @@ watch(
               :key="message.id"
               :class="[
                 'flex',
-                message.isUser ? 'justify-end' : 'justify-start',
+                isMessageFromCurrentUser(message)
+                  ? 'justify-end'
+                  : 'justify-start',
               ]"
             >
               <div
                 :class="[
                   'max-w-[75%] rounded-2xl p-3 shadow-sm',
-                  message.isUser
+                  isMessageFromCurrentUser(message)
                     ? 'bg-[#F79E0E] text-white rounded-br-none'
                     : 'bg-white text-gray-800 rounded-bl-none',
                 ]"
@@ -266,10 +372,12 @@ watch(
                 <span
                   :class="[
                     'text-xs mt-1 block',
-                    message.isUser ? 'text-white/80' : 'text-gray-500',
+                    isMessageFromCurrentUser(message)
+                      ? 'text-white/80'
+                      : 'text-gray-500',
                   ]"
                 >
-                  {{ formatTime(message.timestamp) }}
+                  {{ formatTimeToDate(message.createdAt) }}
                 </span>
               </div>
             </div>
@@ -293,7 +401,10 @@ watch(
         <!-- Quick Replies -->
         <div
           v-if="
-            showQuickReplies && quickReplies.length > 0 && !isLoadingHistory
+            showQuickReplies &&
+            quickReplies.length > 0 &&
+            !isLoadingHistory &&
+            !isLoadingConversation
           "
           class="px-4 py-2 bg-white border-t border-gray-200"
         >
@@ -313,7 +424,7 @@ watch(
         <!-- Input Area -->
         <div class="p-4 bg-white border-t border-gray-200">
           <form
-            @submit.prevent="sendMessage"
+            @submit.prevent="sendUserMessage"
             class="flex items-center space-x-2"
           >
             <button
@@ -321,7 +432,7 @@ watch(
               @click="showQuickReplies = !showQuickReplies"
               class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Quick replies"
-              :disabled="isLoadingHistory"
+              :disabled="isLoadingHistory || isLoadingConversation"
             >
               <Sparkles class="w-5 h-5" />
             </button>
@@ -331,16 +442,13 @@ watch(
               type="text"
               placeholder="Ketik pesan..."
               class="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-[#F79E0E]/20 focus:border-[#F79E0E] outline-none text-sm"
-              :disabled="isSending || !isConnected || isLoadingHistory"
+              :disabled="isSending || isLoadingConversation"
             />
 
             <button
               type="submit"
               :disabled="
-                !newMessage.trim() ||
-                isSending ||
-                !isConnected ||
-                isLoadingHistory
+                !newMessage.trim() || isSending || isLoadingConversation
               "
               class="bg-[#F79E0E] hover:bg-[#d96f00] text-white p-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               aria-label="Send message"

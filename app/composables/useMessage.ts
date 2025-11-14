@@ -1,55 +1,48 @@
 import { ref, nextTick } from "vue";
-import type { Message } from "~/types/message";
+import type { UserMessage } from "~/types/message";
+import { formatTimeToDate } from "~/utils/formatTime";
+import { getMessagesHistory } from "~/services/messageService";
+import { useCookie } from "#imports";
 
 export const useMessage = () => {
-  const messages = ref<Message[]>([]);
+  const messages = ref<UserMessage[]>([]);
   const recentlySentMessages = ref<Set<string>>(new Set());
-  const currentUserId = ref<string | null>(null);
-  const conversationId = ref<string | null>(null);
+  const currentUserId = ref<number | null>(null);
+  const conversationId = ref<number>();
   const messagesContainer = ref<HTMLElement | null>(null);
 
+  const token = useCookie<string>("auth-token");
+
   // Helper: Check if message is from current user
-  const isMessageFromCurrentUser = (msg: any): boolean => {
-    if (msg.sender_id && currentUserId.value) {
-      return msg.sender_id.toString() === currentUserId.value;
+  const isMessageFromCurrentUser = (msg: UserMessage): boolean => {
+    if (msg.senderId && currentUserId.value) {
+      return msg.senderId === currentUserId.value;
     }
-    return msg.sender_type === "customer" || msg.sender_type === "user";
+    return false;
   };
 
   // Helper: Check if message already exists
-  const messageExists = (messageId: number | string): boolean => {
-    return messages.value.some(
-      (msg) => msg.id.toString() === messageId.toString()
-    );
+  const messageExists = (messageId: number): boolean => {
+    return messages.value.some((msg) => msg.id === messageId);
   };
 
   // Helper: Check if message text was recently sent
-  const isRecentlySentMessage = (
-    text: string,
-    senderId: string | number
-  ): boolean => {
-    if (
-      senderId &&
-      currentUserId.value &&
-      senderId.toString() === currentUserId.value
-    ) {
+  const isRecentlySentMessage = (text: string, senderId: number): boolean => {
+    if (senderId && currentUserId.value && senderId === currentUserId.value) {
       return recentlySentMessages.value.has(text.trim());
     }
     return false;
   };
 
   // Helper: Replace optimistic message with real one
-  const replaceOptimisticMessage = (text: string, realMessage: Message) => {
+  const replaceOptimisticMessage = (text: string, realMessage: UserMessage) => {
     const optimisticIndex = messages.value.findIndex(
-      (msg) => msg.isOptimistic && msg.text.trim() === text.trim()
+      (msg) => msg.id < 0 && msg.text.trim() === text.trim()
     );
 
     if (optimisticIndex !== -1 && messages.value[optimisticIndex]) {
-      // optimistic -> real replacement
-
       messages.value[optimisticIndex] = {
         ...realMessage,
-        isOptimistic: false,
       };
 
       setTimeout(() => {
@@ -66,14 +59,14 @@ export const useMessage = () => {
   };
 
   // Add message with deduplication
-  const addMessage = (newMsg: Message, playSound = false, isOpen = true) => {
+  const addMessage = (newMsg: UserMessage) => {
     // Check for duplicate from current user
     if (
-      newMsg.sender_id &&
+      newMsg.senderId &&
       currentUserId.value &&
-      newMsg.sender_id.toString() === currentUserId.value
+      newMsg.senderId === currentUserId.value
     ) {
-      if (isRecentlySentMessage(newMsg.text, newMsg.sender_id)) {
+      if (isRecentlySentMessage(newMsg.text, newMsg.senderId)) {
         // Detected broadcast echo from server; replace optimistic message
         replaceOptimisticMessage(newMsg.text, newMsg);
         return;
@@ -89,8 +82,6 @@ export const useMessage = () => {
     // Add message to array
     messages.value.push(newMsg);
 
-    // Message added to UI
-
     // Scroll to bottom
     nextTick(() => {
       scrollToBottom();
@@ -98,191 +89,58 @@ export const useMessage = () => {
   };
 
   // Handle WebSocket message data
-  const handleWebSocketMessage = (data: any, isOpen: boolean) => {
-    // Processing incoming websocket data
-
+  const handleWebSocketMessage = (data: any) => {
     // Handle connection - capture user ID
     if (data.type === "connected") {
-      const userId =
-        data.user_id || data.payload?.user_id || data.fullData?.user_id;
+      const userId = data.user_id;
 
       if (userId) {
-        currentUserId.value = userId.toString();
-        // User ID set from WebSocket
-        localStorage.setItem("chat_user_id", String(currentUserId.value));
+        currentUserId.value = Number(userId);
+        localStorage.setItem("message_user_id", String(currentUserId.value));
       }
       return { type: "connected", userId };
     }
 
-    // Handle conversation loaded
-    if (data.type === "conversation_loaded") {
-      const convId = data.conversation_id;
-      conversationId.value = convId ? String(convId) : null;
-
-      // Conversation loaded
-
-      if (conversationId.value) {
-        localStorage.setItem(
-          "active_conversation_id",
-          String(conversationId.value)
-        );
-      }
-
-      return { type: "conversation_loaded", conversationId: convId };
-    }
-
-    // Handle message history
-    if (data.type === "message_history") {
-      const historyMessages = data.messages || [];
-      // Loading message history
-
-      messages.value = [];
-      recentlySentMessages.value.clear();
-
-      if (historyMessages.length > 0) {
-        historyMessages.forEach((msg: any) => {
-          const message: Message = {
-            id: msg.id || Date.now() + Math.random(),
-            text: msg.message_text || msg.text || msg.message || "",
-            isUser:
-              msg.sender_id && currentUserId.value
-                ? msg.sender_id.toString() === currentUserId.value
-                : false,
-            timestamp: msg.created_at ? new Date(msg.created_at) : new Date(),
-            sender_id: msg.sender_id,
-            sender_type: msg.sender_type,
-            isOptimistic: false,
-          };
-          messages.value.push(message);
-        });
-
-        nextTick(() => scrollToBottom());
-      }
-
-      return { type: "message_history", count: historyMessages.length };
-    }
-
-    // Handle conversation creation
-    if (data.type === "conversation_created") {
-      const convId = data.payload?.conversation_id || data.conversation_id;
-      conversationId.value = convId ? String(convId) : null;
-
-      // Conversation created
-
-      if (conversationId.value) {
-        localStorage.setItem(
-          "active_conversation_id",
-          String(conversationId.value)
-        );
-      }
-
-      if (
-        messages.value.length === 0 ||
-        messages.value.every((m) => !m.isUser)
-      ) {
-        addMessage(
-          {
-            id: Date.now(),
-            text: "Percakapan dimulai. Admin akan segera membalas pesan Anda.",
-            isUser: false,
-            timestamp: new Date(),
-            isOptimistic: false,
-          },
-          false,
-          isOpen
-        );
-      }
-
-      return { type: "conversation_created", conversationId: convId };
+    if (data.type === "subscribed") {
+      return {
+        type: "subscribed",
+        conversationId: data.payload.conversation_id,
+      };
     }
 
     // Handle incoming chat messages (with type)
-    if (data.type === "message" || data.type === "new_message") {
-      const messageData = data.payload || data;
+    if (data.type === "new_message") {
+      const messageData = data;
 
-      const newMsg: Message = {
+      const newMsg: UserMessage = {
         id: messageData.id || Date.now(),
-        text:
-          messageData.message_text ||
-          messageData.text ||
-          messageData.message ||
-          "",
-        isUser:
-          messageData.sender_id && currentUserId.value
-            ? messageData.sender_id.toString() === currentUserId.value
-            : false,
-        timestamp: messageData.created_at
+        text: messageData.message_text || "",
+        createdAt: messageData.created_at
           ? new Date(messageData.created_at)
           : new Date(),
-        sender_id: messageData.sender_id,
-        sender_type: messageData.sender_type,
-        isOptimistic: false,
+        conversationId: messageData.conversation_id,
+        senderId: messageData.sender_id,
+        sender: messageData.sender_type,
       };
 
-      addMessage(newMsg, true, isOpen);
+      addMessage(newMsg);
       return { type: "new_message", message: newMsg };
-    }
-
-    // Handle raw message objects (without type field)
-    if (data.id && data.conversation_id && data.message_text && !data.type) {
-      const newMsg: Message = {
-        id: data.id,
-        text: data.message_text,
-        isUser:
-          data.sender_id && currentUserId.value
-            ? data.sender_id.toString() === currentUserId.value
-            : false,
-        timestamp: data.created_at ? new Date(data.created_at) : new Date(),
-        sender_id: data.sender_id,
-        isOptimistic: false,
-      };
-
-      addMessage(newMsg, true, isOpen);
-      return { type: "raw_message", message: newMsg };
-    }
-
-    // Handle conversation status updates
-    if (data.type === "conversation_status") {
-      const status = data.payload?.status || data.status;
-      // Conversation status updated
-
-      if (status === "closed") {
-        addMessage(
-          {
-            id: Date.now(),
-            text: "Percakapan ini telah ditutup oleh admin.",
-            isUser: false,
-            timestamp: new Date(),
-            isOptimistic: false,
-          },
-          false,
-          isOpen
-        );
-
-        conversationId.value = null;
-        localStorage.removeItem("active_conversation_id");
-      }
-
-      return { type: "conversation_status", status };
     }
 
     // Handle errors
     if (data.type === "error") {
       console.error("WebSocket error:", data);
 
-      addMessage(
-        {
-          id: Date.now(),
-          text: `Error: ${data.message || "Terjadi kesalahan pada koneksi"}`,
-          isUser: false,
-          timestamp: new Date(),
-          isOptimistic: false,
-        },
-        false,
-        isOpen
-      );
+      addMessage({
+        id: Date.now(),
+        senderId: 0,
+        sender: "admin",
+        conversationId: conversationId.value,
+        text: `Error: ${data.error || "Terjadi kesalahan pada koneksi"}`,
+        createdAt: new Date(),
+      });
 
-      return { type: "error", message: data.message };
+      return { type: "error", message: data.error };
     }
 
     // Log unhandled message types
@@ -298,14 +156,17 @@ export const useMessage = () => {
   };
 
   // Create optimistic message for sending
-  const createOptimisticMessage = (text: string, tempId: number): Message => {
+  const createOptimisticMessage = (
+    text: string,
+    tempId: number
+  ): UserMessage => {
     return {
-      id: tempId,
+      id: -Math.abs(tempId), // ID negatif menandai optimistic
+      conversationId: conversationId.value || 0,
+      sender: "customer",
       text,
-      isUser: true,
-      timestamp: new Date(),
-      sender_id: currentUserId.value || undefined,
-      isOptimistic: true,
+      createdAt: new Date(),
+      senderId: currentUserId.value || 0,
     };
   };
 
@@ -319,16 +180,14 @@ export const useMessage = () => {
 
   // Initialize from localStorage
   const initializeFromStorage = () => {
-    const savedUserId = localStorage.getItem("chat_user_id");
+    const savedUserId = localStorage.getItem("message_user_id");
     if (savedUserId) {
-      currentUserId.value = savedUserId;
-      // Restored user ID from localStorage
+      currentUserId.value = Number(savedUserId);
     }
 
-    const savedConvId = localStorage.getItem("active_conversation_id");
+    const savedConvId = localStorage.getItem("conversation_id");
     if (savedConvId) {
-      conversationId.value = savedConvId;
-      // Restored conversation ID from localStorage
+      conversationId.value = Number(savedConvId);
     }
   };
 
@@ -338,19 +197,56 @@ export const useMessage = () => {
       messages.value.push({
         id: Date.now(),
         text: "Halo! 👋 Selamat datang di SecondCycle Help Center. Ada yang bisa kami bantu?",
-        isUser: false,
-        timestamp: new Date(),
-        isOptimistic: false,
+        senderId: 0,
+        sender: "admin",
+        conversationId: conversationId.value || 0,
+        createdAt: new Date(),
       });
     }
   };
 
-  // Format time helper
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  // Fetch message history from API and normalize into UserMessage[]
+  const fetchMessagesHistory = async (opts?: {
+    limit?: number;
+    cursor?: string;
+  }) => {
+    if (!conversationId.value) {
+      throw new Error("conversationId is not set");
+    }
+
+    try {
+      const resp = await getMessagesHistory(
+        token.value,
+        conversationId.value,
+        opts
+      );
+
+      const msgsRaw = resp.data.messages || [];
+
+      // Normalize API response to UserMessage[]
+      const msgs: UserMessage[] = msgsRaw.map((m: any) => ({
+        id: m.id,
+        text: m.message_text ?? m.text ?? "",
+        createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+        conversationId: m.conversation_id ?? m.conversationId ?? 0,
+        senderId: m.sender_id ?? 0,
+        // set sender type fallback (adjust if your API returns sender_type)
+        sender:
+          (m.sender_type as any) ?? (m.sender_id === 0 ? "admin" : "customer"),
+      }));
+
+      messages.value = msgs;
+
+      // Return meta if present (support both snake_case and camelCase)
+      return {
+        nextCursor: resp.data.next_cursor ?? resp.data.nextCursor ?? "",
+        messages: msgs,
+        limit: resp.data.limit ?? undefined,
+      };
+    } catch (err) {
+      console.error("Failed to fetch messages history", err);
+      throw err;
+    }
   };
 
   return {
@@ -369,7 +265,10 @@ export const useMessage = () => {
     initializeFromStorage,
     addWelcomeMessage,
     scrollToBottom,
-    formatTime,
+    formatTimeToDate,
     isMessageFromCurrentUser,
+
+    // new
+    fetchMessagesHistory,
   };
 };

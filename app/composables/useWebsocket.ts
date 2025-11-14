@@ -14,7 +14,7 @@ export const useWebsocket = (url: string) => {
   const isConnected = ref(false);
   const connectionError = ref<string | null>(null);
   const reconnectAttempts = ref(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 0;
   const reconnectDelay = 3000;
   const isAuthenticated = ref(false);
   const debugLogs = ref<DebugLog[]>([]);
@@ -86,15 +86,6 @@ export const useWebsocket = (url: string) => {
         isAuthenticated.value = !!token;
         connectionError.value = null;
         reconnectAttempts.value = 0;
-
-        // Send initial ping/connect message
-        const connectMessage = {
-          type: "connect",
-          timestamp: new Date().toISOString(),
-        };
-
-        addDebugLog("info", "Sending connect message", connectMessage);
-        sendMessage(connectMessage);
       };
 
       ws.value.onmessage = (event) => {
@@ -105,22 +96,21 @@ export const useWebsocket = (url: string) => {
           });
 
           // Handle authentication response from server
-          if (data.type === "auth_success") {
+          if (data.type === "success") {
             isAuthenticated.value = true;
             addDebugLog("success", "Authentication successful", {
-              payload: data.payload,
+              payload: data.payload.text,
             });
-          } else if (data.type === "auth_error" || data.type === "error") {
+          } else if (data.type === "error") {
             isAuthenticated.value = false;
-            const errorMsg =
-              data.payload?.message || data.message || "Authentication failed";
+            const errorMsg = data.error || "Authentication failed";
             connectionError.value = errorMsg;
             addDebugLog("error", "Authentication error from server", {
               message: errorMsg,
               fullResponse: data,
             });
 
-            if (data.type === "auth_error") {
+            if (data.type === "error") {
               addDebugLog(
                 "error",
                 "Connection will be closed due to auth failure"
@@ -134,7 +124,7 @@ export const useWebsocket = (url: string) => {
           messageHandlers.forEach((handler) => handler(data));
         } catch (error) {
           addDebugLog("error", "Error parsing server message", {
-            error: error instanceof Error ? error.message : String(error),
+            error: error,
             rawData: event.data,
           });
         }
@@ -251,32 +241,23 @@ export const useWebsocket = (url: string) => {
     }
   };
 
-  const sendChatMessage = async (
-    text: string,
-    conversationId?: string | number
-  ) => {
+  const Message = async (text: string, conversationId: number) => {
     return new Promise((resolve, reject) => {
       try {
         // Convert conversation_id to number if it's a string
-        const convId = conversationId
-          ? typeof conversationId === "string"
-            ? parseInt(conversationId, 10)
-            : conversationId
-          : undefined;
+        const convId = conversationId;
 
         const message = {
           type: "send_message",
-          payload: {
-            text: text,
-            ...(convId && { conversation_id: convId }),
-          },
+          payload: { conversation_id: convId, text: text },
         };
 
         addDebugLog("info", "Sending chat message", {
           type: message.type,
-          payload: message.payload,
-          textPreview: text.substring(0, 50),
-          conversationId: convId || "auto-create (backend will create)",
+          payload: {
+            text: message.payload.text,
+            conversationId: convId,
+          },
         });
 
         sendMessage(message);
@@ -312,6 +293,27 @@ export const useWebsocket = (url: string) => {
     connect();
   };
 
+  const subscribe = (conversationId: number) => {
+    if (!isConnected.value) {
+      addDebugLog("error", "Cannot subscribe - not connected");
+      throw new Error("WebSocket is not connected");
+    }
+
+    const subscribeMessage = {
+      type: "subscribe",
+      payload: {
+        text: "subscribe to conversation",
+        conversation_id: conversationId,
+      },
+    };
+
+    addDebugLog("info", "Subscribing to conversation", {
+      conversationId,
+    });
+
+    sendMessage(subscribeMessage);
+  };
+
   const clearDebugLogs = () => {
     debugLogs.value = [];
     addDebugLog("info", "Debug logs cleared");
@@ -343,10 +345,11 @@ export const useWebsocket = (url: string) => {
     debugLogs,
     connect,
     disconnect,
+    Message,
     sendMessage,
-    sendChatMessage,
     onMessage,
     reconnect,
+    subscribe, // Add this
     clearDebugLogs,
     exportDebugLogs,
   };

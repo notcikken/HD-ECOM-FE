@@ -10,9 +10,9 @@ const buildApiUrl = (path: string) => {
   return base ? `${base}${normalizedPath}` : normalizedPath;
 };
 
-const apiFetch = async <T = any>(path: string, opts?: FetchOptions) => {
+const apiFetch = async <T = any>(path: string, opts: FetchOptions) => {
   const url = buildApiUrl(path);
-  return await $fetch<T>(url, opts);
+  return await $fetch<T>(url, opts as any);
 };
 
 const apiGet = <T = any>(path: string, opts?: FetchOptions) =>

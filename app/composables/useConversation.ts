@@ -1,48 +1,42 @@
+import { ref } from "vue";
 import {
-  getConversation as svcGetConversation,
-  updateConversationStatus as svcUpdateConversationStatus,
+  getConversation,
+  createConversation,
 } from "~/services/conversationService";
 
-/**
- * Composable wrapper around conversationService.
- * Calls to Nuxt composables are done inside the function (setup-time), not at module scope.
- */
-export const useConversation = () => {
-  // token from cookie (safe to call inside composable factory)
-  const token = useCookie<string | null>("auth-token");
+const selectedConversation = ref<any | null>(null);
 
-  const fetchConversation = async (conversationId: string) => {
-    if (!conversationId) throw new Error("conversationId is required");
+export const useConversation = () => {
+  const token = useCookie<string>("auth-token");
+
+  const fetchConversation = async () => {
     try {
-      const resp = await svcGetConversation(
-        token.value ?? null,
-        conversationId
-      );
+      const resp = await getConversation(token.value);
       return resp;
     } catch (err) {
       throw err;
     }
   };
 
-  const updateConversationStatus = async (
-    conversationId: string,
-    status: string
-  ) => {
-    if (!conversationId) throw new Error("conversationId is required");
+  const startConversation = async () => {
     try {
-      const resp = await svcUpdateConversationStatus(
-        token.value ?? null,
-        conversationId,
-        status
-      );
+      const resp = await createConversation(token.value);
       return resp;
     } catch (err) {
       throw err;
     }
+  };
+
+  // Set or clear the currently selected conversation
+  const selectConversation = (conversation: any | null) => {
+    selectedConversation.value = conversation;
+    return selectedConversation.value;
   };
 
   return {
     fetchConversation,
-    updateConversationStatus,
+    startConversation,
+    selectedConversation,
+    selectConversation,
   };
 };

@@ -9,7 +9,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const config = useRuntimeConfig();
   const base = (config.public?.authBase || "").replace(/\/+$/, "");
   const url = `${base}/api/auth`;
-  return await $fetch(`${url}/login`, {
+  return await $fetch<LoginResponse>(`${url}/login`, {
     method: "POST",
     body: data,
   });
@@ -21,7 +21,7 @@ export const register = async (
   const config = useRuntimeConfig();
   const base = (config.public?.authBase || "").replace(/\/+$/, "");
   const url = `${base}/api/auth`;
-  return await $fetch(`${url}/register`, {
+  return await $fetch<RegisterResponse>(`${url}/register`, {
     method: "POST",
     body: data,
   });

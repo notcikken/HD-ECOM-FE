@@ -1,39 +1,23 @@
-import { apiGet, apiPatch } from "~/services/apiService";
+import { apiGet, apiPost } from "~/services/apiService";
 
-/**
- * Conversation-related HTTP helpers.
- * These are plain services and do not call Nuxt composables at module scope.
- */
-
-export const getConversation = async (
-  token: string | null,
-  conversationId: string
-) => {
+export const getConversation = async (token: string) => {
   try {
-    return await apiGet(`/api/conversations/${conversationId}`, {
+    return await apiGet(`/api/conversations`, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
   } catch (error) {
-    console.error("Error fetching conversation:", error);
+    console.error("Error fetching conversation:", error, token);
     throw error;
   }
 };
 
-export const updateConversationStatus = async (
-  token: string | null,
-  conversationId: string,
-  status: string
-) => {
+export const createConversation = async (token: string) => {
   try {
-    return await apiPatch(
-      `/api/conversations/${conversationId}`,
-      { status },
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      }
-    );
+    return await apiPost(`/api/conversations`, undefined, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
   } catch (error) {
-    console.error("Error updating conversation status:", error);
+    console.error("Error creating conversation:", error, token);
     throw error;
   }
 };

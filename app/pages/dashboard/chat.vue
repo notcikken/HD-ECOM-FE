@@ -1,17 +1,11 @@
 <script setup lang="ts">
 // filepath: app/pages/dashboard/chat.vue
-import { ref, nextTick, onMounted, onUnmounted, watch } from "vue";
-import {
-  User,
-  MessageCircle,
-  Phone,
-  Video,
-  MoreVertical,
-  Paperclip,
-  Send,
-} from "lucide-vue-next";
+import { ref, nextTick, onMounted, onUnmounted } from "vue";
+import { User, MessageCircle, Paperclip, Send } from "lucide-vue-next";
 import { useWebsocket } from "~/composables/useWebsocket";
-import { useAdminChat } from "~/composables/useAdminChat";
+import { formatTimeToString } from "~/utils/formatTime";
+import { useMessage } from "~/composables/useMessage";
+import { useConversation } from "~/composables/useConversation";
 
 definePageMeta({
   layout: "dashboard",
@@ -21,39 +15,45 @@ definePageMeta({
 const config = useRuntimeConfig();
 const newMessage = ref("");
 const isSending = ref(false);
+const unreadCount = ref(0);
+const showQuickReplies = ref(false);
+const isLoadingHistory = ref(false);
+const isLoadingConversation = ref(false);
+const conversations = ref<Array<any>>([]);
+
+const {
+  messages,
+  recentlySentMessages,
+  isMessageFromCurrentUser,
+  conversationId,
+  messagesContainer,
+  addMessage,
+  formatTimeToDate,
+  handleWebSocketMessage,
+  createOptimisticMessage,
+  removeOptimisticMessage,
+  initializeFromStorage,
+  addWelcomeMessage,
+  scrollToBottom,
+} = useMessage();
 
 // WebSocket setup
 const wsUrl = `${config.public.wsBase}/api/ws`;
-const { isConnected, sendChatMessage, onMessage, connect, disconnect } =
-  useWebsocket(wsUrl);
-
-// Admin chat management
 const {
-  activeChats,
-  selectedChat,
-  messagesContainer,
-  currentAdminId,
-  recentlySentMessages,
-  isLoading,
-  loadingMessages,
-  error,
-  isMessageFromCurrentAdmin,
-  addMessageToChat,
-  scrollToBottom,
-  fetchConversations,
-  selectChat,
-  createOptimisticMessage,
-  removeOptimisticMessage,
-  handleWebSocketMessage,
-  updateConversationStatus,
-  formatTime,
-  initializeFromStorage,
-} = useAdminChat();
+  isConnected,
+  sendMessage,
+  Message,
+  onMessage,
+  connect,
+  disconnect,
+  connectionError,
+} = useWebsocket(wsUrl);
+const { fetchConversation, selectConversation, selectedConversation } =
+  useConversation();
 
 // Send message handler
-const sendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedChat.value || isSending.value)
-    return;
+const sendAdminMessage = async () => {
+  if (!newMessage.value.trim() || isSending.value) return;
 
   const messageText = newMessage.value.trim();
   const tempId = Date.now().toString();
@@ -63,71 +63,21 @@ const sendMessage = async () => {
   isSending.value = true;
 
   try {
-    // Create and add optimistic message
-    const message = createOptimisticMessage(messageText, tempId);
-    selectedChat.value.messages.push(message);
-    selectedChat.value.lastMessage = message.text || "";
-    selectedChat.value.lastMessageTime = message.timestamp || "";
-
     newMessage.value = "";
 
     nextTick(() => scrollToBottom());
 
     // Send via WebSocket
-    await sendChatMessage(messageText, selectedChat.value.id);
+    await Message(messageText, selectedConversation.value.id);
 
-    console.log("Message sent successfully", {
-      conversationId: selectedChat.value.id,
-      messageText: messageText.substring(0, 30) + "...",
-    });
+    console.log("Message sent successfully", {});
 
     isSending.value = false;
   } catch (err) {
     console.error("Error sending message:", err);
-    error.value = "Failed to send message";
-    isSending.value = false;
 
     // Remove from recently sent
     recentlySentMessages.value.delete(messageText);
-
-    // Remove optimistic message
-    if (selectedChat.value) {
-      removeOptimisticMessage(selectedChat.value, tempId);
-
-      // Add error message
-      selectedChat.value.messages.push({
-        id: Date.now().toString(),
-        text: "Failed to send message. Please try again.",
-        message: "Failed to send message. Please try again.",
-        sender: "admin",
-        timestamp: new Date().toISOString(),
-        isOptimistic: false,
-      });
-    }
-  }
-};
-
-const closeConversation = async () => {
-  if (!selectedChat.value) return;
-
-  try {
-    await updateConversationStatus(selectedChat.value.id, "closed");
-    selectedChat.value.status = "closed";
-  } catch (err) {
-    console.error("Error closing conversation:", err);
-    error.value = "Failed to close conversation";
-  }
-};
-
-const reopenConversation = async () => {
-  if (!selectedChat.value) return;
-
-  try {
-    await updateConversationStatus(selectedChat.value.id, "open");
-    selectedChat.value.status = "open";
-  } catch (err) {
-    console.error("Error reopening conversation:", err);
-    error.value = "Failed to reopen conversation";
   }
 };
 
@@ -144,12 +94,7 @@ onMounted(async () => {
   connect();
 
   // Fetch initial conversations
-  await fetchConversations();
-
-  // Auto-select first chat if available
-  if (activeChats.value.length > 0 && activeChats.value[0]) {
-    await selectChat(activeChats.value[0]);
-  }
+  await fetchConversation();
 });
 
 onUnmounted(() => {
@@ -167,7 +112,10 @@ onUnmounted(() => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center h-96">
+    <div
+      v-if="isLoadingConversation"
+      class="flex items-center justify-center h-96"
+    >
       <div class="text-center">
         <div
           class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F79E0E] mx-auto mb-4"
@@ -178,7 +126,7 @@ onUnmounted(() => {
 
     <!-- Error State -->
     <div
-      v-else-if="error"
+      v-else-if="connectionError"
       class="bg-red-50 border border-red-200 rounded-xl p-6 mb-6"
     >
       <div class="flex items-center space-x-3">
@@ -201,10 +149,10 @@ onUnmounted(() => {
           <h3 class="font-semibold text-red-800">
             Error Loading Conversations
           </h3>
-          <p class="text-sm text-red-600">{{ error }}</p>
+          <p class="text-sm text-red-600">{{ connectionError }}</p>
         </div>
         <button
-          @click="fetchConversations"
+          @click="fetchConversation"
           class="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           Retry
@@ -224,13 +172,13 @@ onUnmounted(() => {
         <div class="p-4 border-b border-gray-200 bg-gray-50">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-semibold text-gray-800">Active Chats</h3>
+              <h3 class="font-semibold text-gray-800">Total Chat</h3>
               <p class="text-sm text-gray-600">
-                {{ activeChats.length }} conversations
+                {{ conversations.length }} conversations
               </p>
             </div>
             <button
-              @click="fetchConversations"
+              @click="fetchConversation"
               class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               title="Refresh conversations"
             >
@@ -253,12 +201,12 @@ onUnmounted(() => {
 
         <div class="overflow-y-auto h-full">
           <div
-            v-for="chat in activeChats"
-            :key="chat.id"
-            @click="selectChat(chat)"
+            v-for="conversation in conversations"
+            :key="conversation.id"
+            @click="selectConversation(conversation)"
             :class="[
               'p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors',
-              selectedChat?.id === chat.id
+              selectedConversation?.id === conversation.id
                 ? 'bg-[#F79E0E]/10 border-l-4 border-l-[#F79E0E]'
                 : '',
             ]"
@@ -271,7 +219,7 @@ onUnmounted(() => {
                   <User class="w-5 h-5 text-gray-600" />
                 </div>
                 <div
-                  v-if="chat.isOnline"
+                  v-if="conversation.isOnline"
                   class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
                 ></div>
               </div>
@@ -279,33 +227,21 @@ onUnmounted(() => {
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">
                   <p class="text-sm font-medium text-gray-800 truncate">
-                    {{ chat.customerName }}
+                    {{ conversation.customerName }}
                   </p>
                   <span class="text-xs text-gray-500">
-                    {{ formatTime(chat.lastMessageTime) }}
+                    {{ formatTimeToString(conversation.lastMessageTime) }}
                   </span>
                 </div>
                 <p class="text-sm text-gray-600 truncate mt-1">
-                  {{ chat.lastMessage }}
+                  {{ conversation.lastMessage }}
                 </p>
                 <div class="flex items-center justify-between mt-1">
                   <span
-                    :class="[
-                      'text-xs px-2 py-0.5 rounded-full font-medium',
-                      chat.status === 'open'
-                        ? 'bg-green-100 text-green-700'
-                        : chat.status === 'closed'
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-yellow-100 text-yellow-700',
-                    ]"
-                  >
-                    {{ chat.status }}
-                  </span>
-                  <span
-                    v-if="chat.unreadCount > 0"
+                    v-if="conversation.unreadCount > 0"
                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#F79E0E] text-white"
                   >
-                    {{ chat.unreadCount }}
+                    {{ conversation.unreadCount }}
                   </span>
                 </div>
               </div>
@@ -313,7 +249,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Empty State -->
-          <div v-if="activeChats.length === 0" class="p-8 text-center">
+          <div v-if="conversations.length === 0" class="p-8 text-center">
             <MessageCircle class="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p class="text-gray-600">No active chats</p>
           </div>
@@ -326,7 +262,7 @@ onUnmounted(() => {
       >
         <!-- Chat Header -->
         <div
-          v-if="selectedChat"
+          v-if="selectedConversation"
           class="p-4 border-b border-gray-200 bg-gray-50"
         >
           <div class="flex items-center justify-between">
@@ -337,15 +273,11 @@ onUnmounted(() => {
                 >
                   <User class="w-5 h-5 text-gray-600" />
                 </div>
-                <div
-                  v-if="selectedChat.isOnline"
-                  class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
-                ></div>
               </div>
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-semibold text-gray-800">
-                    {{ selectedChat.customerName }}
+                    {{ selectedConversation.customerName }}
                   </h3>
                   <!-- Connection Status Badge -->
                   <span
@@ -366,31 +298,9 @@ onUnmounted(() => {
                   </span>
                 </div>
                 <p class="text-sm text-gray-600">
-                  {{ selectedChat.customerEmail }}
-                </p>
-                <p class="text-xs text-gray-500">
-                  {{
-                    selectedChat.isOnline
-                      ? "Online"
-                      : `Last seen ${formatTime(selectedChat.lastSeen)}`
-                  }}
+                  {{ selectedConversation.customerEmail }}
                 </p>
               </div>
-            </div>
-
-            <div class="flex items-center space-x-2">
-              <button
-                v-if="selectedChat.status === 'open'"
-                @click="closeConversation"
-                class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
-              >
-                Close Chat
-              </button>
-              <button
-                class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MoreVertical class="w-5 h-5" />
-              </button>
             </div>
           </div>
         </div>
@@ -402,7 +312,7 @@ onUnmounted(() => {
         >
           <!-- Loading Messages -->
           <div
-            v-if="loadingMessages"
+            v-if="isLoadingHistory"
             class="flex items-center justify-center h-full"
           >
             <div class="text-center">
@@ -414,13 +324,13 @@ onUnmounted(() => {
           </div>
 
           <!-- Messages -->
-          <div v-else-if="selectedChat" class="space-y-4">
+          <div v-else-if="selectedConversation" class="space-y-4">
             <div
-              v-for="message in selectedChat.messages"
+              v-for="message in selectedConversation.messages"
               :key="message.id"
               :class="[
                 'flex',
-                isMessageFromCurrentAdmin(message)
+                isMessageFromCurrentUser(message)
                   ? 'justify-end'
                   : 'justify-start',
               ]"
@@ -428,7 +338,7 @@ onUnmounted(() => {
               <div
                 :class="[
                   'max-w-xs lg:max-w-md px-4 py-2 rounded-lg',
-                  isMessageFromCurrentAdmin(message)
+                  isMessageFromCurrentUser(message)
                     ? 'bg-[#F79E0E] text-white'
                     : 'bg-gray-100 text-gray-800',
                 ]"
@@ -437,12 +347,14 @@ onUnmounted(() => {
                 <p
                   :class="[
                     'text-xs mt-1',
-                    isMessageFromCurrentAdmin(message)
+                    isMessageFromCurrentUser(message)
                       ? 'text-orange-100'
                       : 'text-gray-500',
                   ]"
                 >
-                  {{ formatTime(message.timestamp || message.created_at) }}
+                  {{
+                    formatTimeToString(message.timestamp || message.created_at)
+                  }}
                 </p>
               </div>
             </div>
@@ -463,12 +375,9 @@ onUnmounted(() => {
         </div>
 
         <!-- Message Input -->
-        <div
-          v-if="selectedChat && selectedChat.status === 'open'"
-          class="p-4 border-t border-gray-200"
-        >
+        <div v-if="selectedConversation" class="p-4 border-t border-gray-200">
           <form
-            @submit.prevent="sendMessage"
+            @submit.prevent="sendAdminMessage"
             class="flex items-center space-x-3"
           >
             <button
@@ -485,7 +394,7 @@ onUnmounted(() => {
                 placeholder="Type your message..."
                 :disabled="isSending || !isConnected"
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:border-[#F79E0E] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                @keydown.enter.prevent="sendMessage"
+                @keydown.enter.prevent="sendAdminMessage"
               />
             </div>
 
@@ -501,22 +410,6 @@ onUnmounted(() => {
               ></div>
             </button>
           </form>
-        </div>
-
-        <!-- Closed Chat Notice -->
-        <div
-          v-else-if="selectedChat && selectedChat.status === 'closed'"
-          class="p-4 border-t border-gray-200 bg-gray-50"
-        >
-          <p class="text-sm text-gray-600 text-center">
-            This conversation is closed.
-            <button
-              @click="reopenConversation"
-              class="text-[#F79E0E] hover:underline font-medium"
-            >
-              Reopen conversation
-            </button>
-          </p>
         </div>
       </div>
     </div>
