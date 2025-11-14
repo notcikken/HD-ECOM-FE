@@ -21,6 +21,10 @@ export const useWebsocket = (url: string) => {
   let reconnectTimeout: NodeJS.Timeout | null = null;
   let messageHandlers: Array<(data: WebSocketMessage) => void> = [];
 
+  // Keep the last conversation id we attempted to subscribe to so we can
+  // automatically re-subscribe after reconnect/auth.
+  let lastSubscribedConversationId: number | null = null;
+
   const addDebugLog = (type: DebugLog["type"], message: string, data?: any) => {
     const log: DebugLog = {
       timestamp: new Date().toISOString(),
@@ -86,6 +90,32 @@ export const useWebsocket = (url: string) => {
         isAuthenticated.value = !!token;
         connectionError.value = null;
         reconnectAttempts.value = 0;
+
+        // If we previously requested a subscription, attempt to subscribe now.
+        if (lastSubscribedConversationId) {
+          try {
+            addDebugLog("info", "Attempting stored subscription on open", {
+              conversationId: lastSubscribedConversationId,
+            });
+            const subscribeMessage = {
+              type: "subscribe",
+              payload: {
+                text: "subscribe to conversation",
+                conversation_id: lastSubscribedConversationId,
+              },
+            };
+            sendMessage(subscribeMessage);
+            addDebugLog("success", "Subscribed to conversation on open", {
+              conversationId: lastSubscribedConversationId,
+            });
+          } catch (err) {
+            addDebugLog(
+              "error",
+              "Failed to subscribe on open - will retry after auth or next reconnect",
+              { error: err }
+            );
+          }
+        }
       };
 
       ws.value.onmessage = (event) => {
@@ -101,6 +131,32 @@ export const useWebsocket = (url: string) => {
             addDebugLog("success", "Authentication successful", {
               payload: data.payload.text,
             });
+
+            // After auth success, try re-subscribing if we have a stored id
+            if (lastSubscribedConversationId && isConnected.value) {
+              try {
+                addDebugLog(
+                  "info",
+                  "Attempting stored subscription after auth success",
+                  { conversationId: lastSubscribedConversationId }
+                );
+                const subscribeMessageAfterAuth = {
+                  type: "subscribe",
+                  payload: {
+                    text: "subscribe to conversation",
+                    conversation_id: lastSubscribedConversationId,
+                  },
+                };
+                sendMessage(subscribeMessageAfterAuth);
+                addDebugLog("success", "Subscribed after auth", {
+                  conversationId: lastSubscribedConversationId,
+                });
+              } catch (err) {
+                addDebugLog("error", "Failed to subscribe after auth", {
+                  error: err,
+                });
+              }
+            }
           } else if (data.type === "error") {
             isAuthenticated.value = false;
             const errorMsg = data.error || "Authentication failed";
@@ -290,13 +346,26 @@ export const useWebsocket = (url: string) => {
     reconnectAttempts.value = 0;
     connectionError.value = null;
     disconnect();
+    // connect() will re-attempt subscriptions on open/auth using lastSubscribedConversationId
     connect();
   };
 
+  /**
+   * Subscribe to a conversation. This stores the requested conversation id so
+   * that if the websocket is not currently connected we will automatically
+   * re-subscribe once connected (or after auth completes).
+   */
   const subscribe = (conversationId: number) => {
+    // store requested id for future reconnects
+    lastSubscribedConversationId = conversationId;
+
     if (!isConnected.value) {
-      addDebugLog("error", "Cannot subscribe - not connected");
-      throw new Error("WebSocket is not connected");
+      addDebugLog(
+        "info",
+        "Stored subscription until connected (will auto-subscribe on reconnect)",
+        { conversationId }
+      );
+      return;
     }
 
     const subscribeMessage = {
@@ -349,7 +418,7 @@ export const useWebsocket = (url: string) => {
     sendMessage,
     onMessage,
     reconnect,
-    subscribe, // Add this
+    subscribe,
     clearDebugLogs,
     exportDebugLogs,
   };

@@ -60,6 +60,7 @@ export const useMessage = () => {
 
   // Add message with deduplication
   const addMessage = (newMsg: UserMessage) => {
+    console.log("Adding message:", newMsg);
     // Check for duplicate from current user
     if (
       newMsg.senderId &&
@@ -110,7 +111,7 @@ export const useMessage = () => {
 
     // Handle incoming chat messages (with type)
     if (data.type === "new_message") {
-      const messageData = data;
+      const messageData = data.payload;
 
       const newMsg: UserMessage = {
         id: messageData.id || Date.now(),
