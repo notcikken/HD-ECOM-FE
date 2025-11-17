@@ -67,7 +67,7 @@ const submit = async () => {
         <h3 class="text-xl font-semibold text-[#F79E0E] mb-4">
           Masuk ke SecondCycle Help Center
         </h3>
-        <form class="space-y-4" @submit.prevent="login">
+        <form @submit.prevent="submit" class="space-y-4">
           <div>
             <label class="block text-sm text-gray-700 mb-1">Email</label>
             <input
@@ -157,40 +157,3 @@ const submit = async () => {
     </div>
   </div>
 </template>
-
-<script setup>
-definePageMeta({ layout: "auth" });
-
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-
-const email = ref("");
-const password = ref("");
-const remember = ref(false);
-const error = ref("");
-
-const router = useRouter();
-
-const login = async () => {
-  error.value = "";
-  // basic client-side validation
-  if (!email.value || !password.value) {
-    error.value = "Harap isi email dan kata sandi.";
-    return;
-  }
-
-  // TODO: Replace with real auth call
-  // fake success for any password length >= 6
-  if (password.value.length < 6) {
-    error.value = "Kata sandi minimal 6 karakter.";
-    return;
-  }
-
-  // Simulate successful login then navigate to browse
-  router.push({ path: "/browse", query: { topic: "Akun & Keamanan" } });
-};
-</script>
-
-<style scoped>
-/* minimal extra styles; layout via Tailwind */
-</style>
