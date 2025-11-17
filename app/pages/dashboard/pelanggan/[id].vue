@@ -19,6 +19,7 @@ import {
   FileCode, // 👈 Import icon untuk TXT
   Download,
 } from "lucide-vue-next";
+import Modal from "~/components/actionModal.vue";
 import type { Ticket } from "~/types/ticket";
 
 definePageMeta({
@@ -687,6 +688,7 @@ onMounted(() => {
                 </p>
               </div>
             </div>
+
             <div
               v-if="ticket.assignedTo"
               class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
@@ -939,187 +941,143 @@ onMounted(() => {
     </div>
 
     <!-- Assign & Set Priority Modal -->
-    <Transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    <ActionModal
+      :show="showAssignModal"
+      title="Tugaskan & Set Prioritas"
+      :icon="User"
+      icon-bg-class="bg-blue-500"
+      @close="showAssignModal = false"
     >
-      <div
-        v-if="showAssignModal"
-        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        @click.self="showAssignModal = false"
-      >
-        <div
-          class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl transform transition-all"
-          @click.stop
+      <p class="text-sm text-gray-600 mb-4">
+        Masukkan nama pegawai yang akan menangani tiket ini dan tentukan
+        prioritas kasusnya. Status akan otomatis berubah menjadi "In Progress".
+      </p>
+
+      <!-- Assignee Input -->
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-gray-700 mb-2"
+          for="assignee"
         >
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center"
-            >
-              <User class="w-6 h-6 text-white" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">
-              Tugaskan & Set Prioritas
-            </h3>
-          </div>
-          <p class="text-sm text-gray-600 mb-4">
-            Masukkan nama pegawai yang akan menangani tiket ini dan tentukan
-            prioritas kasusnya. Status akan otomatis berubah menjadi "In
-            Progress".
-          </p>
+          Nama Pegawai <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="assignee"
+          v-model="assigneeForm.assignedTo"
+          type="text"
+          placeholder="Contoh: John Doe"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+        />
+      </div>
 
-          <!-- Assignee Input -->
-          <div class="mb-4">
-            <label
-              class="block text-sm font-medium text-gray-700 mb-2"
-              for="assignee"
-            >
-              Nama Pegawai <span class="text-red-500">*</span>
-            </label>
-            <input
-              id="assignee"
-              v-model="assigneeForm.assignedTo"
-              type="text"
-              placeholder="Contoh: John Doe"
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            />
-          </div>
+      <!-- Priority Select -->
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-gray-700 mb-2"
+          for="priority"
+        >
+          Prioritas <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="priority"
+          v-model="assigneeForm.priority"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+        >
+          <option value="low">Low - Tidak Mendesak</option>
+          <option value="medium">Medium - Normal</option>
+          <option value="high">High - Mendesak</option>
+          <option value="urgent">Urgent - Sangat Mendesak</option>
+        </select>
+      </div>
 
-          <!-- Priority Select -->
-          <div class="mb-4">
-            <label
-              class="block text-sm font-medium text-gray-700 mb-2"
-              for="priority"
-            >
-              Prioritas <span class="text-red-500">*</span>
-            </label>
-            <select
-              id="priority"
-              v-model="assigneeForm.priority"
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            >
-              <option value="low">Low - Tidak Mendesak</option>
-              <option value="medium">Medium - Normal</option>
-              <option value="high">High - Mendesak</option>
-              <option value="urgent">Urgent - Sangat Mendesak</option>
-            </select>
-          </div>
-
-          <!-- Info Box -->
-          <div
-            class="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4 text-xs text-blue-800"
-          >
-            <div class="flex items-start gap-2">
-              <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Prioritas akan membantu tim untuk mengatur urutan penanganan
-                tiket
-              </span>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-              :disabled="updating"
-              @click="showAssignModal = false"
-            >
-              Batal
-            </button>
-            <button
-              class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 shadow-md"
-              :disabled="updating || !assigneeForm.assignedTo.trim()"
-              @click="handleAssignTicket"
-            >
-              {{ updating ? "Memproses..." : "Tugaskan" }}
-            </button>
-          </div>
+      <!-- Info Box -->
+      <div
+        class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800"
+      >
+        <div class="flex items-start gap-2">
+          <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span>
+            Prioritas akan membantu tim untuk mengatur urutan penanganan tiket
+          </span>
         </div>
       </div>
-    </Transition>
+
+      <template #actions>
+        <button
+          class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+          :disabled="updating"
+          @click="showAssignModal = false"
+        >
+          Batal
+        </button>
+        <button
+          class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 shadow-md"
+          :disabled="updating || !assigneeForm.assignedTo.trim()"
+          @click="handleAssignTicket"
+        >
+          {{ updating ? "Memproses..." : "Tugaskan" }}
+        </button>
+      </template>
+    </ActionModal>
 
     <!-- Resolve Ticket Modal -->
-    <Transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    <ActionModal
+      :show="showResolveModal"
+      title="Resolve Tiket"
+      :icon="CheckCircle"
+      icon-bg-class="bg-green-500"
+      @close="showResolveModal = false"
     >
-      <div
-        v-if="showResolveModal"
-        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        @click.self="showResolveModal = false"
-      >
-        <div
-          class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
-          @click.stop
+      <p class="text-sm text-gray-600 mb-4">
+        Masalah customer telah diselesaikan. Jelaskan solusi yang diberikan agar
+        customer dapat memahami penyelesaian masalahnya.
+      </p>
+
+      <!-- Resolution Input -->
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-gray-700 mb-2"
+          for="resolution"
         >
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center"
-            >
-              <CheckCircle class="w-6 h-6 text-white" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-800">Resolve Tiket</h3>
-          </div>
-          <p class="text-sm text-gray-600 mb-4">
-            Masalah customer telah diselesaikan. Jelaskan solusi yang diberikan
-            agar customer dapat memahami penyelesaian masalahnya.
-          </p>
+          Solusi/Resolusi <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          id="resolution"
+          v-model="resolveForm.resolution"
+          rows="5"
+          placeholder="Jelaskan solusi yang telah diberikan untuk menyelesaikan masalah customer..."
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
+        ></textarea>
+      </div>
 
-          <!-- Resolution Input -->
-          <div class="mb-4">
-            <label
-              class="block text-sm font-medium text-gray-700 mb-2"
-              for="resolution"
-            >
-              Solusi/Resolusi <span class="text-red-500">*</span>
-            </label>
-            <textarea
-              id="resolution"
-              v-model="resolveForm.resolution"
-              rows="5"
-              placeholder="Jelaskan solusi yang telah diberikan untuk menyelesaikan masalah customer..."
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
-            ></textarea>
-          </div>
-
-          <!-- Info Box -->
-          <div
-            class="p-3 bg-green-50 border border-green-200 rounded-lg mb-4 text-xs text-green-800"
-          >
-            <div class="flex items-start gap-2">
-              <MessageSquare class="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>
-                Customer akan dapat melihat solusi ini di halaman tiket mereka
-              </span>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-              :disabled="updating"
-              @click="showResolveModal = false"
-            >
-              Batal
-            </button>
-            <button
-              class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all font-medium disabled:opacity-50 shadow-md"
-              :disabled="updating || !resolveForm.resolution.trim()"
-              @click="handleResolveTicket"
-            >
-              {{ updating ? "Memproses..." : "Resolve Tiket" }}
-            </button>
-          </div>
+      <!-- Info Box -->
+      <div
+        class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800"
+      >
+        <div class="flex items-start gap-2">
+          <MessageSquare class="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span>
+            Customer akan dapat melihat solusi ini di halaman tiket mereka
+          </span>
         </div>
       </div>
-    </Transition>
+
+      <template #actions>
+        <button
+          class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+          :disabled="updating"
+          @click="showResolveModal = false"
+        >
+          Batal
+        </button>
+        <button
+          class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all font-medium disabled:opacity-50 shadow-md"
+          :disabled="updating || !resolveForm.resolution.trim()"
+          @click="handleResolveTicket"
+        >
+          {{ updating ? "Memproses..." : "Resolve Tiket" }}
+        </button>
+      </template>
+    </ActionModal>
   </div>
 </template>
