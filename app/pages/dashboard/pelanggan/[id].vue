@@ -422,7 +422,7 @@ onMounted(() => {
     <!-- Error State -->
     <div
       v-else-if="error"
-      class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl p-8 text-center shadow-lg"
+      class="bg-linear-to-br from-red-50 to-red-100 border border-red-200 rounded-2xl p-8 text-center shadow-lg"
     >
       <div
         class="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center"
@@ -445,7 +445,7 @@ onMounted(() => {
     <div v-else-if="ticket" class="space-y-6">
       <!-- Header Card -->
       <div
-        class="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
+        class="bg-linear-to-br from-white to-gray-50 rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
       >
         <div class="flex items-start justify-between mb-4">
           <div class="flex-1">
@@ -520,7 +520,7 @@ onMounted(() => {
                 >
                   <!-- File Icon -->
                   <div
-                    class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0 transition-transform group-hover:scale-110"
+                    class="w-10 h-10 rounded-lg flex items-center justify-center shadow-sm shrink-0 transition-transform group-hover:scale-110"
                     :class="getFileColor(doc).icon"
                   >
                     <component
@@ -574,7 +574,7 @@ onMounted(() => {
           >
             <div class="flex items-start gap-3">
               <div
-                class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0"
+                class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shrink-0"
               >
                 <CheckCircle class="w-5 h-5 text-white" />
               </div>
@@ -602,7 +602,7 @@ onMounted(() => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
             <div class="flex items-start gap-2">
               <div
-                class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold"
+                class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shrink-0 text-white font-bold"
               >
                 1
               </div>
@@ -615,7 +615,7 @@ onMounted(() => {
             </div>
             <div class="flex items-start gap-2">
               <div
-                class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold"
+                class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shrink-0 text-white font-bold"
               >
                 2
               </div>
@@ -628,7 +628,7 @@ onMounted(() => {
             </div>
             <div class="flex items-start gap-2">
               <div
-                class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold"
+                class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shrink-0 text-white font-bold"
               >
                 3
               </div>
@@ -674,7 +674,7 @@ onMounted(() => {
               >
                 <div class="flex items-start gap-4">
                   <!-- Step Circle with Icon -->
-                  <div class="relative flex-shrink-0 z-10">
+                  <div class="relative shrink-0 z-10">
                     <div
                       class="w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm"
                       :class="[
@@ -788,7 +788,7 @@ onMounted(() => {
         <div class="space-y-6">
           <!-- Quick Actions Card -->
           <div
-            class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm sticky top-6"
+            class="bg-linear-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6 shadow-sm sticky top-6"
           >
             <h2
               class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"
@@ -826,7 +826,7 @@ onMounted(() => {
               >
                 <div class="flex items-start gap-3">
                   <div
-                    class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shrink-0"
                   >
                     <CheckCircle class="w-5 h-5 text-white" />
                   </div>
@@ -913,7 +913,7 @@ onMounted(() => {
         class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800"
       >
         <div class="flex items-start gap-2">
-          <AlertCircle class="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             Prioritas akan membantu tim untuk mengatur urutan penanganan tiket
           </span>
@@ -973,7 +973,7 @@ onMounted(() => {
         class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800"
       >
         <div class="flex items-start gap-2">
-          <MessageSquare class="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <MessageSquare class="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             Customer akan dapat melihat solusi ini di halaman tiket mereka
           </span>

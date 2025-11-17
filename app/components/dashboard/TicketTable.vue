@@ -130,7 +130,7 @@ const handleViewTicket = (ticket: Ticket) => {
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
                   <!-- <div
-                    class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="w-8 h-8 bg-linear-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shrink-0"
                   >
                     <User class="w-4 h-4 text-white" />
                   </div> -->
