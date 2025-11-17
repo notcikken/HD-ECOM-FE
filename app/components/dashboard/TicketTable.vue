@@ -8,7 +8,6 @@ interface Props {
   showRole?: boolean;
 }
 
-// Remove the props variable, just use defineProps
 withDefaults(defineProps<Props>(), {
   loading: false,
   showRole: false,
@@ -21,7 +20,6 @@ const getStatusBadgeClass = (status: string) => {
     open: "bg-blue-100 text-blue-700",
     "in-progress": "bg-yellow-100 text-yellow-700",
     resolved: "bg-green-100 text-green-700",
-    closed: "bg-gray-100 text-gray-700",
   };
   return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
 };
@@ -37,7 +35,6 @@ const getStatusLabel = (status: string) => {
     open: "Open",
     "in-progress": "In Progress",
     resolved: "Resolved",
-    closed: "Closed",
   };
   return labels[status as keyof typeof labels] || status;
 };
@@ -53,14 +50,12 @@ const formatDate = (date: string) => {
 };
 
 const handleViewTicket = (ticket: Ticket) => {
-  // Navigate based on role
   const route = `/dashboard/${ticket.role}/${ticket.id}`;
   router.push(route);
 };
 </script>
 
 <template>
-  <!-- Same template as before -->
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
@@ -84,6 +79,11 @@ const handleViewTicket = (ticket: Ticket) => {
                 class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
               >
                 Judul
+              </th>
+              <th
+                class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+              >
+                User
               </th>
               <th
                 v-if="showRole"
@@ -125,6 +125,18 @@ const handleViewTicket = (ticket: Ticket) => {
               <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-800">
                   {{ ticket.title }}
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <!-- <div
+                    class="w-8 h-8 bg-linear-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shrink-0"
+                  >
+                    <User class="w-4 h-4 text-white" />
+                  </div> -->
+                  <span class="text-sm font-medium text-gray-800">
+                    {{ ticket.createdBy || "Unknown" }}
+                  </span>
                 </div>
               </td>
               <td v-if="showRole" class="px-6 py-4 text-sm">

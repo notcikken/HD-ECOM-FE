@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronDown, ChevronUp } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();

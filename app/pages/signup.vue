@@ -76,12 +76,9 @@
 </template>
 
 <script setup>
-definePageMeta({
-  layout: "auth",
-  middleware: "guest", // Add this
-});
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+definePageMeta({ layout: "auth" });
 
 const name = ref("");
 const email = ref("");

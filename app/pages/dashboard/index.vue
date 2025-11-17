@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ticket, TrendingUp, Clock, CheckCircle } from "lucide-vue-next";
+import { Ticket, TrendingUp, CheckCircle } from "lucide-vue-next";
 import type { Ticket as TicketType } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard/TicketTable.vue";
 
@@ -18,19 +18,19 @@ const statistics = [
     badgeClass: "bg-green-100 text-green-700",
   },
   {
-    label: "Tiket Aktif",
-    value: "89",
+    label: "Open",
+    value: "45",
     change: "+8%",
-    icon: TrendingUp,
+    icon: Ticket,
     bgColor: "bg-blue-50",
     iconColor: "text-blue-600",
     badgeClass: "bg-blue-100 text-blue-700",
   },
   {
-    label: "Pending",
-    value: "34",
+    label: "In Progress",
+    value: "44",
     change: "-5%",
-    icon: Clock,
+    icon: TrendingUp,
     bgColor: "bg-yellow-50",
     iconColor: "text-yellow-600",
     badgeClass: "bg-yellow-100 text-yellow-700",
@@ -91,6 +91,7 @@ const recentTickets: TicketType[] = [
     status: "open",
     priority: "high",
     role: "pelanggan",
+    createdBy: "Budi Santoso",
     createdAt: "2025-01-15T10:30:00",
     updatedAt: "2025-01-15T10:30:00",
     category: "Akun & Keamanan",
@@ -102,6 +103,7 @@ const recentTickets: TicketType[] = [
     status: "in-progress",
     priority: "medium",
     role: "pelanggan",
+    createdBy: "Siti Aminah",
     createdAt: "2025-01-15T09:15:00",
     updatedAt: "2025-01-15T11:20:00",
     category: "Pengiriman",
@@ -113,6 +115,7 @@ const recentTickets: TicketType[] = [
     status: "resolved",
     priority: "low",
     role: "penjual",
+    createdBy: "Andi Wijaya",
     createdAt: "2025-01-14T14:45:00",
     updatedAt: "2025-01-15T08:30:00",
     category: "Teknis Aplikasi",
@@ -124,6 +127,7 @@ const recentTickets: TicketType[] = [
     status: "open",
     priority: "urgent",
     role: "pelanggan",
+    createdBy: "Budi Santoso",
     createdAt: "2025-01-15T11:00:00",
     updatedAt: "2025-01-15T11:00:00",
     category: "Pembayaran",
@@ -135,6 +139,7 @@ const recentTickets: TicketType[] = [
     status: "in-progress",
     priority: "high",
     role: "penjual",
+    createdBy: "Rina Kurnia",
     createdAt: "2025-01-15T08:20:00",
     updatedAt: "2025-01-15T10:45:00",
     category: "Teknis Aplikasi",
