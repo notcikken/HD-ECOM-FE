@@ -15,38 +15,35 @@ definePageMeta({
 const config = useRuntimeConfig();
 const newMessage = ref("");
 const isSending = ref(false);
-const unreadCount = ref(0);
-const showQuickReplies = ref(false);
 const isLoadingHistory = ref(false);
 const isLoadingConversation = ref(false);
-const conversations = ref<Array<any>>([]);
 
+// add a reactive conversations list used by the template
+const conversations = ref<any[]>([]);
 const {
   messages,
   recentlySentMessages,
   isMessageFromCurrentUser,
-  conversationId,
   messagesContainer,
-  addMessage,
-  formatTimeToDate,
   handleWebSocketMessage,
+  initializeFromStorage,
+  scrollToBottom,
+  fetchMessagesHistory,
   createOptimisticMessage,
   removeOptimisticMessage,
-  initializeFromStorage,
-  addWelcomeMessage,
-  scrollToBottom,
 } = useMessage();
 
 // WebSocket setup
 const wsUrl = `${config.public.wsBase}/api/ws`;
 const {
   isConnected,
-  sendMessage,
   Message,
   onMessage,
   connect,
   disconnect,
   connectionError,
+  subscribe,
+  unsubscribe,
 } = useWebsocket(wsUrl);
 const { fetchConversation, selectConversation, selectedConversation } =
   useConversation();
@@ -56,10 +53,16 @@ const sendAdminMessage = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
 
   const messageText = newMessage.value.trim();
-  const tempId = Date.now().toString();
 
   // Track recently sent
   recentlySentMessages.value.add(messageText);
+
+  const adminMessage = createOptimisticMessage(
+    messageText,
+    selectedConversation.value!.id
+  );
+  messages.value.push(adminMessage);
+
   isSending.value = true;
 
   try {
@@ -68,7 +71,7 @@ const sendAdminMessage = async () => {
     nextTick(() => scrollToBottom());
 
     // Send via WebSocket
-    await Message(messageText, selectedConversation.value.id);
+    await Message(messageText, selectedConversation.value!.id);
 
     console.log("Message sent successfully", {});
 
@@ -81,9 +84,54 @@ const sendAdminMessage = async () => {
   }
 };
 
+// Load conversation history when selecting a conversation
+const loadConversationHistory = async (conversation: any) => {
+  // If switching from another selected conversation, unsubscribe it first
+  if (
+    selectedConversation.value &&
+    selectedConversation.value.id !== conversation.id
+  ) {
+    try {
+      unsubscribe(selectedConversation.value.id);
+    } catch (err) {
+      console.error("Error unsubscribing previous conversation:", err);
+    }
+  }
+
+  // select the new conversation and clear messages
+  selectConversation(conversation);
+  messages.value = [];
+
+  if (!isConnected.value) {
+    await connect();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  // Subscribe to conversation
+  try {
+    subscribe(conversation.id);
+  } catch (err) {
+    console.error("Error subscribing to conversation:", err);
+  }
+
+  // Load message history
+  isLoadingHistory.value = true;
+  try {
+    const result = await fetchMessagesHistory({ limit: 50 });
+    messages.value = result.messages;
+
+    nextTick(() => scrollToBottom());
+  } catch (err) {
+    console.error("Error loading messages:", err);
+  } finally {
+    isLoadingHistory.value = false;
+  }
+};
+
 // Handle incoming WebSocket messages
 onMessage((data) => {
   handleWebSocketMessage(data);
+  nextTick(() => scrollToBottom());
 });
 
 onMounted(async () => {
@@ -93,8 +141,24 @@ onMounted(async () => {
   // Connect to WebSocket
   connect();
 
-  // Fetch initial conversations
-  await fetchConversation();
+  // Fetch initial conversations and show results
+  isLoadingConversation.value = true;
+  try {
+    const resp = await fetchConversation();
+    if (resp) {
+      conversations.value = resp;
+      // auto-select first conversation if none selected
+      if (!selectedConversation.value && conversations.value.length > 0) {
+        await loadConversationHistory(conversations.value[0]);
+      }
+    } else {
+      console.warn("fetchConversation returned no conversations", resp);
+    }
+  } catch (err) {
+    console.error("Failed to fetch conversations", err);
+  } finally {
+    isLoadingConversation.value = false;
+  }
 });
 
 onUnmounted(() => {
@@ -203,7 +267,7 @@ onUnmounted(() => {
           <div
             v-for="conversation in conversations"
             :key="conversation.id"
-            @click="selectConversation(conversation)"
+            @click="loadConversationHistory(conversation)"
             :class="[
               'p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors',
               selectedConversation?.id === conversation.id
@@ -319,14 +383,17 @@ onUnmounted(() => {
               <div
                 class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F79E0E] mx-auto mb-2"
               ></div>
-              <p class="text-sm text-gray-600">Loading messages...</p>
+              <p class="text-sm text-gray-600">Memuat riwayat chat...</p>
             </div>
           </div>
 
           <!-- Messages -->
-          <div v-else-if="selectedConversation" class="space-y-4">
+          <div
+            v-else-if="selectedConversation && messages.length > 0"
+            class="space-y-4"
+          >
             <div
-              v-for="message in selectedConversation.messages"
+              v-for="message in messages"
               :key="message.id"
               :class="[
                 'flex',
@@ -343,7 +410,7 @@ onUnmounted(() => {
                     : 'bg-gray-100 text-gray-800',
                 ]"
               >
-                <p class="text-sm">{{ message.text || message.message }}</p>
+                <p class="text-sm">{{ message.text }}</p>
                 <p
                   :class="[
                     'text-xs mt-1',
@@ -352,16 +419,17 @@ onUnmounted(() => {
                       : 'text-gray-500',
                   ]"
                 >
-                  {{
-                    formatTimeToString(message.timestamp || message.created_at)
-                  }}
+                  {{ formatTimeToDate(message.createdAt) }}
                 </p>
               </div>
             </div>
           </div>
 
           <!-- No Chat Selected -->
-          <div v-else class="flex items-center justify-center h-full">
+          <div
+            v-else-if="!selectedConversation"
+            class="flex items-center justify-center h-full"
+          >
             <div class="text-center">
               <MessageCircle class="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 class="text-lg font-medium text-gray-800 mb-2">
@@ -370,6 +438,14 @@ onUnmounted(() => {
               <p class="text-gray-600">
                 Choose a conversation from the sidebar to view messages
               </p>
+            </div>
+          </div>
+
+          <!-- Empty Messages State -->
+          <div v-else class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <MessageCircle class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-600">No messages yet in this conversation</p>
             </div>
           </div>
         </div>

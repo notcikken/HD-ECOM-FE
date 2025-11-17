@@ -346,15 +346,9 @@ export const useWebsocket = (url: string) => {
     reconnectAttempts.value = 0;
     connectionError.value = null;
     disconnect();
-    // connect() will re-attempt subscriptions on open/auth using lastSubscribedConversationId
     connect();
   };
 
-  /**
-   * Subscribe to a conversation. This stores the requested conversation id so
-   * that if the websocket is not currently connected we will automatically
-   * re-subscribe once connected (or after auth completes).
-   */
   const subscribe = (conversationId: number) => {
     // store requested id for future reconnects
     lastSubscribedConversationId = conversationId;
@@ -381,6 +375,42 @@ export const useWebsocket = (url: string) => {
     });
 
     sendMessage(subscribeMessage);
+  };
+
+  const unsubscribe = (conversationId: number) => {
+    // Clear stored subscription so we don't auto re-subscribe later
+    if (lastSubscribedConversationId === conversationId) {
+      lastSubscribedConversationId = null;
+    }
+
+    if (!isConnected.value) {
+      addDebugLog(
+        "info",
+        "Not connected: stored subscription cleared but no unsubscribe sent",
+        { conversationId }
+      );
+      return;
+    }
+
+    const unsubscribeMessage = {
+      type: "unsubscribe",
+      payload: {
+        text: "unsubscribe from conversation",
+        conversation_id: conversationId,
+      },
+    };
+
+    addDebugLog("info", "Unsubscribing from conversation", { conversationId });
+    try {
+      sendMessage(unsubscribeMessage);
+      addDebugLog("success", "Unsubscribed from conversation", {
+        conversationId,
+      });
+    } catch (err) {
+      addDebugLog("error", "Failed to send unsubscribe message", {
+        error: err,
+      });
+    }
   };
 
   const clearDebugLogs = () => {
@@ -419,6 +449,7 @@ export const useWebsocket = (url: string) => {
     onMessage,
     reconnect,
     subscribe,
+    unsubscribe,
     clearDebugLogs,
     exportDebugLogs,
   };

@@ -1,10 +1,10 @@
-import type { UserMessage } from "~/types/message";
-
 export interface Conversation {
   id: number;
-  customer_id: number;
-  admin_id?: number;
+  customerId: number;
+  adminId: number;
   lastMessageAt: Date;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  customerName: string;
+  customerEmail: string;
 }

@@ -1,6 +1,6 @@
 export interface Message {
   id: number;
-  conversationId?: number;
+  conversationId: number;
   senderId: number;
   text: string;
   createdAt: Date;

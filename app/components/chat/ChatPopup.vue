@@ -1,11 +1,26 @@
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted, onUnmounted, computed } from "vue";
-import { MessageCircle, X, Send, Headphones, Sparkles } from "lucide-vue-next";
+// filepath: app/pages/dashboard/chat.vue
+import { ref, nextTick, onMounted, onUnmounted, computed } from "vue";
+import {
+  User,
+  MessageCircle,
+  Paperclip,
+  Send,
+  X,
+  Headphones,
+  Sparkles,
+} from "lucide-vue-next";
 import { useWebsocket } from "~/composables/useWebsocket";
+import { formatTimeToDate, formatTimeToString } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
-import { formatTimeToDate } from "~/utils/formatTime";
 
+definePageMeta({
+  layout: "dashboard",
+  middleware: "auth",
+});
+
+const config = useRuntimeConfig();
 const isOpen = ref(false);
 const newMessage = ref("");
 const isSending = ref(false);
@@ -15,6 +30,9 @@ const isLoadingHistory = ref(false);
 const isLoadingConversation = ref(false);
 const hasConversation = ref(false);
 
+// add a reactive conversations list used by the template
+const conversations = ref<any[]>([]);
+
 const quickReplies = [
   "Halo, saya butuh bantuan",
   "Status pesanan saya?",
@@ -23,17 +41,15 @@ const quickReplies = [
 ];
 
 // WebSocket setup
-const config = useRuntimeConfig();
 const wsUrl = `${config.public.wsBase}/api/ws`;
-
 const {
   isConnected,
-  connectionError,
-  connect,
-  disconnect,
   Message,
   onMessage,
+  connect,
   reconnect,
+  disconnect,
+  connectionError,
   subscribe,
 } = useWebsocket(wsUrl);
 
@@ -44,14 +60,14 @@ const {
   isMessageFromCurrentUser,
   conversationId,
   messagesContainer,
-  addMessage,
   handleWebSocketMessage,
-  createOptimisticMessage,
-  removeOptimisticMessage,
   initializeFromStorage,
   addWelcomeMessage,
   scrollToBottom,
   fetchMessagesHistory,
+  createOptimisticMessage,
+  removeOptimisticMessage,
+  addMessage,
   currentUserId,
 } = useMessage();
 
@@ -71,11 +87,11 @@ const loadConversation = async () => {
   try {
     const conversation = await fetchConversation();
 
-    if (conversation && conversation.data[0].id) {
+    if (conversation && conversation[0]?.id) {
       // User has existing conversation
       hasConversation.value = true;
-      conversationId.value = conversation.data[0].id;
-      localStorage.setItem("conversation_id", conversation.data[0].id);
+      conversationId.value = conversation[0].id;
+      localStorage.setItem("conversation_id", String(conversation[0].id));
 
       if (conversationId.value) {
         hasConversation.value = true;
@@ -100,6 +116,8 @@ const loadConversation = async () => {
         try {
           const result = await fetchMessagesHistory({ limit: 50 });
           messages.value = result.messages;
+          console.log("Loaded messages:", messages);
+          console.log("Current user ID:", currentUserId);
         } catch (err) {
           console.error("Error loading messages:", err);
         } finally {
@@ -234,7 +252,7 @@ const sendUserMessage = async () => {
       id: Date.now(),
       sender: "admin",
       senderId: 0,
-      conversationId: conversationId.value,
+      conversationId: conversationId.value!,
       createdAt: new Date(),
       text: "Maaf, pesan gagal terkirim. Silakan coba lagi.",
     });

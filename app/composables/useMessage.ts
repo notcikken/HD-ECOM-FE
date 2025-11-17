@@ -15,6 +15,7 @@ export const useMessage = () => {
 
   // Helper: Check if message is from current user
   const isMessageFromCurrentUser = (msg: UserMessage): boolean => {
+    console.log();
     if (msg.senderId && currentUserId.value) {
       return msg.senderId === currentUserId.value;
     }
@@ -93,7 +94,7 @@ export const useMessage = () => {
   const handleWebSocketMessage = (data: any) => {
     // Handle connection - capture user ID
     if (data.type === "connected") {
-      const userId = data.user_id;
+      const userId = data.payload.user_id;
 
       if (userId) {
         currentUserId.value = Number(userId);
@@ -136,7 +137,7 @@ export const useMessage = () => {
         id: Date.now(),
         senderId: 0,
         sender: "admin",
-        conversationId: conversationId.value,
+        conversationId: conversationId.value!,
         text: `Error: ${data.error || "Terjadi kesalahan pada koneksi"}`,
         createdAt: new Date(),
       });
@@ -268,8 +269,6 @@ export const useMessage = () => {
     scrollToBottom,
     formatTimeToDate,
     isMessageFromCurrentUser,
-
-    // new
     fetchMessagesHistory,
   };
 };
