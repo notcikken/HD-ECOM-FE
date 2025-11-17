@@ -39,7 +39,9 @@ const formatDate = (date: string) => {
         </div>
         <div>
           <p class="text-xs text-blue-600 font-medium mb-1">Kategori</p>
-          <p class="text-sm font-bold text-gray-800">{{ ticket.category }}</p>
+          <p class="text-sm font-bold text-gray-800">
+            {{ props.ticket.category }}
+          </p>
         </div>
       </div>
 
@@ -55,14 +57,14 @@ const formatDate = (date: string) => {
         <div>
           <p class="text-xs text-green-600 font-medium mb-1">Dibuat</p>
           <p class="text-sm font-bold text-gray-800">
-            {{ formatDate(ticket.createdAt) }}
+            {{ formatDate(props.ticket.createdAt) }}
           </p>
         </div>
       </div>
 
       <!-- Ditangani oleh (if assigned) -->
       <div
-        v-if="ticket.assignedTo"
+        v-if="props.ticket.assignedTo"
         class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
       >
         <div
@@ -78,7 +80,7 @@ const formatDate = (date: string) => {
 
       <!-- Di-resolve pada (if resolved) -->
       <div
-        v-if="ticket.resolvedAt"
+        v-if="props.ticket.resolvedAt"
         class="flex items-center gap-3 p-3 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
       >
         <div
@@ -89,7 +91,7 @@ const formatDate = (date: string) => {
         <div>
           <p class="text-xs text-teal-600 font-medium mb-1">Di-resolve pada</p>
           <p class="text-sm font-bold text-gray-800">
-            {{ formatDate(ticket.resolvedAt) }}
+            {{ formatDate(props.ticket.resolvedAt) }}
           </p>
         </div>
       </div>

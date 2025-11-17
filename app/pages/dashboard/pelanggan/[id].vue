@@ -8,7 +8,6 @@ import {
   User,
   AlertCircle,
   CheckCircle,
-  XCircle,
   FileText,
   Bell,
   MessageSquare,
@@ -67,7 +66,6 @@ const showToast = (message: string, type: "success" | "error" = "success") => {
   }, 3000);
 };
 
-// 👇 TAMBAHKAN HELPER FUNCTION INI
 const getFileType = (
   fileName: string
 ): "pdf" | "image" | "text" | "unknown" => {
@@ -370,29 +368,11 @@ onMounted(() => {
 <template>
   <div>
     <!-- Toast Notification -->
-    <Transition
-      enter-active-class="transition ease-out duration-300"
-      enter-from-class="translate-y-2 opacity-0"
-      enter-to-class="translate-y-0 opacity-100"
-      leave-active-class="transition ease-in duration-200"
-      leave-from-class="translate-y-0 opacity-100"
-      leave-to-class="translate-y-2 opacity-0"
-    >
-      <div v-if="toast.show" class="fixed top-4 right-4 z-50 max-w-md">
-        <div
-          class="rounded-lg shadow-lg p-4 flex items-center gap-3"
-          :class="
-            toast.type === 'success'
-              ? 'bg-green-500 text-white'
-              : 'bg-red-500 text-white'
-          "
-        >
-          <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5" />
-          <XCircle v-else class="w-5 h-5" />
-          <span class="font-medium">{{ toast.message }}</span>
-        </div>
-      </div>
-    </Transition>
+    <ToastNotification
+      :show="toast.show"
+      :message="toast.message"
+      :type="toast.type"
+    />
 
     <!-- Back Button -->
     <button
