@@ -53,10 +53,26 @@ export const useMessage = () => {
   };
 
   // Scroll to bottom of messages
-  const scrollToBottom = () => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
+  const scrollToBottom = async () => {
+    // Ensure DOM updates completed
+    await nextTick();
+    // Wait for browser paint to ensure accurate scrollHeight
+    requestAnimationFrame(() => {
+      if (messagesContainer.value) {
+        try {
+          messagesContainer.value.scrollTop =
+            messagesContainer.value.scrollHeight;
+        } catch (e) {
+          // safe guard: element may be detached
+          console.warn("[useMessage] scrollToBottom failed", e);
+        }
+      } else {
+        // helpful debug when ref isn't set
+        console.warn(
+          "[useMessage] messagesContainer ref is null when scrolling"
+        );
+      }
+    });
   };
 
   // Add message with deduplication

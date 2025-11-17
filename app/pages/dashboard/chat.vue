@@ -31,6 +31,7 @@ const {
   fetchMessagesHistory,
   createOptimisticMessage,
   removeOptimisticMessage,
+  conversationId,
 } = useMessage();
 
 // WebSocket setup
@@ -101,6 +102,10 @@ const loadConversationHistory = async (conversation: any) => {
   // select the new conversation and clear messages
   selectConversation(conversation);
   messages.value = [];
+
+  // Ensure useMessage knows the active conversation id so fetchMessagesHistory works
+  conversationId.value = conversation.id;
+  localStorage.setItem("conversation_id", String(conversation.id));
 
   if (!isConnected.value) {
     await connect();
