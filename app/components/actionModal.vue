@@ -4,7 +4,7 @@ import { X } from "lucide-vue-next";
 interface Props {
   show: boolean;
   title: string;
-  icon?: any;
+  icon?: Component;
   iconBgClass?: string;
 }
 
