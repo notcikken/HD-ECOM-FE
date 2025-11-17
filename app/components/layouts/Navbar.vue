@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Mail, Store, User } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import { Mail, Store, User, LogOut } from "lucide-vue-next";
+import { useAuth } from "~/composables/useAuth";
 
-// Track scroll state for enhanced navbar styling
 const isScrolled = ref(false);
 
 const handleScroll = () => {
@@ -10,14 +10,23 @@ const handleScroll = () => {
 };
 
 onMounted(() => {
-  // Initialize scroll state and attach listener
   handleScroll();
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener("scroll", handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener("scroll", handleScroll);
 });
+
+const { user, logout: authLogout } = useAuth();
+
+const isAdmin = computed(
+  () => user.value?.role === 0 || user.value?.role === "0"
+);
+
+const logout = () => {
+  authLogout();
+};
 </script>
 
 <template>
@@ -32,9 +41,9 @@ onUnmounted(() => {
         <!-- Brand section -->
         <div class="flex items-center space-x-3">
           <div
-            class="w-10 h-10 bg-[#F79E0E] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md"
+            class="w-10 h-10 bg-[#F79E0E] rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg"
           >
-            <Store class="w-5 h-5" />
+            <Store class="w-6 h-6" />
           </div>
           <div>
             <h1 class="text-lg font-bold text-gray-800">
@@ -58,14 +67,65 @@ onUnmounted(() => {
             </button>
           </RouterLink>
 
-          <RouterLink class="relative cursor-pointer" to="/login">
+          <!-- User Menu -->
+          <div v-if="user" class="flex items-center space-x-2">
+            <!-- Admin Badge -->
+            <span
+              v-if="isAdmin"
+              class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"
+            >
+              Admin
+            </span>
+
+            <!-- Dashboard Link for Admin -->
+            <NuxtLink
+              v-if="isAdmin"
+              to="/dashboard"
+              class="p-2 hover:bg-white/50 rounded-lg transition-colors"
+              title="Dashboard"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </NuxtLink>
+
+            <!-- Logout Button -->
+            <button
+              @click="logout"
+              class="p-2 hover:bg-white/50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut class="w-4 h-4" />
+            </button>
+
+            <!-- Profile Avatar -->
+            <div
+              class="w-9 h-9 bg-gray-800 hover:bg-gray-700 cursor-pointer text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
+              :title="`${user.name || 'User'}`"
+            >
+              <User class="w-4 h-4" />
+            </div>
+          </div>
+
+          <!-- Login Link if not authenticated -->
+          <NuxtLink v-else to="/login">
             <button
               class="w-9 h-9 bg-gray-800 hover:bg-gray-700 cursor-pointer text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
               aria-label="Menu profil pengguna"
             >
               <User class="w-4 h-4" />
             </button>
-          </RouterLink>
+          </NuxtLink>
         </div>
       </div>
     </div>
