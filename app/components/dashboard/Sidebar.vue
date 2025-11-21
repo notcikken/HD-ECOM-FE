@@ -14,14 +14,10 @@ import { computed } from "vue";
 const route = useRoute();
 const { notification } = useNotification();
 
-// Calculate total unread count from all conversations
-const totalUnreadCount = computed(() => {
-  console.log("Notification data:", notification.value);
-  if (!notification.value || !Array.isArray(notification.value)) return 0;
-  return notification.value.reduce(
-    (total, n) => total + (n.unreadCount || 0),
-    0
-  );
+// Return an array of conversations that have unread messages
+const totalUnreadConversations = computed(() => {
+  if (!notification.value || !Array.isArray(notification.value)) return [];
+  return notification.value.filter((n) => (n.unreadCount || 0) > 0);
 });
 
 const menuItems = computed(() => [
@@ -47,7 +43,10 @@ const menuItems = computed(() => [
     path: "/dashboard/chat",
     label: "Customer Chat",
     icon: MessageCircle,
-    badge: totalUnreadCount.value > 0 ? String(totalUnreadCount.value) : null,
+    badge:
+      totalUnreadConversations.value.length > 0
+        ? String(totalUnreadConversations.value.length)
+        : null,
   },
 ]);
 
@@ -92,7 +91,8 @@ const isActive = (path: string) => {
             v-if="item.badge"
             class="ml-auto bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full"
             :class="
-              item.path === '/dashboard/chat' && totalUnreadCount > 0
+              item.path === '/dashboard/chat' &&
+              totalUnreadConversations.length > 0
                 ? 'bg-red-100 text-red-700'
                 : ''
             "

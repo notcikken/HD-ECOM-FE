@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // filepath: app/pages/dashboard/chat.vue
-import { ref, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { User, MessageCircle, Paperclip, Send } from "lucide-vue-next";
 import { getWebsocket } from "~/composables/useWebsocket";
 import { formatTimeToString } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
+import { useNotification } from "~/composables/useNotification";
 
 definePageMeta({
   layout: "dashboard",
@@ -32,6 +33,33 @@ const {
   createOptimisticMessage,
   conversationId,
 } = useMessage();
+
+const { notification } = useNotification();
+
+// helper to apply notification unread counts to conversation objects
+const applyNotificationsToConversations = (convs: any[]) => {
+  const notifs = Array.isArray(notification.value) ? notification.value : [];
+  return convs.map((c) => {
+    const match = notifs.find((n: any) => n.conversationId === c.id);
+    return {
+      ...c,
+      unreadCount: match ? match.unreadCount : c.unreadCount ?? 0,
+    };
+  });
+};
+
+// keep conversations in sync when notifications update
+watch(
+  notification,
+  () => {
+    if (conversations.value && conversations.value.length > 0) {
+      conversations.value = applyNotificationsToConversations(
+        conversations.value
+      );
+    }
+  },
+  { immediate: false }
+);
 
 // WebSocket setup
 const wsUrl = `${config.public.wsBase}/api/ws`;
@@ -144,7 +172,8 @@ onMounted(async () => {
   try {
     const resp = await fetchConversation();
     if (resp) {
-      conversations.value = resp;
+      // merge unread counts from notifications into each conversation
+      conversations.value = applyNotificationsToConversations(resp);
       // auto-select first conversation if none selected
       if (!selectedConversation.value && conversations.value.length > 0) {
         await loadConversationHistory(conversations.value[0]);

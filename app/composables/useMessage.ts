@@ -15,7 +15,6 @@ export const useMessage = () => {
 
   // Helper: Check if message is from current user
   const isMessageFromCurrentUser = (msg: UserMessage): boolean => {
-    console.log();
     if (msg.senderId && currentUserId.value) {
       return msg.senderId === currentUserId.value;
     }
