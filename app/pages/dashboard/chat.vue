@@ -34,7 +34,7 @@ const {
   conversationId,
 } = useMessage();
 
-const { notification } = useNotification();
+const { notification, updateNotificationFromWebSocket } = useNotification();
 
 // helper to apply notification unread counts to conversation objects
 const applyNotificationsToConversations = (convs: any[]) => {
@@ -136,6 +136,19 @@ const loadConversationHistory = async (conversation: any) => {
   conversationId.value = conversation.id;
   localStorage.setItem("conversation_id", String(conversation.id));
 
+  // Reset unread count for this conversation immediately
+  const updatedConversation = { ...conversation, unreadCount: 0 };
+  const convIndex = conversations.value.findIndex(c => c.id === conversation.id);
+  if (convIndex !== -1) {
+    conversations.value[convIndex] = updatedConversation;
+  }
+
+  // Update notification state to reset unread count
+  updateNotificationFromWebSocket({
+    conversation_id: conversation.id,
+    unread_count: 0
+  });
+
   // Subscribe to conversation
   try {
     subscribe(conversation.id);
@@ -159,7 +172,18 @@ const loadConversationHistory = async (conversation: any) => {
 
 // Handle incoming WebSocket messages
 onMessage((data) => {
-  handleWebSocketMessage(data);
+  const result = handleWebSocketMessage(data);
+
+  // Handle admin notifications to update unread counts
+  if (result.type === "admin_notification") {
+    // Update conversations list with new unread count
+    if (conversations.value && conversations.value.length > 0) {
+      conversations.value = applyNotificationsToConversations(
+        conversations.value
+      );
+    }
+  }
+
   nextTick(() => scrollToBottom());
 });
 

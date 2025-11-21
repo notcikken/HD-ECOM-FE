@@ -3,6 +3,7 @@ import type { UserMessage } from "~/types/message";
 import { formatTimeToDate } from "~/utils/formatTime";
 import { getMessagesHistory } from "~/services/messageService";
 import { useCookie } from "#imports";
+import { useNotification } from "~/composables/useNotification";
 
 export const useMessage = () => {
   const messages = ref<UserMessage[]>([]);
@@ -12,6 +13,7 @@ export const useMessage = () => {
   const messagesContainer = ref<HTMLElement | null>(null);
 
   const token = useCookie<string>("auth-token");
+  const { updateNotificationFromWebSocket } = useNotification();
 
   // Helper: Check if message is from current user
   const isMessageFromCurrentUser = (msg: UserMessage): boolean => {
@@ -119,9 +121,19 @@ export const useMessage = () => {
     }
 
     if (data.type === "subscribed") {
+      const conversationId = data.payload.conversation_id;
+
+      // Reset unread count when successfully subscribed
+      if (conversationId) {
+        updateNotificationFromWebSocket({
+          conversation_id: conversationId,
+          unread_count: 0,
+        });
+      }
+
       return {
         type: "subscribed",
-        conversationId: data.payload.conversation_id,
+        conversationId: conversationId,
       };
     }
 
@@ -142,6 +154,19 @@ export const useMessage = () => {
 
       addMessage(newMsg);
       return { type: "new_message", message: newMsg };
+    }
+
+    if (data.type === "unsubscribed") {
+      return { type: "unsubscribed" };
+    }
+
+    if (data.type === "admin_notification") {
+      const notification = data.payload;
+
+      // Update global notification state
+      updateNotificationFromWebSocket(notification);
+
+      return { type: "admin_notification", notification };
     }
 
     // Handle errors
