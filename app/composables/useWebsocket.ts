@@ -454,3 +454,12 @@ export const useWebsocket = (url: string) => {
     exportDebugLogs,
   };
 };
+
+const websocketInstances = new Map<string, ReturnType<typeof useWebsocket>>();
+
+export const getWebsocket = (url: string) => {
+  if (!websocketInstances.has(url)) {
+    websocketInstances.set(url, useWebsocket(url));
+  }
+  return websocketInstances.get(url)!;
+};

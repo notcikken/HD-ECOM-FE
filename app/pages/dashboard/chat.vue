@@ -2,7 +2,7 @@
 // filepath: app/pages/dashboard/chat.vue
 import { ref, nextTick, onMounted, onUnmounted } from "vue";
 import { User, MessageCircle, Paperclip, Send } from "lucide-vue-next";
-import { useWebsocket } from "~/composables/useWebsocket";
+import { getWebsocket } from "~/composables/useWebsocket";
 import { formatTimeToString } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
@@ -30,7 +30,6 @@ const {
   scrollToBottom,
   fetchMessagesHistory,
   createOptimisticMessage,
-  removeOptimisticMessage,
   conversationId,
 } = useMessage();
 
@@ -40,14 +39,16 @@ const {
   isConnected,
   Message,
   onMessage,
-  connect,
-  disconnect,
   connectionError,
   subscribe,
   unsubscribe,
-} = useWebsocket(wsUrl);
-const { fetchConversation, selectConversation, selectedConversation } =
-  useConversation();
+} = getWebsocket(wsUrl);
+const {
+  fetchConversation,
+  selectConversation,
+  selectedConversation,
+  closeConversation,
+} = useConversation();
 
 // Send message handler
 const sendAdminMessage = async () => {
@@ -107,11 +108,6 @@ const loadConversationHistory = async (conversation: any) => {
   conversationId.value = conversation.id;
   localStorage.setItem("conversation_id", String(conversation.id));
 
-  if (!isConnected.value) {
-    await connect();
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-
   // Subscribe to conversation
   try {
     subscribe(conversation.id);
@@ -143,10 +139,7 @@ onMounted(async () => {
   // Initialize from localStorage
   initializeFromStorage();
 
-  // Connect to WebSocket
-  connect();
-
-  // Fetch initial conversations and show results
+  // Connection is handled by dashboard layout singleton
   isLoadingConversation.value = true;
   try {
     const resp = await fetchConversation();
@@ -167,8 +160,59 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  disconnect();
+  // no-op: connection lifecycle is managed by the dashboard layout singleton
 });
+
+// Close selected conversation (admin)
+const closeSelectedConversation = async () => {
+  if (!selectedConversation.value) return;
+  isLoadingConversation.value = true;
+
+  try {
+    // Unsubscribe websocket for this conversation to stop receiving messages
+    try {
+      unsubscribe(selectedConversation.value.id);
+    } catch (e) {
+      console.warn("unsubscribe failed", e);
+    }
+
+    // Call API to close conversation
+    const resp = await closeConversation(selectedConversation.value.id);
+
+    // If API returns updated conversation object, apply it
+    if (resp && (resp.data as any)) {
+      // update selectedConversation
+      selectedConversation.value = resp.data as any;
+
+      // update conversation list status (if present)
+      const idx = conversations.value.findIndex(
+        (c) => c.id === (resp.data as any).id
+      );
+      if (idx !== -1) {
+        conversations.value[idx] = {
+          ...(conversations.value[idx] || {}),
+          ...(resp.data as any),
+        };
+      }
+    } else {
+      // fallback: mark locally as closed
+      (selectedConversation.value as any).status = "closed";
+      const idx = conversations.value.findIndex(
+        (c) => c.id === selectedConversation.value!.id
+      );
+      if (idx !== -1) conversations.value[idx].status = "closed";
+    }
+
+    // Clear message state and conversation id so UI reflects closed conversation
+    messages.value = [];
+    conversationId.value = undefined;
+    localStorage.removeItem("conversation_id");
+  } catch (err) {
+    console.error("Failed to close conversation:", err);
+  } finally {
+    isLoadingConversation.value = false;
+  }
+};
 </script>
 
 <template>
@@ -370,6 +414,17 @@ onUnmounted(() => {
                   {{ selectedConversation.customerEmail }}
                 </p>
               </div>
+            </div>
+            <!-- Close button -->
+            <div class="ml-4">
+              <button
+                @click="closeSelectedConversation"
+                :disabled="isLoadingConversation"
+                class="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                title="Close conversation"
+              >
+                Close Conversation
+              </button>
             </div>
           </div>
         </div>
