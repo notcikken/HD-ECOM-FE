@@ -138,7 +138,9 @@ const loadConversationHistory = async (conversation: any) => {
 
   // Reset unread count for this conversation immediately
   const updatedConversation = { ...conversation, unreadCount: 0 };
-  const convIndex = conversations.value.findIndex(c => c.id === conversation.id);
+  const convIndex = conversations.value.findIndex(
+    (c) => c.id === conversation.id
+  );
   if (convIndex !== -1) {
     conversations.value[convIndex] = updatedConversation;
   }
@@ -146,7 +148,7 @@ const loadConversationHistory = async (conversation: any) => {
   // Update notification state to reset unread count
   updateNotificationFromWebSocket({
     conversation_id: conversation.id,
-    unread_count: 0
+    unread_count: 0,
   });
 
   // Subscribe to conversation
@@ -173,6 +175,25 @@ const loadConversationHistory = async (conversation: any) => {
 // Handle incoming WebSocket messages
 onMessage((data) => {
   const result = handleWebSocketMessage(data);
+
+  // Insert or update newly created conversation
+  if (result?.type === "conversation_created" && result.conversation) {
+    const newConv = result.conversation;
+    const idx = conversations.value.findIndex((c) => c.id === newConv.id);
+    if (idx === -1) {
+      // Add newest conversation to top
+      conversations.value.unshift(newConv);
+    } else {
+      conversations.value[idx] = {
+        ...(conversations.value[idx] || {}),
+        ...newConv,
+      };
+    }
+    // apply notification mapping so badges reflect unread counts
+    conversations.value = applyNotificationsToConversations(
+      conversations.value
+    );
+  }
 
   // Handle admin notifications to update unread counts
   if (result.type === "admin_notification") {

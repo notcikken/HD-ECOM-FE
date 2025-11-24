@@ -169,6 +169,40 @@ export const useMessage = () => {
       return { type: "admin_notification", notification };
     }
 
+    // New conversation created by backend (customer started chat)
+    if (data.type === "conversation_created") {
+      const payload = data.payload || {};
+      const convRaw = payload.conversation || {};
+      const adminState = payload.admin_state || {};
+      const customer = payload.customer || {};
+
+      const conv = {
+        id: convRaw.id,
+        customerName: customer.username || customer.name || "Customer",
+        customerEmail: customer.email || "",
+        lastMessage: convRaw.last_message_at ? "" : "", // no message text yet
+        lastMessageTime: convRaw.last_message_at
+          ? new Date(convRaw.last_message_at)
+          : new Date(),
+        isOnline: false,
+        unreadCount: adminState.unread_count ?? 0,
+        createdAt: convRaw.created_at
+          ? new Date(convRaw.created_at)
+          : new Date(),
+        updatedAt: convRaw.updated_at
+          ? new Date(convRaw.updated_at)
+          : new Date(),
+      };
+
+      // keep global notification state in sync
+      updateNotificationFromWebSocket({
+        conversation_id: conv.id,
+        unread_count: conv.unreadCount,
+      });
+
+      return { type: "conversation_created", conversation: conv, raw: payload };
+    }
+
     // Handle errors
     if (data.type === "error") {
       console.error("WebSocket error:", data);
