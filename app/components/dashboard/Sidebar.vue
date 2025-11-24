@@ -8,10 +8,19 @@ import {
   MessageCircle,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
+import { useNotification } from "~/composables/useNotification";
+import { computed } from "vue";
 
 const route = useRoute();
+const { notification } = useNotification();
 
-const menuItems = [
+// Return an array of conversations that have unread messages
+const totalUnreadConversations = computed(() => {
+  if (!notification.value || !Array.isArray(notification.value)) return [];
+  return notification.value.filter((n) => (n.unreadCount || 0) > 0);
+});
+
+const menuItems = computed(() => [
   {
     path: "/dashboard",
     label: "Dashboard",
@@ -34,9 +43,12 @@ const menuItems = [
     path: "/dashboard/chat",
     label: "Customer Chat",
     icon: MessageCircle,
-    badge: "3",
+    badge:
+      totalUnreadConversations.value.length > 0
+        ? String(totalUnreadConversations.value.length)
+        : null,
   },
-];
+]);
 
 const isActive = (path: string) => {
   if (path === "/dashboard") {
@@ -47,7 +59,7 @@ const isActive = (path: string) => {
 </script>
 
 <template>
-  <aside class="relativew-64 bg-white border-r border-gray-200 min-h-screen">
+  <aside class="relative w-64 bg-white border-r border-gray-200 min-h-screen">
     <div class="p-6">
       <div class="flex items-center space-x-3 mb-8">
         <div
@@ -78,6 +90,12 @@ const isActive = (path: string) => {
           <span
             v-if="item.badge"
             class="ml-auto bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full"
+            :class="
+              item.path === '/dashboard/chat' &&
+              totalUnreadConversations.length > 0
+                ? 'bg-red-100 text-red-700'
+                : ''
+            "
           >
             {{ item.badge }}
           </span>

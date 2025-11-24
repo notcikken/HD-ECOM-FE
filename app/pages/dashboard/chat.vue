@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // filepath: app/pages/dashboard/chat.vue
-import { ref, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { User, MessageCircle, Paperclip, Send } from "lucide-vue-next";
-import { useWebsocket } from "~/composables/useWebsocket";
+import { getWebsocket } from "~/composables/useWebsocket";
 import { formatTimeToString } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
+import { useNotification } from "~/composables/useNotification";
 
 definePageMeta({
   layout: "dashboard",
@@ -30,9 +31,35 @@ const {
   scrollToBottom,
   fetchMessagesHistory,
   createOptimisticMessage,
-  removeOptimisticMessage,
   conversationId,
 } = useMessage();
+
+const { notification, updateNotificationFromWebSocket } = useNotification();
+
+// helper to apply notification unread counts to conversation objects
+const applyNotificationsToConversations = (convs: any[]) => {
+  const notifs = Array.isArray(notification.value) ? notification.value : [];
+  return convs.map((c) => {
+    const match = notifs.find((n: any) => n.conversationId === c.id);
+    return {
+      ...c,
+      unreadCount: match ? match.unreadCount : c.unreadCount ?? 0,
+    };
+  });
+};
+
+// keep conversations in sync when notifications update
+watch(
+  notification,
+  () => {
+    if (conversations.value && conversations.value.length > 0) {
+      conversations.value = applyNotificationsToConversations(
+        conversations.value
+      );
+    }
+  },
+  { immediate: false }
+);
 
 // WebSocket setup
 const wsUrl = `${config.public.wsBase}/api/ws`;
@@ -40,14 +67,16 @@ const {
   isConnected,
   Message,
   onMessage,
-  connect,
-  disconnect,
   connectionError,
   subscribe,
   unsubscribe,
-} = useWebsocket(wsUrl);
-const { fetchConversation, selectConversation, selectedConversation } =
-  useConversation();
+} = getWebsocket(wsUrl);
+const {
+  fetchConversation,
+  selectConversation,
+  selectedConversation,
+  closeConversation,
+} = useConversation();
 
 // Send message handler
 const sendAdminMessage = async () => {
@@ -107,10 +136,20 @@ const loadConversationHistory = async (conversation: any) => {
   conversationId.value = conversation.id;
   localStorage.setItem("conversation_id", String(conversation.id));
 
-  if (!isConnected.value) {
-    await connect();
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  // Reset unread count for this conversation immediately
+  const updatedConversation = { ...conversation, unreadCount: 0 };
+  const convIndex = conversations.value.findIndex(
+    (c) => c.id === conversation.id
+  );
+  if (convIndex !== -1) {
+    conversations.value[convIndex] = updatedConversation;
   }
+
+  // Update notification state to reset unread count
+  updateNotificationFromWebSocket({
+    conversation_id: conversation.id,
+    unread_count: 0,
+  });
 
   // Subscribe to conversation
   try {
@@ -135,7 +174,37 @@ const loadConversationHistory = async (conversation: any) => {
 
 // Handle incoming WebSocket messages
 onMessage((data) => {
-  handleWebSocketMessage(data);
+  const result = handleWebSocketMessage(data);
+
+  // Insert or update newly created conversation
+  if (result?.type === "conversation_created" && result.conversation) {
+    const newConv = result.conversation;
+    const idx = conversations.value.findIndex((c) => c.id === newConv.id);
+    if (idx === -1) {
+      // Add newest conversation to top
+      conversations.value.unshift(newConv);
+    } else {
+      conversations.value[idx] = {
+        ...(conversations.value[idx] || {}),
+        ...newConv,
+      };
+    }
+    // apply notification mapping so badges reflect unread counts
+    conversations.value = applyNotificationsToConversations(
+      conversations.value
+    );
+  }
+
+  // Handle admin notifications to update unread counts
+  if (result.type === "admin_notification") {
+    // Update conversations list with new unread count
+    if (conversations.value && conversations.value.length > 0) {
+      conversations.value = applyNotificationsToConversations(
+        conversations.value
+      );
+    }
+  }
+
   nextTick(() => scrollToBottom());
 });
 
@@ -143,15 +212,13 @@ onMounted(async () => {
   // Initialize from localStorage
   initializeFromStorage();
 
-  // Connect to WebSocket
-  connect();
-
-  // Fetch initial conversations and show results
+  // Connection is handled by dashboard layout singleton
   isLoadingConversation.value = true;
   try {
     const resp = await fetchConversation();
     if (resp) {
-      conversations.value = resp;
+      // merge unread counts from notifications into each conversation
+      conversations.value = applyNotificationsToConversations(resp);
       // auto-select first conversation if none selected
       if (!selectedConversation.value && conversations.value.length > 0) {
         await loadConversationHistory(conversations.value[0]);
@@ -167,8 +234,59 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  disconnect();
+  // no-op: connection lifecycle is managed by the dashboard layout singleton
 });
+
+// Close selected conversation (admin)
+const closeSelectedConversation = async () => {
+  if (!selectedConversation.value) return;
+  isLoadingConversation.value = true;
+
+  try {
+    // Unsubscribe websocket for this conversation to stop receiving messages
+    try {
+      unsubscribe(selectedConversation.value.id);
+    } catch (e) {
+      console.warn("unsubscribe failed", e);
+    }
+
+    // Call API to close conversation
+    const resp = await closeConversation(selectedConversation.value.id);
+
+    // If API returns updated conversation object, apply it
+    if (resp && (resp.data as any)) {
+      // update selectedConversation
+      selectedConversation.value = resp.data as any;
+
+      // update conversation list status (if present)
+      const idx = conversations.value.findIndex(
+        (c) => c.id === (resp.data as any).id
+      );
+      if (idx !== -1) {
+        conversations.value[idx] = {
+          ...(conversations.value[idx] || {}),
+          ...(resp.data as any),
+        };
+      }
+    } else {
+      // fallback: mark locally as closed
+      (selectedConversation.value as any).status = "closed";
+      const idx = conversations.value.findIndex(
+        (c) => c.id === selectedConversation.value!.id
+      );
+      if (idx !== -1) conversations.value[idx].status = "closed";
+    }
+
+    // Clear message state and conversation id so UI reflects closed conversation
+    messages.value = [];
+    conversationId.value = undefined;
+    localStorage.removeItem("conversation_id");
+  } catch (err) {
+    console.error("Failed to close conversation:", err);
+  } finally {
+    isLoadingConversation.value = false;
+  }
+};
 </script>
 
 <template>
@@ -370,6 +488,17 @@ onUnmounted(() => {
                   {{ selectedConversation.customerEmail }}
                 </p>
               </div>
+            </div>
+            <!-- Close button -->
+            <div class="ml-4">
+              <button
+                @click="closeSelectedConversation"
+                :disabled="isLoadingConversation"
+                class="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                title="Close conversation"
+              >
+                Close Conversation
+              </button>
             </div>
           </div>
         </div>

@@ -21,3 +21,21 @@ export const createConversation = async (token: string) => {
     throw error;
   }
 };
+
+export const closeConversation = async (
+  token: string,
+  conversationId: number
+) => {
+  try {
+    return await apiPost(
+      `/api/conversations/${conversationId}/close`,
+      undefined,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      }
+    );
+  } catch (error) {
+    console.error("Error closing conversation:", error, token, conversationId);
+    throw error;
+  }
+};

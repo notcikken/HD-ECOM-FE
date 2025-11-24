@@ -2,6 +2,7 @@ import { ref } from "vue";
 import {
   getConversation,
   createConversation,
+  closeConversation as closeConversationService,
 } from "~/services/conversationService";
 import type { Conversation } from "~/types/conversation";
 import { useCookie } from "#imports";
@@ -45,6 +46,15 @@ export const useConversation = () => {
     }
   };
 
+  const closeConversation = async (conversationId: number) => {
+    try {
+      const resp = await closeConversationService(token.value, conversationId);
+      return resp;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   // Set or clear the currently selected conversation
   const selectConversation = (conversation: Conversation | null) => {
     selectedConversation.value = conversation;
@@ -56,6 +66,7 @@ export const useConversation = () => {
     startConversation,
     selectedConversation,
     selectConversation,
+    closeConversation,
 
     conversations,
   };

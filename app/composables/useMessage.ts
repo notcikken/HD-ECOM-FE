@@ -3,6 +3,7 @@ import type { UserMessage } from "~/types/message";
 import { formatTimeToDate } from "~/utils/formatTime";
 import { getMessagesHistory } from "~/services/messageService";
 import { useCookie } from "#imports";
+import { useNotification } from "~/composables/useNotification";
 
 export const useMessage = () => {
   const messages = ref<UserMessage[]>([]);
@@ -12,10 +13,10 @@ export const useMessage = () => {
   const messagesContainer = ref<HTMLElement | null>(null);
 
   const token = useCookie<string>("auth-token");
+  const { updateNotificationFromWebSocket } = useNotification();
 
   // Helper: Check if message is from current user
   const isMessageFromCurrentUser = (msg: UserMessage): boolean => {
-    console.log();
     if (msg.senderId && currentUserId.value) {
       return msg.senderId === currentUserId.value;
     }
@@ -120,9 +121,19 @@ export const useMessage = () => {
     }
 
     if (data.type === "subscribed") {
+      const conversationId = data.payload.conversation_id;
+
+      // Reset unread count when successfully subscribed
+      if (conversationId) {
+        updateNotificationFromWebSocket({
+          conversation_id: conversationId,
+          unread_count: 0,
+        });
+      }
+
       return {
         type: "subscribed",
-        conversationId: data.payload.conversation_id,
+        conversationId: conversationId,
       };
     }
 
@@ -143,6 +154,53 @@ export const useMessage = () => {
 
       addMessage(newMsg);
       return { type: "new_message", message: newMsg };
+    }
+
+    if (data.type === "unsubscribed") {
+      return { type: "unsubscribed" };
+    }
+
+    if (data.type === "admin_notification") {
+      const notification = data.payload;
+
+      // Update global notification state
+      updateNotificationFromWebSocket(notification);
+
+      return { type: "admin_notification", notification };
+    }
+
+    // New conversation created by backend (customer started chat)
+    if (data.type === "conversation_created") {
+      const payload = data.payload || {};
+      const convRaw = payload.conversation || {};
+      const adminState = payload.admin_state || {};
+      const customer = payload.customer || {};
+
+      const conv = {
+        id: convRaw.id,
+        customerName: customer.username || customer.name || "Customer",
+        customerEmail: customer.email || "",
+        lastMessage: convRaw.last_message_at ? "" : "", // no message text yet
+        lastMessageTime: convRaw.last_message_at
+          ? new Date(convRaw.last_message_at)
+          : new Date(),
+        isOnline: false,
+        unreadCount: adminState.unread_count ?? 0,
+        createdAt: convRaw.created_at
+          ? new Date(convRaw.created_at)
+          : new Date(),
+        updatedAt: convRaw.updated_at
+          ? new Date(convRaw.updated_at)
+          : new Date(),
+      };
+
+      // keep global notification state in sync
+      updateNotificationFromWebSocket({
+        conversation_id: conv.id,
+        unread_count: conv.unreadCount,
+      });
+
+      return { type: "conversation_created", conversation: conv, raw: payload };
     }
 
     // Handle errors

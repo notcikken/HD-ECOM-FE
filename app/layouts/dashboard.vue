@@ -1,3 +1,37 @@
+<script setup lang="ts">
+import Sidebar from "~/components/dashboard/Sidebar.vue";
+import { onMounted, onUnmounted } from "vue";
+import { getWebsocket } from "~/composables/useWebsocket";
+import { useNotification } from "~/composables/useNotification";
+
+const config = useRuntimeConfig();
+const wsUrl = `${config.public.wsBase}/api/ws`;
+
+const { fetchNotification, notification, updateNotificationFromWebSocket } =
+  useNotification();
+const ws = getWebsocket(wsUrl);
+
+onMounted(() => {
+  // connect early so pages/components can reuse the same socket
+  ws.connect();
+  fetchNotification();
+
+  // Listen for admin notifications globally
+  ws.onMessage((data) => {
+    if (data.type === "admin_notification") {
+      updateNotificationFromWebSocket(data.payload);
+    }
+  });
+
+  console.log("Notification", notification.value);
+});
+
+onUnmounted(() => {
+  // disconnect when leaving dashboard layout
+  ws.disconnect();
+});
+</script>
+
 <template>
   <div class="flex h-screen bg-gray-50 overflow-hidden">
     <Sidebar />
@@ -8,7 +42,3 @@
     </main>
   </div>
 </template>
-
-<script setup lang="ts">
-import Sidebar from "~/components/dashboard/Sidebar.vue";
-</script>
