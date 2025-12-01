@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Inbox } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
+import { getCategoryLabel } from "~/utils/convertTicket";
 
 interface Props {
   tickets: Ticket[];
@@ -143,7 +144,7 @@ const handleViewTicket = (ticket: Ticket) => {
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">
-                {{ ticket.category }}
+                {{ getCategoryLabel(ticket.id_category) }}
               </td>
               <td class="px-6 py-4">
                 <span
