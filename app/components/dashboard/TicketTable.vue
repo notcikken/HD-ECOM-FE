@@ -120,20 +120,15 @@ const handleViewTicket = (ticket: Ticket) => {
               class="hover:bg-gray-50 transition-colors"
             >
               <td class="px-6 py-4 text-sm font-medium text-gray-800">
-                {{ ticket.id }}
+                {{ ticket.kode_tiket }}
               </td>
               <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-800">
-                  {{ ticket.title }}
+                  {{ ticket.judul }}
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
-                  <!-- <div
-                    class="w-8 h-8 bg-linear-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shrink-0"
-                  >
-                    <User class="w-4 h-4 text-white" />
-                  </div> -->
                   <span class="text-sm font-medium text-gray-800">
                     {{ ticket.createdBy || "Unknown" }}
                   </span>

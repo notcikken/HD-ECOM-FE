@@ -4,7 +4,8 @@ export type TicketRole = "pelanggan" | "penjual";
 
 export interface Ticket {
   id: string;
-  title: string;
+  kode_tiket: string;
+  judul: string;
   description: string;
   status: TicketStatus;
   priority: TicketPriority | null; // null untuk status open

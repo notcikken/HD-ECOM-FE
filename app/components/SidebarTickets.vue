@@ -66,7 +66,10 @@ function statusClass(status?: string) {
   <aside class="mt-6 max-w-7xl bg-white rounded-2xl p-4 border border-gray-100">
     <div class="flex items-center mb-4">
       <h1 class="font-semibold text-gray-800">Daftar Tiket Saya</h1>
-      <span class="text-sm text-[#F79E0E] ml-3 py-1.5 px-3 bg-[#F79E0E]/10 rounded-full">{{ tickets.length }}</span>
+      <span
+        class="text-sm text-[#F79E0E] ml-3 py-1.5 px-3 bg-[#F79E0E]/10 rounded-full"
+        >{{ tickets.length }}</span
+      >
     </div>
 
     <div v-if="!tickets.length" class="text-sm text-gray-500">
@@ -76,7 +79,7 @@ function statusClass(status?: string) {
     <ul class="space-y-3">
       <li
         v-for="(t, i) in tickets"
-        :key="t.id || `${t.title}-${i}`"
+        :key="t.id || `${t.judul}-${i}`"
         class="p-3 rounded-lg border border-gray-50 hover:bg-gray-50 transition"
       >
         <button
@@ -89,7 +92,7 @@ function statusClass(status?: string) {
             <div class="flex items-center justify-between gap-3">
               <div class="truncate">
                 <div class="text-sm font-medium text-gray-800 truncate">
-                  {{ t.title }}
+                  {{ t.judul }}
                 </div>
                 <div class="text-xs text-gray-500 truncate">
                   {{ t.category }}
@@ -146,16 +149,16 @@ function statusClass(status?: string) {
                       target="_blank"
                       rel="noopener"
                     >
-                      <SquareArrowOutUpRight class="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      <SquareArrowOutUpRight
+                        class="w-4 h-4 text-gray-400 hover:text-gray-600"
+                      />
                     </a>
                   </li>
                 </ul>
               </div>
               <!-- Response/Message Admin -->
               <div class="mt-4 p-3 bg-[#F79E0E]/10 rounded">
-                <div class="text-sm font-medium text-[#F79E0E]">
-                  Balasan:
-                </div>
+                <div class="text-sm font-medium text-[#F79E0E]">Balasan:</div>
                 <div class="text-sm text-[#F79E0E]">
                   Terima kasih telah menghubungi kami. Kami akan segera meninjau
                   masalah Anda dan memberikan solusi secepatnya.
