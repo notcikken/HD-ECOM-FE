@@ -7,6 +7,7 @@ export interface Ticket {
   kode_tiket: string;
   judul: string;
   description: string;
+  id_status: number;
   status: TicketStatus;
   priority: TicketPriority | null; // null untuk status open
   role: TicketRole;
