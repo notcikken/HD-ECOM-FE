@@ -155,7 +155,7 @@ const handleViewTicket = (ticket: Ticket) => {
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">
-                {{ formatDate(ticket.createdAt) }}
+                {{ formatDate(ticket.tanggal_dibuat) }}
               </td>
               <td class="px-6 py-4">
                 <button
