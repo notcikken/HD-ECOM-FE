@@ -189,7 +189,26 @@ const displayedQuestions = computed(() => {
         class="w-full outline-none text-gray-700 placeholder-gray-500"
         @focus="isFocused = true"
         @blur="handleBlur"
-      >
+      />
+    </div>
+
+    <!-- mobile: show subtopics as horizontal list -->
+    <div class="lg:hidden mt-4 mb-2">
+      <div class="overflow-x-auto">
+        <div class="flex gap-3">
+          <button
+            v-for="s in currentTopic.subtopics"
+            :key="s.slug"
+            :class="[
+              'whitespace-nowrap px-4 py-2 mb-1 rounded',
+              selectedSubtopic === s.slug ? 'bg-[#FFF1C1]' : 'bg-white',
+            ]"
+            @click="selectSubtopic(s.slug)"
+          >
+            {{ s.title }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="flex gap-8">
@@ -240,7 +259,11 @@ const displayedQuestions = computed(() => {
           class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
           <!-- Accordion list -->
-          <div v-for="q in displayedQuestions" :key="q.id" class="px-6 py-2 hover:bg-white/40">
+          <div
+            v-for="q in displayedQuestions"
+            :key="q.id"
+            class="px-6 py-2 hover:bg-white/40"
+          >
             <button
               type="button"
               :aria-expanded="openQuestion === q.id"
@@ -279,25 +302,6 @@ const displayedQuestions = computed(() => {
           Tidak ada pertanyaan untuk topik / subtopik ini.
         </div>
       </main>
-    </div>
-
-    <!-- mobile: show subtopics as horizontal list -->
-    <div class="lg:hidden mt-6">
-      <div class="overflow-x-auto">
-        <div class="flex gap-3">
-          <button
-            v-for="s in currentTopic.subtopics"
-            :key="s.slug"
-            :class="[
-              'whitespace-nowrap px-4 py-2 rounded',
-              selectedSubtopic === s.slug ? 'bg-yellow-200' : 'bg-gray-100',
-            ]"
-            @click="selectSubtopic(s.slug)"
-          >
-            {{ s.title }}
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>

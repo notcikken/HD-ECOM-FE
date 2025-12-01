@@ -59,11 +59,11 @@ const logout = () => {
         <div class="flex items-center space-x-4">
           <RouterLink to="/contact-support"
             ><button
-              class="inline-flex items-center space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
+              class="inline-flex items-center lg:space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200/50 focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
               aria-label="Kirim pesan bantuan"
             >
               <Mail class="w-4 h-4" />
-              <span>Pesan Bantuan</span>
+              <span class="hidden lg:inline">Pesan Bantuan</span>
             </button>
           </RouterLink>
 
@@ -120,7 +120,7 @@ const logout = () => {
           <!-- Login Link if not authenticated -->
           <NuxtLink v-else to="/login">
             <button
-              class="w-9 h-9 bg-gray-800 hover:bg-gray-700 cursor-pointer text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
+              class="w-9 h-9 bg-white hover:bg-gray-700 cursor-pointer text-gray-700 font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
               aria-label="Menu profil pengguna"
             >
               <User class="w-4 h-4" />
