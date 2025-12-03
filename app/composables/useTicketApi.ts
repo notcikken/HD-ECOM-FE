@@ -21,6 +21,16 @@ interface TicketCategory {
   nama_category: string;
 }
 
+interface TicketAttachment {
+  attachment: {
+    id_attachment: number;
+    id_ticket: number;
+    file_path: string;
+    uploaded_at: string;
+  };
+  download_url: string;
+}
+
 export const useTicketApi = () => {
   const fetchTickets = async (
     filters?: TicketFilters
@@ -86,6 +96,25 @@ export const useTicketApi = () => {
         success: false,
         data: [],
         message: error?.message || "Failed to fetch ticket categories",
+      };
+    }
+  };
+
+  /**
+   * Fetch current user's tickets
+   */
+  const fetchMyTickets = async (): Promise<ApiResponse<Ticket[]>> => {
+    try {
+      const data = await ticketService.fetchMyTickets();
+      return {
+        success: true,
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error?.message || "Failed to fetch your tickets",
       };
     }
   };
@@ -213,11 +242,34 @@ export const useTicketApi = () => {
     }
   };
 
+  /**
+   * Fetch ticket attachments
+   */
+  const fetchTicketAttachments = async (
+    ticketId: number
+  ): Promise<ApiResponse<TicketAttachment[]>> => {
+    try {
+      const data = await ticketService.fetchTicketAttachments(ticketId);
+      return {
+        success: true,
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error?.message || "Failed to fetch ticket attachments",
+      };
+    }
+  };
+
   return {
     fetchTickets,
     fetchTicketById,
     fetchTicketStats,
     fetchTicketCategories,
+    fetchMyTickets,
+    fetchTicketAttachments,
     createTicket,
     updateTicket,
     deleteTicket,

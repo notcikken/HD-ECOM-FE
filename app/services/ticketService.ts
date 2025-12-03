@@ -23,6 +23,16 @@ interface TicketCategory {
   nama_category: string;
 }
 
+interface TicketAttachment {
+  attachment: {
+    id_attachment: number;
+    id_ticket: number;
+    file_path: string;
+    uploaded_at: string;
+  };
+  download_url: string;
+}
+
 export const ticketService = {
   /**
    * Fetch tickets with optional filters
@@ -73,6 +83,26 @@ export const ticketService = {
     );
 
     return "data" in response ? response.data : response;
+  },
+
+  /**
+   * Fetch current user's tickets
+   */
+  async fetchMyTickets(): Promise<Ticket[]> {
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+
+    const response = await $fetch<{ data: Ticket[] } | Ticket[]>(
+      `${config.public.apiBase}/api/tickets/my-tickets`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      }
+    );
+
+    return Array.isArray(response) ? response : response.data;
   },
 
   /**
@@ -261,6 +291,26 @@ export const ticketService = {
     const response = await $fetch<{ data: TicketCategory[] } | TicketCategory[]>(
       `${config.public.apiBase}/api/ticket-categories`,
       { method: "GET" }
+    );
+
+    return Array.isArray(response) ? response : response.data;
+  },
+
+  /**
+   * Fetch ticket attachments by ticket ID
+   */
+  async fetchTicketAttachments(ticketId: number): Promise<TicketAttachment[]> {
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+
+    const response = await $fetch<{ data: TicketAttachment[] } | TicketAttachment[]>(
+      `${config.public.apiBase}/api/ticket-attachments/ticket/${ticketId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      }
     );
 
     return Array.isArray(response) ? response : response.data;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { ticketService } from '~/services/ticketService';
+import { useTicketApi } from '~/composables/useTicketApi';
 import SidebarTickets from '~/components/SidebarTickets.vue';
 import type { Ticket } from '~/types/ticket';
 import {
@@ -19,6 +20,8 @@ import {
 
 definePageMeta({ title: 'Contact Support', layout: 'default' });
 
+const { fetchMyTickets } = useTicketApi();
+
 const title = ref('');
 const description = ref('');
 const category = ref(''); // This will store the category ID
@@ -34,17 +37,13 @@ const MAX_FILES = 3;
 
 const categories = ref<{id_category: number; nama_category: string}[]>([]);
 const categoriesLoading = ref(false);
-const categoriesLoaded = ref(false);
 
-// Updated to use ticketService
-const fetchCategoriesOnClick = async () => {
-  if (categoriesLoaded.value || categoriesLoading.value) return;
-  
+// Fetch categories on page load
+const fetchCategories = async () => {
   categoriesLoading.value = true;
   try {
     const response = await ticketService.fetchTicketCategories();
     categories.value = response;
-    categoriesLoaded.value = true;
   } catch (error) {
     console.error('Failed to load categories:', error);
     // Fallback to hardcoded categories if API fails
@@ -56,11 +55,37 @@ const fetchCategoriesOnClick = async () => {
       { id_category: 6, nama_category: 'Teknis Aplikasi' },
       { id_category: 7, nama_category: 'Produk' },
     ];
-    categoriesLoaded.value = true;
   } finally {
     categoriesLoading.value = false;
   }
 };
+
+// add userTickets state
+const userTickets = ref<Ticket[]>([]); // array of Ticket, bisa diisi dari API onMounted
+const ticketsLoading = ref(false);
+
+// Fetch user's tickets
+const loadUserTickets = async () => {
+  ticketsLoading.value = true;
+  try {
+    const response = await fetchMyTickets();
+    if (response.success) {
+      userTickets.value = response.data;
+    } else {
+      console.error('Failed to load user tickets:', response.message);
+    }
+  } catch (error) {
+    console.error('Error loading user tickets:', error);
+  } finally {
+    ticketsLoading.value = false;
+  }
+};
+
+// Load categories and tickets when component mounts
+onMounted(() => {
+  fetchCategories();
+  loadUserTickets();
+});
 
 const handleFileChange = (e: Event) => {
   const files = Array.from((e.target as HTMLInputElement).files || []);
@@ -125,6 +150,9 @@ const submitForm = async () => {
     }
     
     resetForm();
+    
+    // Reload user tickets after successful submission
+    await loadUserTickets();
   } catch (err) {
     console.error(err);
     error.value = 'Terjadi kesalahan saat mengirim pesan.';
@@ -133,13 +161,34 @@ const submitForm = async () => {
   }
 };
 
-// add userTickets state
-const userTickets = ref<Ticket[]>([]); // array of Ticket, bisa diisi dari API onMounted
-
-function handleDeleteTicket(ticket: Ticket): void {
-  // hapus via API lalu update userTickets
-  userTickets.value = userTickets.value.filter((t) => t.id !== ticket.id);
-}
+// Group tickets by category
+const ticketsByCategory = computed(() => {
+  const grouped = new Map<string, Ticket[]>();
+  
+  // Create a map of category ID to category name
+  const categoryMap = new Map(
+    categories.value.map(cat => [cat.id_category, cat.nama_category])
+  );
+  
+  userTickets.value.forEach(ticket => {
+    // Get category name from the ticket's id_category
+    const categoryName = categoryMap.get(ticket.id_category) || 'Uncategorized';
+    
+    if (!grouped.has(categoryName)) {
+      grouped.set(categoryName, []);
+    }
+    grouped.get(categoryName)!.push(ticket);
+  });
+  
+  // Sort by category name
+  return Array.from(grouped.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([category, tickets]) => ({
+      category,
+      tickets,
+      count: tickets.length
+    }));
+});
 </script>
 
 <template>
@@ -241,8 +290,12 @@ function handleDeleteTicket(ticket: Ticket): void {
                 </div>
               </div>
             </div>
+            <!-- User Tickets Sidebar -->
             <SidebarTickets
               class="mt-6"
+              :initial-tickets="userTickets"
+              :tickets-by-category="ticketsByCategory"
+              :loading="ticketsLoading"
             />
           </div>
         </div>
@@ -287,22 +340,19 @@ function handleDeleteTicket(ticket: Ticket): void {
                 <select
                   v-model="category"
                   required
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] transition"
-                  @click="fetchCategoriesOnClick"
+                  :disabled="categoriesLoading"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Pilih Kategori</option>
-                  <template v-if="categoriesLoading">
-                    <option disabled>Loading categories...</option>
-                  </template>
-                  <template v-else>
-                    <option 
-                      v-for="c in categories" 
-                      :key="c.id_category" 
-                      :value="c.id_category"
-                    >
-                      {{ c.nama_category }}
-                    </option>
-                  </template>
+                  <option value="">
+                    {{ categoriesLoading ? 'Loading categories...' : 'Pilih Kategori' }}
+                  </option>
+                  <option 
+                    v-for="c in categories" 
+                    :key="c.id_category" 
+                    :value="c.id_category"
+                  >
+                    {{ c.nama_category }}
+                  </option>
                 </select>
               </div>
 
