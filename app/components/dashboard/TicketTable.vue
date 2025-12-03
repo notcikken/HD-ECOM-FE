@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Inbox } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
+import {
+  getCategoryLabel,
+  getStatusLabel,
+  getStatusBadgeClass,
+  getRoleBadgeClass,
+} from "~/utils/convertTicket";
 
 interface Props {
   tickets: Ticket[];
@@ -14,30 +20,6 @@ withDefaults(defineProps<Props>(), {
 });
 
 const router = useRouter();
-
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    open: "bg-blue-100 text-blue-700",
-    "in-progress": "bg-yellow-100 text-yellow-700",
-    resolved: "bg-green-100 text-green-700",
-  };
-  return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
-};
-
-const getRoleBadgeClass = (role: string) => {
-  return role === "pelanggan"
-    ? "bg-purple-100 text-purple-700"
-    : "bg-indigo-100 text-indigo-700";
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: "Open",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-  };
-  return labels[status as keyof typeof labels] || status;
-};
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString("id-ID", {
@@ -120,20 +102,15 @@ const handleViewTicket = (ticket: Ticket) => {
               class="hover:bg-gray-50 transition-colors"
             >
               <td class="px-6 py-4 text-sm font-medium text-gray-800">
-                {{ ticket.id }}
+                {{ ticket.kode_tiket }}
               </td>
               <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-800">
-                  {{ ticket.title }}
+                  {{ ticket.judul }}
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
-                  <!-- <div
-                    class="w-8 h-8 bg-linear-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shrink-0"
-                  >
-                    <User class="w-4 h-4 text-white" />
-                  </div> -->
                   <span class="text-sm font-medium text-gray-800">
                     {{ ticket.createdBy || "Unknown" }}
                   </span>
@@ -148,18 +125,18 @@ const handleViewTicket = (ticket: Ticket) => {
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">
-                {{ ticket.category }}
+                {{ getCategoryLabel(ticket.id_category) }}
               </td>
               <td class="px-6 py-4">
                 <span
                   class="px-3 py-1 rounded-full text-xs font-semibold"
-                  :class="getStatusBadgeClass(ticket.status)"
+                  :class="getStatusBadgeClass(getStatusLabel(ticket.id_status))"
                 >
-                  {{ getStatusLabel(ticket.status) }}
+                  {{ getStatusLabel(ticket.id_status) }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">
-                {{ formatDate(ticket.createdAt) }}
+                {{ formatDate(ticket.tanggal_dibuat) }}
               </td>
               <td class="px-6 py-4">
                 <button
