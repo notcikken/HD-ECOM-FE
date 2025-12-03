@@ -16,6 +16,11 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+interface TicketCategory {
+  id_category: number;
+  nama_category: string;
+}
+
 export const useTicketApi = () => {
   const fetchTickets = async (
     filters?: TicketFilters
@@ -69,11 +74,43 @@ export const useTicketApi = () => {
     }
   };
 
+  const fetchTicketCategories = async (): Promise<ApiResponse<TicketCategory[]>> => {
+    try {
+      const data = await ticketService.fetchTicketCategories();
+      return {
+        success: true,
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        message: error?.message || "Failed to fetch ticket categories",
+      };
+    }
+  };
+
   const createTicket = async (
-    ticket: Omit<Ticket, "id" | "createdAt" | "updatedAt">
+    ticket: any // Changed to any to accommodate the new payload structure
   ): Promise<ApiResponse<Ticket>> => {
     try {
-      const data = await ticketService.createTicket(ticket);
+      const config = useRuntimeConfig();
+      const { token } = useAuth();
+
+      const response = await $fetch<{ data: Ticket } | Ticket>(
+        `${config.public.apiBase}/api/tickets`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token.value}`,
+            "Content-Type": "application/json"
+          },
+          body: ticket,
+        }
+      );
+
+      const data = "data" in response ? response.data : response;
+
       return {
         success: true,
         data,
@@ -180,6 +217,7 @@ export const useTicketApi = () => {
     fetchTickets,
     fetchTicketById,
     fetchTicketStats,
+    fetchTicketCategories,
     createTicket,
     updateTicket,
     deleteTicket,

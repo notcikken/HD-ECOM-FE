@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useTicketApi } from '~/composables/useTicketApi';
+import { ticketService } from '~/services/ticketService';
 import SidebarTickets from '~/components/SidebarTickets.vue';
 import type { Ticket } from '~/types/ticket';
 import {
@@ -18,12 +18,10 @@ import {
 } from 'lucide-vue-next';
 
 definePageMeta({ title: 'Contact Support', layout: 'default' });
-const { createTicket } = useTicketApi();
 
 const title = ref('');
 const description = ref('');
-const category = ref('');
-const priority = ref<'low' | 'medium' | 'high' | 'urgent'>('medium');
+const category = ref(''); // This will store the category ID
 const attachments = ref<File[]>([]);
 const attachmentError = ref<string | null>(null);
 
@@ -34,14 +32,35 @@ const success = ref<string | null>(null);
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 const MAX_FILES = 3;
 
-const categories = [
-  'Akun & Keamanan',
-  'Pembayaran',
-  'Pengiriman',
-  'Pengembalian',
-  'Teknis Aplikasi',
-  'Produk',
-];
+const categories = ref<{id_category: number; nama_category: string}[]>([]);
+const categoriesLoading = ref(false);
+const categoriesLoaded = ref(false);
+
+// Updated to use ticketService
+const fetchCategoriesOnClick = async () => {
+  if (categoriesLoaded.value || categoriesLoading.value) return;
+  
+  categoriesLoading.value = true;
+  try {
+    const response = await ticketService.fetchTicketCategories();
+    categories.value = response;
+    categoriesLoaded.value = true;
+  } catch (error) {
+    console.error('Failed to load categories:', error);
+    // Fallback to hardcoded categories if API fails
+    categories.value = [
+      { id_category: 1, nama_category: 'Akun & Keamanan' },
+      { id_category: 2, nama_category: 'Pembayaran' },
+      { id_category: 3, nama_category: 'Pengiriman' },
+      { id_category: 4, nama_category: 'Pengembalian' },
+      { id_category: 6, nama_category: 'Teknis Aplikasi' },
+      { id_category: 7, nama_category: 'Produk' },
+    ];
+    categoriesLoaded.value = true;
+  } finally {
+    categoriesLoading.value = false;
+  }
+};
 
 const handleFileChange = (e: Event) => {
   const files = Array.from((e.target as HTMLInputElement).files || []);
@@ -67,7 +86,6 @@ const resetForm = () => {
   title.value = '';
   description.value = '';
   category.value = '';
-  priority.value = 'medium';
   attachments.value = [];
   attachmentError.value = null;
   error.value = null;
@@ -87,37 +105,26 @@ const submitForm = async () => {
   loading.value = true;
 
   try {
-    if (attachments.value.length > 0) {
-      console.log(
-        'Attachments selected:',
-        attachments.value.map((f) => `${f.name} (${f.type})`).join(', ')
-      );
-    }
-
-    const payload: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'> = {
-      title: title.value,
-      description:
-        description.value +
-        (attachments.value.length > 0
-          ? `\n\nAttachments: ${attachments.value
-              .map((f) => f.name)
-              .join(', ')}`
-          : ''),
-      category: category.value,
-      status: 'open',
-      priority: priority.value,
-      role: 'pelanggan',
-      assignedTo: undefined,
+    // Prepare ticket payload
+    const payload = {
+      judul: title.value,
+      deskripsi: description.value,
+      id_category: parseInt(category.value),
     };
 
-    const res = await createTicket(payload);
+    // Create ticket with attachments
+    const ticket = await ticketService.createTicketWithAttachments(
+      payload,
+      attachments.value
+    );
 
-    if (res.success) {
-      success.value = 'Pesan berhasil dikirim. Terima kasih.';
-      resetForm();
+    if (attachments.value.length > 0) {
+      success.value = `Pesan berhasil dikirim dengan ${attachments.value.length} file lampiran. Terima kasih.`;
     } else {
-      error.value = res.message || 'Gagal mengirim pesan.';
+      success.value = 'Pesan berhasil dikirim. Terima kasih.';
     }
+    
+    resetForm();
   } catch (err) {
     console.error(err);
     error.value = 'Terjadi kesalahan saat mengirim pesan.';
@@ -281,11 +288,21 @@ function handleDeleteTicket(ticket: Ticket): void {
                   v-model="category"
                   required
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F79E0E] focus:border-[#F79E0E] transition"
+                  @click="fetchCategoriesOnClick"
                 >
                   <option value="">Pilih Kategori</option>
-                  <option v-for="c in categories" :key="c" :value="c">
-                    {{ c }}
-                  </option>
+                  <template v-if="categoriesLoading">
+                    <option disabled>Loading categories...</option>
+                  </template>
+                  <template v-else>
+                    <option 
+                      v-for="c in categories" 
+                      :key="c.id_category" 
+                      :value="c.id_category"
+                    >
+                      {{ c.nama_category }}
+                    </option>
+                  </template>
                 </select>
               </div>
 

@@ -18,6 +18,11 @@ interface TicketStats {
   low: number;
 }
 
+interface TicketCategory {
+  id_category: number;
+  nama_category: string;
+}
+
 export const ticketService = {
   /**
    * Fetch tickets with optional filters
@@ -74,18 +79,113 @@ export const ticketService = {
    * Create new ticket
    */
   async createTicket(
-    ticket: Omit<Ticket, "id" | "createdAt" | "updatedAt">
-  ): Promise<Ticket> {
+    ticket: {
+      judul: string;
+      deskripsi: string;
+      id_category: number;
+    }
+  ): Promise<any> {
     const config = useRuntimeConfig();
-    const response = await $fetch<{ data: Ticket } | Ticket>(
+
+    // Get the auth token from your auth composable
+    const { token } = useAuth();
+
+    const response = await $fetch<{
+      status: number;
+      message: string;
+      data: {
+        id_ticket: number;
+        kode_tiket: string;
+        id_user: number;
+        judul: string;
+        deskripsi: string;
+        id_category: number;
+        id_priority: number;
+        id_status: number;
+        tipe_pengaduan: string;
+        tanggal_dibuat: string;
+        tanggal_diperbarui: string;
+      };
+    }>(
       `${config.public.apiBase}/api/tickets`,
       {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token.value}`,
+          "Content-Type": "application/json"
+        },
         body: ticket,
       }
     );
 
-    return "data" in response ? response.data : response;
+    return response.data;
+  },
+
+  /**
+   * Upload attachments for a ticket
+   */
+  async uploadTicketAttachments(
+    ticketId: number,
+    files: File[]
+  ): Promise<any> {
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+
+    // Upload each file separately since the API might expect one file per request
+    const results = [];
+    
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("id_ticket", ticketId.toString());
+      formData.append("file", file);
+
+      try {
+        const response = await $fetch(
+          `${config.public.apiBase}/api/ticket-attachments`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token.value}`,
+            },
+            body: formData,
+          }
+        );
+        results.push(response);
+      } catch (error) {
+        console.error(`Failed to upload file ${file.name}:`, error);
+        throw error;
+      }
+    }
+
+    return results;
+  },
+
+  /**
+   * Create ticket with attachments
+   */
+  async createTicketWithAttachments(
+    ticketData: {
+      judul: string;
+      deskripsi: string;
+      id_category: number;
+    },
+    attachments: File[] = []
+  ): Promise<any> {
+    // First create the ticket
+    const ticket = await this.createTicket(ticketData);
+    
+    // Then upload attachments if any
+    if (attachments.length > 0 && ticket.id_ticket) {
+      try {
+        await this.uploadTicketAttachments(ticket.id_ticket, attachments);
+      } catch (error) {
+        console.error('Failed to upload attachments:', error);
+        // Re-throw the error so the UI can handle it appropriately
+        throw new Error(`Ticket created but failed to upload attachments: ${error.message}`);
+      }
+    }
+    
+    return ticket;
   },
 
   /**
@@ -151,5 +251,18 @@ export const ticketService = {
     );
 
     return "data" in response ? response.data : response;
+  },
+
+  /**
+   * Fetch ticket categories
+   */
+  async fetchTicketCategories(): Promise<TicketCategory[]> {
+    const config = useRuntimeConfig();
+    const response = await $fetch<{ data: TicketCategory[] } | TicketCategory[]>(
+      `${config.public.apiBase}/api/ticket-categories`,
+      { method: "GET" }
+    );
+
+    return Array.isArray(response) ? response : response.data;
   },
 };
