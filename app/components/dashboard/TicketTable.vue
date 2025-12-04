@@ -32,7 +32,7 @@ const formatDate = (date: string) => {
 };
 
 const handleViewTicket = (ticket: Ticket) => {
-  const route = `/dashboard/${ticket.role}/${ticket.id}`;
+  const route = `/dashboard/${ticket.tipe_pengaduan}/${ticket.id_ticket}`;
   router.push(route);
 };
 </script>
