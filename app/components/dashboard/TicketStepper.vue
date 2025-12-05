@@ -32,7 +32,7 @@ const ticketSteps = computed(() => {
       description: "Tiket dibuat dan menunggu penugasan",
       timestamp: props.ticket.tanggal_dibuat,
       isCompleted: true,
-      isCurrent: props.ticket.status === "open",
+      isCurrent: props.ticket.id_status === 1,
     },
     {
       id: 2,
@@ -43,8 +43,8 @@ const ticketSteps = computed(() => {
         ? `Ditangani oleh ${props.ticket.assignedTo}`
         : "Menunggu admin ditugaskan",
       timestamp: props.ticket.assignedTo ? props.ticket.updatedAt : null,
-      isCompleted: ["in-progress", "resolved"].includes(props.ticket.status),
-      isCurrent: props.ticket.status === "in-progress",
+      isCompleted: [2, 3].includes(props.ticket.id_status),
+      isCurrent: props.ticket.id_status === 2,
     },
     {
       id: 3,
@@ -53,8 +53,8 @@ const ticketSteps = computed(() => {
       icon: CheckCircle,
       description: "Masalah diselesaikan",
       timestamp: props.ticket.resolvedAt || null,
-      isCompleted: props.ticket.status === "resolved",
-      isCurrent: props.ticket.status === "resolved",
+      isCompleted: props.ticket.id_status === 3,
+      isCurrent: props.ticket.id_status === 3,
     },
   ];
 

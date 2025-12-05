@@ -49,7 +49,7 @@ const emit = defineEmits<{
 
       <!-- Info for Resolved Status -->
       <div
-        v-if="ticket.status === 'resolved'"
+        v-if="ticket.id_status === 3"
         class="p-4 bg-white rounded-xl border-2 border-green-200"
       >
         <div class="flex items-start gap-3">
