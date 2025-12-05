@@ -38,7 +38,7 @@ const emit = defineEmits<{
 
       <!-- Resolve Ticket (only for in-progress) -->
       <button
-        v-if="ticket.status === 'in-progress'"
+        v-if="ticket.id_status === 2"
         class="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl hover:from-green-700 hover:to-emerald-800 transition-all font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
         :disabled="updating"
         @click="emit('resolve')"
@@ -49,7 +49,7 @@ const emit = defineEmits<{
 
       <!-- Info for Resolved Status -->
       <div
-        v-if="ticket.status === 'resolved'"
+        v-if="ticket.id_status === 3"
         class="p-4 bg-white rounded-xl border-2 border-green-200"
       >
         <div class="flex items-start gap-3">

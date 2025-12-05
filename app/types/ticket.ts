@@ -24,3 +24,13 @@ export interface Ticket {
   resolution?: string; // Solusi yang diberikan saat resolve
   supportingDocuments?: string[]; // Array nama file
 }
+
+export interface TicketAttachment {
+  attachment: {
+    id_attachment: number;
+    id_ticket: number;
+    file_path: string;
+    uploaded_at: string;
+  };
+  download_url: string;
+}
