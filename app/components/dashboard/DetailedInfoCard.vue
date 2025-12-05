@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Tag, Calendar, User, CheckCircle } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
+import { getCategoryLabel } from "~/utils/convertTicket";
 
 interface Props {
   ticket: Ticket;
@@ -40,7 +41,7 @@ const formatDate = (date: string) => {
         <div>
           <p class="text-xs text-blue-600 font-medium mb-1">Kategori</p>
           <p class="text-sm font-bold text-gray-800">
-            {{ props.ticket.category }}
+            {{ getCategoryLabel(props.ticket.id_category) }}
           </p>
         </div>
       </div>
@@ -57,7 +58,7 @@ const formatDate = (date: string) => {
         <div>
           <p class="text-xs text-green-600 font-medium mb-1">Dibuat</p>
           <p class="text-sm font-bold text-gray-800">
-            {{ formatDate(props.ticket.createdAt) }}
+            {{ formatDate(props.ticket.tanggal_dibuat) }}
           </p>
         </div>
       </div>

@@ -28,14 +28,14 @@ const menuItems = computed(() => [
     badge: null,
   },
   {
-    path: "/dashboard/pelanggan",
-    label: "Pelanggan",
+    path: "/dashboard/customer",
+    label: "Customer",
     icon: Users,
     badge: "12",
   },
   {
-    path: "/dashboard/penjual",
-    label: "Penjual",
+    path: "/dashboard/seller",
+    label: "Seller",
     icon: Store,
     badge: "8",
   },

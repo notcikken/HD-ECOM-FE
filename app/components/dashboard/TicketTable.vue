@@ -32,7 +32,7 @@ const formatDate = (date: string) => {
 };
 
 const handleViewTicket = (ticket: Ticket) => {
-  const route = `/dashboard/${ticket.role}/${ticket.id}`;
+  const route = `/dashboard/${ticket.tipe_pengaduan}/${ticket.id_ticket}`;
   router.push(route);
 };
 </script>
@@ -98,7 +98,7 @@ const handleViewTicket = (ticket: Ticket) => {
           <tbody class="divide-y divide-gray-200">
             <tr
               v-for="ticket in tickets"
-              :key="ticket.id"
+              :key="ticket.id_ticket"
               class="hover:bg-gray-50 transition-colors"
             >
               <td class="px-6 py-4 text-sm font-medium text-gray-800">
@@ -112,7 +112,7 @@ const handleViewTicket = (ticket: Ticket) => {
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
                   <span class="text-sm font-medium text-gray-800">
-                    {{ ticket.createdBy || "Unknown" }}
+                    {{ ticket.username || "Unknown" }}
                   </span>
                 </div>
               </td>

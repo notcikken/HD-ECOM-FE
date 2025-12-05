@@ -27,7 +27,7 @@ const emit = defineEmits<{
     <div class="space-y-3">
       <!-- Assign Ticket & Set Priority (only for open status) -->
       <button
-        v-if="ticket.status === 'open'"
+        v-if="ticket.id_status === 1"
         class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
         :disabled="updating"
         @click="emit('assign')"

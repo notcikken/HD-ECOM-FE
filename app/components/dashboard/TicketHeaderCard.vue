@@ -7,58 +7,18 @@ import {
   Download,
 } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
-
+import {
+  getRoleBadgeClass,
+  getStatusBadgeClass,
+  getStatusLabel,
+  getPriorityBadgeClass,
+  getPriorityLabel,
+} from "~/utils/convertTicket";
 interface Props {
   ticket: Ticket;
 }
 
 defineProps<Props>();
-
-const getStatusBadgeClass = (status: string) => {
-  const classes = {
-    open: "bg-blue-100 text-blue-700 border border-blue-200",
-    "in-progress": "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    resolved: "bg-green-100 text-green-700 border border-green-200",
-  };
-  return classes[status as keyof typeof classes] || "bg-gray-100 text-gray-700";
-};
-
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = {
-    low: "bg-green-100 text-green-700 border border-green-200",
-    medium: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    high: "bg-orange-100 text-orange-700 border border-orange-200",
-    urgent: "bg-red-100 text-red-700 border border-red-200",
-  };
-  return (
-    classes[priority as keyof typeof classes] || "bg-gray-100 text-gray-700"
-  );
-};
-
-const getRoleBadgeClass = (role: string) => {
-  return role === "pelanggan"
-    ? "bg-purple-100 text-purple-700 border border-purple-200"
-    : "bg-indigo-100 text-indigo-700 border border-indigo-200";
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: "Open",
-    "in-progress": "In Progress",
-    resolved: "Resolved",
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-    urgent: "Urgent",
-  };
-  return labels[priority as keyof typeof labels] || priority;
-};
 
 const getFileType = (
   fileName: string
@@ -142,40 +102,39 @@ const getFileName = (filePath: string) => {
           <span
             class="text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
           >
-            {{ ticket.id }}
+            {{ ticket.kode_tiket }}
           </span>
           <span
             class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-            :class="getRoleBadgeClass(ticket.role)"
+            :class="getRoleBadgeClass(ticket.tipe_pengaduan)"
           >
-            {{ ticket.role }}
+            {{ ticket.tipe_pengaduan }}
           </span>
           <span
             class="px-3 py-1 rounded-full text-xs font-semibold"
-            :class="getStatusBadgeClass(ticket.status)"
+            :class="getStatusBadgeClass(getStatusLabel(ticket.id_status))"
           >
-            {{ getStatusLabel(ticket.status) }}
+            {{ getStatusLabel(ticket.id_status) }}
           </span>
           <!-- Show Priority only if assigned -->
           <span
-            v-if="ticket.priority"
             class="px-3 py-1 rounded-full text-xs font-semibold"
-            :class="getPriorityBadgeClass(ticket.priority)"
+            :class="getPriorityBadgeClass(getPriorityLabel(ticket.id_priority))"
           >
-            {{ getPriorityLabel(ticket.priority) }}
+            {{ getPriorityLabel(ticket.id_priority) }}
           </span>
         </div>
         <h1 class="text-3xl font-bold text-gray-800 leading-tight">
-          {{ ticket.title }}
+          {{ ticket.judul }}
         </h1>
         <p class="text-sm text-gray-500 mb-3 mt-2 ml-1 italic">
           Created by :
           <span class="text-indigo-400 font-medium">
-            {{ ticket.createdBy || "Unknown User" }}
+            {{ ticket.username || "Unknown User" }}
           </span>
         </p>
         <p class="text-gray-600 leading-relaxed">
-          {{ ticket.description }}
+          {{ ticket.deskripsi }}
         </p>
         <!-- Supporting Documents (if any) -->
         <div
