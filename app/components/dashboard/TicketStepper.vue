@@ -30,7 +30,7 @@ const ticketSteps = computed(() => {
       status: "open",
       icon: FileText,
       description: "Tiket dibuat dan menunggu penugasan",
-      timestamp: props.ticket.createdAt,
+      timestamp: props.ticket.tanggal_dibuat,
       isCompleted: true,
       isCurrent: props.ticket.status === "open",
     },
