@@ -170,7 +170,7 @@ const ticketsByCategory = computed(() => {
     categories.value.map(cat => [cat.id_category, cat.nama_category])
   );
   
-  userTickets.value.forEach(ticket => {
+  (userTickets.value || []).forEach(ticket => {
     // Get category name from the ticket's id_category
     const categoryName = categoryMap.get(ticket.id_category) || 'Uncategorized';
     
