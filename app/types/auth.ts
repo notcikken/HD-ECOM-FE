@@ -12,9 +12,12 @@ export interface RegisterRequest {
 }
 
 export interface User {
-  id_user: number;
+  id: number;
+  username: string;
   email: string;
-  role: number;
+  role: string | number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type LoginResponse = Response<{ token: string; user: User }>;
