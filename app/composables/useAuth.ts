@@ -1,6 +1,7 @@
 import {
   login as loginApi,
   register as registerApi,
+  getUserInfo as getUserInfoApi,
 } from "~/services/authService";
 import type {
   LoginRequest,
@@ -108,6 +109,22 @@ export const useAuth = () => {
     navigateTo("/login");
   };
 
+  const fetchUserInfo = async () => {
+    if (!token.value) return null;
+
+    try {
+      const response = await getUserInfoApi(token.value);
+      if (response.data) {
+        setUser(response.data);
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch user info:", error);
+      return null;
+    }
+  };
+
   return {
     errorMessage,
     isLoading,
@@ -118,5 +135,6 @@ export const useAuth = () => {
     login,
     register,
     logout,
+    fetchUserInfo,
   };
 };
