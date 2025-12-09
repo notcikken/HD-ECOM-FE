@@ -1,3 +1,9 @@
+<script setup>
+import HeroSection from '~/components/sections/HeroSection.vue';
+import TopicGridSection from '~/components/sections/TopicGridSection.vue';
+import FaqSection from '~/components/sections/FaqSection.vue';
+</script>
+
 <template>
   <div class="min-h-screen">
     <!-- Hero section with full width -->
@@ -17,8 +23,4 @@
   </div>
 </template>
 
-<script setup>
-import HeroSection from '~/components/sections/HeroSection.vue';
-import TopicGridSection from '~/components/sections/TopicGridSection.vue';
-import FaqSection from '~/components/sections/FaqSection.vue';
-</script>
+
