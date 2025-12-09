@@ -139,15 +139,6 @@ const submit = async () => {
             </button>
           </div>
 
-          <div class="text-sm text-center text-gray-600">
-            Belum punya akun?
-            <NuxtLink
-              to="/signup"
-              class="text-[#F79E0E] font-medium hover:underline ml-1"
-              >Daftar</NuxtLink
-            >
-          </div>
-
           <p v-if="error" class="text-sm text-red-600 mt-2">{{ error }}</p>
           <p v-if="successMessage" class="text-sm text-green-600 mt-2">
             {{ successMessage }}
