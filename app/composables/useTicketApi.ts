@@ -302,6 +302,51 @@ export const useTicketApi = () => {
     }
   };
 
+  /**
+   * Assign ticket to support user via ticket-assignments endpoint
+   */
+  const assignTicketToSupport = async (
+    ticketId: number,
+    adminId: number
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const config = useRuntimeConfig();
+      const { token } = useAuth();
+
+      const payload = {
+        id_admin: adminId,
+        id_ticket: ticketId,
+        tanggal_ditugaskan: new Date().toISOString(),
+      };
+
+      const response = await $fetch<{ data: any } | any>(
+        `${config.public.apiBase}/api/ticket-assignments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            "Content-Type": "application/json",
+          },
+          body: payload,
+        }
+      );
+
+      const data = "data" in response ? response.data : response;
+
+      return {
+        success: true,
+        data,
+        message: "Ticket assigned successfully",
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: error?.message || "Failed to assign ticket",
+      };
+    }
+  };
+
   return {
     fetchTickets,
     fetchTicketById,
@@ -313,6 +358,7 @@ export const useTicketApi = () => {
     updateTicket,
     deleteTicket,
     assignTicket,
+    assignTicketToSupport,
     resolveTicket,
   };
 };
