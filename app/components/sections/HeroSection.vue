@@ -22,6 +22,16 @@ function handleBlur() {
     isFocused.value = false;
   }, 150);
 }
+
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+
+  if (hour >= 4 && hour < 11) return "Selamat Pagi"
+  if (hour >= 11 && hour < 15) return "Selamat Siang"
+  if (hour >= 15 && hour < 18) return "Selamat Sore"
+
+  return "Selamat Malam"
+})
 </script>
 
 <template>
@@ -107,7 +117,7 @@ function handleBlur() {
         <div class="space-y-4">
           <div>
             <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight">
-              Selamat Siang,
+              {{ greeting }}
             </h1>
             <p class="text-lg lg:text-xl text-white/90 font-medium">
               Ada yang bisa kami bantu?

@@ -9,29 +9,39 @@ const handleScroll = () => {
   isScrolled.value = window.scrollY > 10;
 };
 
-onMounted(() => {
+const { user, logout: authLogout, fetchUserInfo } = useAuth();
+
+const isAdmin = computed(
+  () => user.value?.role === 0 || user.value?.role === "0" || user.value?.role === "admin"
+);
+
+const userInitial = computed(() => {
+  if (!user.value?.username) return "TEST";
+  return user.value.username.charAt(0).toUpperCase();
+});
+
+const logout = () => {
+  authLogout();
+};
+
+onMounted(async () => {
   handleScroll();
   window.addEventListener("scroll", handleScroll, { passive: true });
+  
+  // Fetch user info when component mounts if authenticated
+  if (user.value) {
+    await fetchUserInfo();
+  }
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
 });
-
-const { user, logout: authLogout } = useAuth();
-
-const isAdmin = computed(
-  () => user.value?.role === 0 || user.value?.role === "0"
-);
-
-const logout = () => {
-  authLogout();
-};
 </script>
 
 <template>
   <nav
-    :class="[
+    :class=" [
       'w-full bg-[#F8D46F] border-b border-orange-200/30 transition-all duration-300',
       { 'shadow-lg backdrop-blur-sm': isScrolled },
     ]"
@@ -101,19 +111,19 @@ const logout = () => {
 
             <!-- Logout Button -->
             <button
-              @click="logout"
               class="p-2 hover:bg-white/50 rounded-lg transition-colors"
               title="Logout"
+              @click="logout"  
             >
               <LogOut class="w-4 h-4" />
             </button>
 
-            <!-- Profile Avatar -->
+            <!-- Profile Avatar with Initial -->
             <div
               class="w-9 h-9 bg-gray-800 hover:bg-gray-700 cursor-pointer text-white font-semibold rounded-full transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg focus:ring-2 focus:ring-[#F79E0E]/20 focus:outline-none"
-              :title="`${user.name || 'User'}`"
+              :title="`${user.username || user.email || 'User'}`"
             >
-              <User class="w-4 h-4" />
+              <span class="text-sm">{{ userInitial }}</span>
             </div>
           </div>
 

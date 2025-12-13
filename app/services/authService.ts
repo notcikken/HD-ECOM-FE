@@ -26,3 +26,15 @@ export const register = async (
     body: data,
   });
 };
+
+export const getUserInfo = async (token: string) => {
+  const config = useRuntimeConfig();
+  const base = (config.public?.apiBase || "").replace(/\/+$/, "");
+  
+  return await $fetch(`${base}/api/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
