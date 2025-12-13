@@ -43,9 +43,9 @@ const handleReset = () => {
           "
         >
           <option value="">Semua Status</option>
-          <option value="open">Open</option>
-          <option value="in-progress">In Progress</option>
-          <option value="resolved">Resolved</option>
+          <option value="1">Open</option>
+          <option value="2">In Progress</option>
+          <option value="3">Resolved</option>
         </select>
       </div>
 
@@ -61,12 +61,13 @@ const handleReset = () => {
           "
         >
           <option value="">Semua Kategori</option>
-          <option value="Akun & Keamanan">Akun & Keamanan</option>
-          <option value="Pembayaran">Pembayaran</option>
-          <option value="Pengiriman">Pengiriman</option>
-          <option value="Pengembalian">Pengembalian</option>
-          <option value="Produk">Produk</option>
-          <option value="Teknis Aplikasi">Teknis Aplikasi</option>
+          <option value="1">Akun & Keamanan</option>
+          <option value="2">Pembayaran</option>
+          <option value="3">Pengiriman</option>
+          <option value="4">Pengembalian</option>
+          <option value="5">Promo & Voucher</option>
+          <option value="6">Teknis Aplikasi</option>
+          <option value="7">Produk</option>
         </select>
       </div>
 

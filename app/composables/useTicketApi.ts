@@ -7,13 +7,18 @@ interface TicketFilters {
   status?: string;
   priority?: string;
   category?: string;
-  role?: "pelanggan" | "penjual";
+  role?: "customer" | "seller";
+  cursor?: string;
 }
 
 interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  meta?: {
+    limit?: number;
+    next_cursor?: string | null;
+  };
 }
 
 interface TicketCategory {
@@ -36,10 +41,44 @@ export const useTicketApi = () => {
     filters?: TicketFilters
   ): Promise<ApiResponse<Ticket[]>> => {
     try {
-      const data = await ticketService.fetchTickets(filters);
+      const config = useRuntimeConfig();
+      const { token } = useAuth();
+      const query = new URLSearchParams();
+
+      if (filters?.role) query.set("role", filters.role);
+      if (filters?.status) query.set("status", filters.status);
+      if (filters?.priority) query.set("priority", filters.priority);
+      if (filters?.category) query.set("category", filters.category);
+      if (filters?.cursor) query.set("cursor", filters.cursor);
+
+      const queryString = query.toString();
+      const url = `${config.public.apiBase}/api/tickets${
+        queryString ? `?${queryString}` : ""
+      }`;
+
+      const response = await $fetch<{ 
+        data: { data: Ticket[]; meta?: { limit?: number; next_cursor?: string | null } } 
+      } | Ticket[]>(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+
+      // Handle API response with metadata
+      if (response && typeof response === 'object' && 'data' in response) {
+        const apiData = response.data;
+        return {
+          success: true,
+          data: apiData.data || [],
+          meta: apiData.meta,
+        };
+      }
+
+      // Fallback for array response
       return {
         success: true,
-        data,
+        data: Array.isArray(response) ? response : [],
       };
     } catch (error: any) {
       return {
