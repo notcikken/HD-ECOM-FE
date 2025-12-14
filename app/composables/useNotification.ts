@@ -8,27 +8,39 @@ export const useNotification = () => {
     "notifications",
     () => null
   );
+  const ticketNotifications = useState<{
+    customer_open_tickets: number;
+    in_progress_tickets: number;
+    priority_counts: {
+      critical: number;
+      high: number;
+      low: number;
+      medium: number;
+    };
+    resolved_tickets: number;
+    seller_open_tickets: number;
+    total_open_tickets: number;
+    total_tickets: number;
+  } | null>("ticketNotifications", () => null);
   const token = useCookie<string>("auth-token");
 
   const fetchNotification = async (): Promise<Notification[] | null> => {
-    try {
-      const resp = await getNotification(token.value);
+    const resp = await getNotification(token.value);
 
-      const data = resp.data;
-      if (data) {
-        const notifications: Notification[] = data.map((n: any) => ({
-          conversationId: n.conversation_id,
-          unreadCount: n.unread_count,
-        }));
-        console.log("Fetched notifications:", notifications);
-        notification.value = notifications;
-        console.log("Notification updated:", notification.value);
-        return notification.value;
-      }
-      return null;
-    } catch (err) {
-      throw err;
+    const data = resp.data;
+    if (data) {
+      const notifications: Notification[] = data.conversation_states.map((n: any) => ({
+        conversationId: n.conversation_id,
+        unreadCount: n.unread_count,
+      }));
+      console.log("Fetched notifications:", notifications);
+      notification.value = notifications;
+      ticketNotifications.value = data.ticket_notifications;
+      console.log("Notification updated:", notification.value);
+      console.log("Ticket notifications updated:", ticketNotifications.value);
+      return notification.value;
     }
+    return null;
   };
 
   // Handle WebSocket admin_notification updates
@@ -70,6 +82,7 @@ export const useNotification = () => {
 
   return {
     notification,
+    ticketNotifications,
     fetchNotification,
     updateNotificationFromWebSocket,
   };

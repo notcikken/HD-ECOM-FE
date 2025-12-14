@@ -12,7 +12,7 @@ import { useNotification } from "~/composables/useNotification";
 import { computed } from "vue";
 
 const route = useRoute();
-const { notification } = useNotification();
+const { notification, ticketNotifications } = useNotification();
 
 // Return an array of conversations that have unread messages
 const totalUnreadConversations = computed(() => {
@@ -31,13 +31,13 @@ const menuItems = computed(() => [
     path: "/dashboard/customer",
     label: "Customer",
     icon: Users,
-    badge: "12",
+    badge: ticketNotifications.value ? String(ticketNotifications.value.customer_open_tickets) : null,
   },
   {
     path: "/dashboard/seller",
     label: "Seller",
     icon: Store,
-    badge: "8",
+    badge: ticketNotifications.value ? String(ticketNotifications.value.seller_open_tickets) : null,
   },
   {
     path: "/dashboard/chat",

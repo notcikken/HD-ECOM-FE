@@ -7,13 +7,19 @@ interface TicketFilters {
   status?: string;
   priority?: string;
   category?: string;
-  role?: "pelanggan" | "penjual";
+  role?: "customer" | "seller";
+  cursor?: string;
+  limit?: number;
 }
 
 interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  meta?: {
+    limit?: number;
+    next_cursor?: string | null;
+  };
 }
 
 interface TicketCategory {
@@ -36,10 +42,45 @@ export const useTicketApi = () => {
     filters?: TicketFilters
   ): Promise<ApiResponse<Ticket[]>> => {
     try {
-      const data = await ticketService.fetchTickets(filters);
+      const config = useRuntimeConfig();
+      const { token } = useAuth();
+      const query = new URLSearchParams();
+
+      if (filters?.role) query.set("role", filters.role);
+      if (filters?.status) query.set("status", filters.status);
+      if (filters?.priority) query.set("priority", filters.priority);
+      if (filters?.category) query.set("category", filters.category);
+      if (filters?.cursor) query.set("cursor", filters.cursor);
+      if (filters?.limit) query.set("limit", filters.limit.toString());
+
+      const queryString = query.toString();
+      const url = `${config.public.apiBase}/api/tickets${
+        queryString ? `?${queryString}` : ""
+      }`;
+
+      const response = await $fetch<{ 
+        data: { data: Ticket[]; meta?: { limit?: number; next_cursor?: string | null } } 
+      } | Ticket[]>(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      });
+
+      // Handle API response with metadata
+      if (response && typeof response === 'object' && 'data' in response) {
+        const apiData = response.data;
+        return {
+          success: true,
+          data: apiData.data || [],
+          meta: apiData.meta,
+        };
+      }
+
+      // Fallback for array response
       return {
         success: true,
-        data,
+        data: Array.isArray(response) ? response : [],
       };
     } catch (error: any) {
       return {
@@ -263,6 +304,51 @@ export const useTicketApi = () => {
     }
   };
 
+  /**
+   * Assign ticket to support user via ticket-assignments endpoint
+   */
+  const assignTicketToSupport = async (
+    ticketId: number,
+    adminId: number
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const config = useRuntimeConfig();
+      const { token } = useAuth();
+
+      const payload = {
+        id_admin: adminId,
+        id_ticket: ticketId,
+        tanggal_ditugaskan: new Date().toISOString(),
+      };
+
+      const response = await $fetch<{ data: any } | any>(
+        `${config.public.apiBase}/api/ticket-assignments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+            "Content-Type": "application/json",
+          },
+          body: payload,
+        }
+      );
+
+      const data = "data" in response ? response.data : response;
+
+      return {
+        success: true,
+        data,
+        message: "Ticket assigned successfully",
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        message: error?.message || "Failed to assign ticket",
+      };
+    }
+  };
+
   return {
     fetchTickets,
     fetchTicketById,
@@ -274,6 +360,7 @@ export const useTicketApi = () => {
     updateTicket,
     deleteTicket,
     assignTicket,
+    assignTicketToSupport,
     resolveTicket,
   };
 };

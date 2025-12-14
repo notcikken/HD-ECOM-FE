@@ -16,6 +16,7 @@ import DetailedInfoCard from "~/components/dashboard/DetailedInfoCard.vue";
 import TicketHeaderCard from "~/components/dashboard/TicketHeaderCard.vue";
 import TicketStepper from "~/components/dashboard/TicketStepper.vue";
 import QuickActionsCard from "~/components/dashboard/QuickActionsCard.vue";
+import { useSupportUsers } from "~/composables/useSupportUsers";
 
 definePageMeta({
   layout: "dashboard",
@@ -23,7 +24,7 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
-const { fetchTicketById, assignTicket, resolveTicket } = useTicketApi();
+const { fetchTicketById, assignTicket, assignTicketToSupport, resolveTicket } = useTicketApi();
 
 const ticketId = computed(() => route.params.id as string);
 const loading = ref(false);
@@ -46,9 +47,13 @@ const toast = ref<{
 const showAssignModal = ref(false);
 const showResolveModal = ref(false);
 
+// Add support users composable
+const { supportUsers, loading: loadingSupportUsers, fetchSupportUsers } = useSupportUsers();
+
 // Form data
 const assigneeForm = ref({
-  assignedTo: "",
+  assignedTo: "", // username for display
+  userId: 0, // user_id for API
   priority: "medium" as "low" | "medium" | "high" | "urgent",
 });
 
@@ -84,31 +89,29 @@ const loadTicketDetail = async () => {
 };
 
 const handleAssignTicket = async () => {
-  if (!assigneeForm.value.assignedTo.trim()) {
-    showToast("Silakan masukkan nama pegawai", "error");
+  if (!assigneeForm.value.userId) {
+    showToast("Silakan pilih pegawai support", "error");
     return;
   }
 
   updating.value = true;
 
   try {
-    const response = await assignTicket(
-      ticketId.value,
-      assigneeForm.value.assignedTo,
-      assigneeForm.value.priority
+    const response = await assignTicketToSupport(
+      Number(ticketId.value),
+      assigneeForm.value.userId
     );
 
     if (response.success) {
-      ticket.value = response.data;
+      // Reload ticket data to get updated information
+      await loadTicketDetail();
       showAssignModal.value = false;
       assigneeForm.value = {
         assignedTo: "",
+        userId: 0,
         priority: "medium",
       };
-      showToast(
-        "Tiket berhasil ditugaskan dengan prioritas " +
-          assigneeForm.value.priority.toUpperCase()
-      );
+      showToast("Tiket berhasil ditugaskan ke support");
     } else {
       showToast(response.message || "Failed to assign ticket", "error");
     }
@@ -152,6 +155,31 @@ const handleResolveTicket = async () => {
 
 const goBack = () => {
   router.back();
+};
+
+// Load support users when assign modal opens
+const openAssignModal = async () => {
+  showAssignModal.value = true;
+  if (supportUsers.value.length === 0) {
+    await fetchSupportUsers();
+  }
+};
+
+// Handle support user selection
+const handleUserSelection = (event: Event) => {
+  const target = event.target as HTMLSelectElement;
+  const selectedUserId = Number(target.value);
+  
+  if (selectedUserId) {
+    const selectedUser = supportUsers.value.find(u => u.user_id === selectedUserId);
+    if (selectedUser) {
+      assigneeForm.value.userId = selectedUser.user_id;
+      assigneeForm.value.assignedTo = selectedUser.username;
+    }
+  } else {
+    assigneeForm.value.userId = 0;
+    assigneeForm.value.assignedTo = "";
+  }
 };
 
 onMounted(() => {
@@ -233,7 +261,7 @@ onMounted(() => {
           <QuickActionsCard
             :ticket="ticket"
             :updating="updating"
-            @assign="showAssignModal = true"
+            @assign="openAssignModal"
             @resolve="showResolveModal = true"
           />
         </div>
@@ -249,25 +277,36 @@ onMounted(() => {
       @close="showAssignModal = false"
     >
       <p class="text-sm text-gray-600 mb-4">
-        Masukkan nama pegawai yang akan menangani tiket ini dan tentukan
+        Pilih pegawai support yang akan menangani tiket ini dan tentukan
         prioritas kasusnya. Status akan otomatis berubah menjadi "In Progress".
       </p>
 
-      <!-- Assignee Input -->
+      <!-- Support User Dropdown -->
       <div class="mb-4">
         <label
           class="block text-sm font-medium text-gray-700 mb-2"
           for="assignee"
         >
-          Nama Pegawai <span class="text-red-500">*</span>
+          Pegawai Support <span class="text-red-500">*</span>
         </label>
-        <input
+        <select
           id="assignee"
-          v-model="assigneeForm.assignedTo"
-          type="text"
-          placeholder="Contoh: John Doe"
-          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-        />
+          :value="assigneeForm.userId"
+          @change="handleUserSelection"
+          :disabled="loadingSupportUsers"
+          class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <option :value="0">
+            {{ loadingSupportUsers ? 'Memuat...' : 'Pilih Pegawai Support' }}
+          </option>
+          <option 
+            v-for="user in supportUsers" 
+            :key="user.user_id" 
+            :value="user.user_id"
+          >
+            {{ user.username }}
+          </option>
+        </select>
       </div>
 
       <!-- Priority Select -->
@@ -312,7 +351,7 @@ onMounted(() => {
         </button>
         <button
           class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-medium disabled:opacity-50 shadow-md"
-          :disabled="updating || !assigneeForm.assignedTo.trim()"
+          :disabled="updating || !assigneeForm.userId || loadingSupportUsers"
           @click="handleAssignTicket"
         >
           {{ updating ? "Memproses..." : "Tugaskan" }}
