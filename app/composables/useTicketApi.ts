@@ -9,6 +9,7 @@ interface TicketFilters {
   category?: string;
   role?: "customer" | "seller";
   cursor?: string;
+  limit?: number;
 }
 
 interface ApiResponse<T> {
@@ -50,6 +51,7 @@ export const useTicketApi = () => {
       if (filters?.priority) query.set("priority", filters.priority);
       if (filters?.category) query.set("category", filters.category);
       if (filters?.cursor) query.set("cursor", filters.cursor);
+      if (filters?.limit) query.set("limit", filters.limit.toString());
 
       const queryString = query.toString();
       const url = `${config.public.apiBase}/api/tickets${

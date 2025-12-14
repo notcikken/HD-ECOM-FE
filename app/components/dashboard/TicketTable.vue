@@ -2,7 +2,6 @@
 import { Inbox } from "lucide-vue-next";
 import type { Ticket } from "~/types/ticket";
 import {
-  getCategoryLabel,
   getStatusLabel,
   getStatusBadgeClass,
   getRoleBadgeClass,
@@ -125,7 +124,7 @@ const handleViewTicket = (ticket: Ticket) => {
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">
-                {{ getCategoryLabel(ticket.id_category) }}
+                {{ ticket.category }}
               </td>
               <td class="px-6 py-4">
                 <span

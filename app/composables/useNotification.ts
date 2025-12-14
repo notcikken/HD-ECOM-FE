@@ -10,8 +10,17 @@ export const useNotification = () => {
   );
   const ticketNotifications = useState<{
     customer_open_tickets: number;
+    in_progress_tickets: number;
+    priority_counts: {
+      critical: number;
+      high: number;
+      low: number;
+      medium: number;
+    };
+    resolved_tickets: number;
     seller_open_tickets: number;
     total_open_tickets: number;
+    total_tickets: number;
   } | null>("ticketNotifications", () => null);
   const token = useCookie<string>("auth-token");
 

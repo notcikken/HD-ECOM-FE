@@ -2,149 +2,180 @@
 import { Ticket, TrendingUp, CheckCircle } from "lucide-vue-next";
 import type { Ticket as TicketType } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard/TicketTable.vue";
+import { useNotification } from "~/composables/useNotification";
+import { computed, ref, onMounted } from "vue";
+import { useTicketApi } from "~/composables/useTicketApi";
 
 definePageMeta({
   layout: "dashboard",
 });
 
-const statistics = [
-  {
-    label: "Total Tiket",
-    value: "156",
-    change: "+12%",
-    icon: Ticket,
-    bgColor: "bg-green-50",
-    iconColor: "text-green-600",
-    badgeClass: "bg-green-100 text-green-700",
-  },
-  {
-    label: "Open",
-    value: "45",
-    change: "+8%",
-    icon: Ticket,
-    bgColor: "bg-blue-50",
-    iconColor: "text-blue-600",
-    badgeClass: "bg-blue-100 text-blue-700",
-  },
-  {
-    label: "In Progress",
-    value: "44",
-    change: "-5%",
-    icon: TrendingUp,
-    bgColor: "bg-yellow-50",
-    iconColor: "text-yellow-600",
-    badgeClass: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    label: "Resolved",
-    value: "67",
-    change: "+15%",
-    icon: CheckCircle,
-    bgColor: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    badgeClass: "bg-emerald-100 text-emerald-700",
-  },
-];
+const { ticketNotifications } = useNotification();
+const { fetchTickets, fetchTicketCategories } = useTicketApi();
 
-const statusDistribution = [
-  { label: "Open", value: 45, percentage: 29, color: "bg-blue-500" },
-  { label: "In Progress", value: 44, percentage: 28, color: "bg-yellow-500" },
-  { label: "Resolved", value: 67, percentage: 43, color: "bg-green-500" },
-];
+const recentTickets = ref<TicketType[]>([]);
 
-const priorityDistribution = [
-  {
-    label: "Urgent",
-    value: 12,
-    percentage: 8,
-    color: "bg-red-500",
-    dotColor: "bg-red-500",
-  },
-  {
-    label: "High",
-    value: 34,
-    percentage: 22,
-    color: "bg-orange-500",
-    dotColor: "bg-orange-500",
-  },
-  {
-    label: "Medium",
-    value: 67,
-    percentage: 43,
-    color: "bg-yellow-500",
-    dotColor: "bg-yellow-500",
-  },
-  {
-    label: "Low",
-    value: 43,
-    percentage: 27,
-    color: "bg-green-500",
-    dotColor: "bg-green-500",
-  },
-];
+const loadRecentTickets = async () => {
+  const [ticketsResponse, categoriesResponse] = await Promise.all([
+    fetchTickets({ limit: 5 }),
+    fetchTicketCategories(),
+  ]);
 
-const recentTickets: TicketType[] = [
-  {
-    id: "TKT-001",
-    title: "Tidak bisa logi ke akun",
-    description: "User mengalami kesulitan login",
-    status: "open",
-    priority: "high",
-    role: "pelanggan",
-    createdBy: "Budi Santoso",
-    createdAt: "2025-01-15T10:30:00",
-    updatedAt: "2025-01-15T10:30:00",
-    category: "Akun & Keamanan",
-  },
-  {
-    id: "TKT-002",
-    title: "Pesanan belum diterima",
-    description: "Pelanggan belum menerima pesanan",
-    status: "in-progress",
-    priority: "medium",
-    role: "pelanggan",
-    createdBy: "Siti Aminah",
-    createdAt: "2025-01-15T09:15:00",
-    updatedAt: "2025-01-15T11:20:00",
-    category: "Pengiriman",
-  },
-  {
-    id: "TKT-003",
-    title: "Tidak bisa upload produk",
-    description: "Error saat upload foto produk",
-    status: "resolved",
-    priority: "low",
-    role: "penjual",
-    createdBy: "Andi Wijaya",
-    createdAt: "2025-01-14T14:45:00",
-    updatedAt: "2025-01-15T08:30:00",
-    category: "Teknis Aplikasi",
-  },
-  {
-    id: "TKT-004",
-    title: "Refund belum masuk",
-    description: "Dana refund belum masuk ke rekening",
-    status: "open",
-    priority: "urgent",
-    role: "pelanggan",
-    createdBy: "Budi Santoso",
-    createdAt: "2025-01-15T11:00:00",
-    updatedAt: "2025-01-15T11:00:00",
-    category: "Pembayaran",
-  },
-  {
-    id: "TKT-005",
-    title: "Dashboard penjual tidak loading",
-    description: "Halaman dashboard error",
-    status: "in-progress",
-    priority: "high",
-    role: "penjual",
-    createdBy: "Rina Kurnia",
-    createdAt: "2025-01-15T08:20:00",
-    updatedAt: "2025-01-15T10:45:00",
-    category: "Teknis Aplikasi",
-  },
-];
+  if (ticketsResponse.success && categoriesResponse.success) {
+    const categoryMap = categoriesResponse.data.reduce((map, cat) => {
+      map[cat.id_category] = cat.nama_category;
+      return map;
+    }, {} as Record<number, string>);
+
+    recentTickets.value = ticketsResponse.data.map((ticket: any) => ({
+      id: ticket.kode_tiket,
+      title: ticket.judul,
+      description: ticket.deskripsi,
+      status:
+        ticket.id_status === 1
+          ? "open"
+          : ticket.id_status === 2
+          ? "in-progress"
+          : "resolved",
+      priority:
+        ticket.id_priority === 0
+          ? null
+          : ticket.id_priority === 1
+          ? "low"
+          : ticket.id_priority === 2
+          ? "medium"
+          : ticket.id_priority === 3
+          ? "high"
+          : "urgent",
+      role: ticket.tipe_pengaduan === "customer" ? "pelanggan" : "penjual",
+      createdBy: ticket.username,
+      createdAt: ticket.tanggal_dibuat,
+      updatedAt: ticket.tanggal_diperbarui,
+      category: categoryMap[ticket.id_category] || "Unknown",
+      // Add other fields as needed, defaulting missing ones
+      id_ticket: ticket.id_ticket.toString(),
+      kode_tiket: ticket.kode_tiket,
+      judul: ticket.judul,
+      deskripsi: ticket.deskripsi,
+      id_status: ticket.id_status,
+      username: ticket.username,
+      id_priority: ticket.id_priority,
+      tipe_pengaduan: ticket.tipe_pengaduan,
+      tanggal_dibuat: ticket.tanggal_dibuat,
+      tanggal_diperbarui: ticket.tanggal_diperbarui,
+    }));
+  }
+};
+
+onMounted(() => {
+  loadRecentTickets();
+});
+
+const statistics = computed(() => {
+  const tn = ticketNotifications.value;
+  if (!tn) return [];
+  return [
+    {
+      label: "Total Tiket",
+      value: tn.total_tickets.toString(),
+      change: "+12%",
+      icon: Ticket,
+      bgColor: "bg-green-50",
+      iconColor: "text-green-600",
+      badgeClass: "bg-green-100 text-green-700",
+    },
+    {
+      label: "Open",
+      value: tn.total_open_tickets.toString(),
+      change: "+8%",
+      icon: Ticket,
+      bgColor: "bg-blue-50",
+      iconColor: "text-blue-600",
+      badgeClass: "bg-blue-100 text-blue-700",
+    },
+    {
+      label: "In Progress",
+      value: tn.in_progress_tickets.toString(),
+      change: "-5%",
+      icon: TrendingUp,
+      bgColor: "bg-yellow-50",
+      iconColor: "text-yellow-600",
+      badgeClass: "bg-yellow-100 text-yellow-700",
+    },
+    {
+      label: "Resolved",
+      value: tn.resolved_tickets.toString(),
+      change: "+15%",
+      icon: CheckCircle,
+      bgColor: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      badgeClass: "bg-emerald-100 text-emerald-700",
+    },
+  ];
+});
+
+const statusDistribution = computed(() => {
+  const tn = ticketNotifications.value;
+  if (!tn) return [];
+  const total = tn.total_tickets;
+  return [
+    {
+      label: "Open",
+      value: tn.total_open_tickets,
+      percentage: Math.round((tn.total_open_tickets / total) * 100),
+      color: "bg-blue-500",
+    },
+    {
+      label: "In Progress",
+      value: tn.in_progress_tickets,
+      percentage: Math.round((tn.in_progress_tickets / total) * 100),
+      color: "bg-yellow-500",
+    },
+    {
+      label: "Resolved",
+      value: tn.resolved_tickets,
+      percentage: Math.round((tn.resolved_tickets / total) * 100),
+      color: "bg-green-500",
+    },
+  ];
+});
+
+const priorityDistribution = computed(() => {
+  const tn = ticketNotifications.value;
+  if (!tn) return [];
+  const pc = tn.priority_counts;
+  const total = tn.total_tickets;
+  return [
+    {
+      label: "Urgent",
+      value: pc.critical,
+      percentage: Math.round((pc.critical / total) * 100),
+      color: "bg-red-500",
+      dotColor: "bg-red-500",
+    },
+    {
+      label: "High",
+      value: pc.high,
+      percentage: Math.round((pc.high / total) * 100),
+      color: "bg-orange-500",
+      dotColor: "bg-orange-500",
+    },
+    {
+      label: "Medium",
+      value: pc.medium,
+      percentage: Math.round((pc.medium / total) * 100),
+      color: "bg-yellow-500",
+      dotColor: "bg-yellow-500",
+    },
+    {
+      label: "Low",
+      value: pc.low,
+      percentage: Math.round((pc.low / total) * 100),
+      color: "bg-green-500",
+      dotColor: "bg-green-500",
+    },
+  ];
+});
 
 const viewTicket = (id: string) => {
   console.log("View ticket:", id);
