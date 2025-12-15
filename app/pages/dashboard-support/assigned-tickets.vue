@@ -1,74 +1,101 @@
 <script setup lang="ts">
-import type { Ticket as TicketType } from "~/types/ticket.ts";
+import type { Ticket as TicketType, TicketRole } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard-employee/TicketTableEmployee.vue";
+import { CATEGORY_MAP } from "~/utils/convertTicket";
 
 definePageMeta({
   layout: "employee",
 });
 
+interface TicketAssignment {
+  id_admin: number;
+  id_assignment: number;
+  id_ticket: number;
+  tanggal_ditugaskan: string;
+  ticket: {
+    category_name: string;
+    deskripsi: string;
+    id_ticket: number;
+    judul: string;
+    kode_ticket: string;
+    priority_name: string;
+    status_name: string;
+    tipe_pengaduan: string;
+    username: string;
+  };
+}
 
-const recentTickets: TicketType[] = [
-  {
-    id: "TKT-001",
-    title: "Tidak bisa logi ke akun",
-    description: "User mengalami kesulitan login",
-    status: "open",
-    priority: "high",
-    role: "pelanggan",
-    createdBy: "Budi Santoso",
-    createdAt: "2025-01-15T10:30:00",
-    updatedAt: "2025-01-15T10:30:00",
-    category: "Akun & Keamanan",
-  },
-  {
-    id: "TKT-002",
-    title: "Pesanan belum diterima",
-    description: "Pelanggan belum menerima pesanan",
-    status: "in-progress",
-    priority: "medium",
-    role: "pelanggan",
-    createdBy: "Siti Aminah",
-    createdAt: "2025-01-15T09:15:00",
-    updatedAt: "2025-01-15T11:20:00",
-    category: "Pengiriman",
-  },
-  {
-    id: "TKT-003",
-    title: "Tidak bisa upload produk",
-    description: "Error saat upload foto produk",
-    status: "resolved",
-    priority: "low",
-    role: "penjual",
-    createdBy: "Andi Wijaya",
-    createdAt: "2025-01-14T14:45:00",
-    updatedAt: "2025-01-15T08:30:00",
-    category: "Teknis Aplikasi",
-  },
-  {
-    id: "TKT-004",
-    title: "Refund belum masuk",
-    description: "Dana refund belum masuk ke rekening",
-    status: "open",
-    priority: "urgent",
-    role: "pelanggan",
-    createdBy: "Budi Santoso",
-    createdAt: "2025-01-15T11:00:00",
-    updatedAt: "2025-01-15T11:00:00",
-    category: "Pembayaran",
-  },
-  {
-    id: "TKT-005",
-    title: "Dashboard penjual tidak loading",
-    description: "Halaman dashboard error",
-    status: "in-progress",
-    priority: "high",
-    role: "penjual",
-    createdBy: "Rina Kurnia",
-    createdAt: "2025-01-15T08:20:00",
-    updatedAt: "2025-01-15T10:45:00",
-    category: "Teknis Aplikasi",
-  },
-];
+const tickets = ref<TicketType[]>([]);
+const loading = ref(false);
+
+const mapAssignmentToTicket = (assignment: TicketAssignment): TicketType => {
+  const { ticket } = assignment;
+
+  const categoryEntry = Object.entries(CATEGORY_MAP).find(
+    ([, name]) => name === ticket.category_name
+  );
+  const id_category = categoryEntry ? Number(categoryEntry[0]) : 0;
+
+  const role: TicketRole =
+    ticket.tipe_pengaduan === "seller" ? "penjual" : "pelanggan";
+
+  return {
+    id_ticket: ticket.id_ticket.toString(),
+    kode_tiket: ticket.kode_ticket,
+    judul: ticket.judul,
+    deskripsi: ticket.deskripsi,
+    id_status: 0,
+    status: ticket.status_name,
+    username: ticket.username,
+    id_priority: 0,
+    priority: null,
+    role,
+    tipe_pengaduan: ticket.tipe_pengaduan,
+    createdBy: ticket.username,
+    tanggal_dibuat: assignment.tanggal_ditugaskan,
+    updatedAt: assignment.tanggal_ditugaskan,
+    assignedTo: undefined,
+    id_category,
+    category: ticket.category_name,
+    resolvedAt: undefined,
+    resolution: undefined,
+    supportingDocuments: [],
+  };
+};
+
+const fetchAssignedTickets = async () => {
+  try {
+    loading.value = true;
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+
+    const response = await $fetch<{
+      status: number;
+      message: string;
+      data: { data: TicketAssignment[] };
+    }>(`${config.public.apiBase}/api/ticket-assignments/my-assignments`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+
+    const assignments = response.data.data || [];
+
+    // Hanya ambil tiket dengan status "In Progress"
+    const activeAssignments = assignments.filter(
+      (a) => a.ticket.status_name === "In Progress"
+    );
+    tickets.value = activeAssignments.map(mapAssignmentToTicket);
+  } catch (error) {
+    console.error("Failed to fetch assigned tickets:", error);
+    tickets.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(fetchAssignedTickets);
 
 const viewTicket = (id: string) => {
   console.log("View ticket:", id);
@@ -83,10 +110,10 @@ const viewTicket = (id: string) => {
       <p class="text-gray-600">Tiket yang ditugaskan kepada anda</p>
     </div>
 
-    <!-- Recent Tickets -->
     <div class="bg-white rounded-xl border border-gray-200">
       <TicketTable
-        :tickets="recentTickets"
+        :tickets="tickets"
+        :loading="loading"
         :show-role="true"
         @view-ticket="viewTicket"
       />

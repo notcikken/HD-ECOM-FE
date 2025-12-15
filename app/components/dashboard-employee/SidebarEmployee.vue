@@ -13,13 +13,13 @@ const route = useRoute();
 
 const menuItems = computed(() => [
   {
-    path: "/dashboard-employee/assigned-tickets",
+    path: "/dashboard-support/assigned-tickets",
     label: "Assigned Tickets",
     icon: Ticket,
     badge: null,
   },
   {
-    path: "/dashboard-employee/all-tickets",
+    path: "/dashboard-support/all-tickets",
     label: "All Tickets",
     icon: CheckCircle,
     badge: "12",
@@ -27,8 +27,8 @@ const menuItems = computed(() => [
 ]);
 
 const isActive = (path: string) => {
-  if (path === "/dashboard-employee") {
-    return route.path === "/dashboard-employee";
+  if (path === "/dashboard-support") {
+    return route.path === "/dashboard-support";
   }
   return route.path.startsWith(path);
 };
