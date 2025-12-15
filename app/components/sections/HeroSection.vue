@@ -1,10 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 import { Search, X, Hash } from 'lucide-vue-next';
+import { useAuth } from '~/composables/useAuth'; 
 
 // Reactive state
 const query = ref('');
 const isFocused = ref(false);
+
+const { user, fetchUserInfo } = useAuth();
 
 // Search suggestions data
 const suggestions = [
@@ -25,12 +28,14 @@ function handleBlur() {
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
-
   if (hour >= 4 && hour < 11) return "Selamat Pagi"
   if (hour >= 11 && hour < 15) return "Selamat Siang"
   if (hour >= 15 && hour < 18) return "Selamat Sore"
-
   return "Selamat Malam"
+})
+
+const username = computed(() => {
+  return user.value?.username || 'Sobat';
 })
 </script>
 
@@ -117,7 +122,7 @@ const greeting = computed(() => {
         <div class="space-y-4">
           <div>
             <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight">
-              {{ greeting }}
+              {{ greeting }}<span>, {{ username }}!</span>
             </h1>
             <p class="text-lg lg:text-xl text-white/90 font-medium">
               Ada yang bisa kami bantu?
