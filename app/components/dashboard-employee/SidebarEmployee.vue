@@ -7,8 +7,12 @@ import {
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { computed, ref, onMounted } from "vue";
+import { useAuth } from "~/composables/useAuth";
+
 
 const route = useRoute();
+const { user } = useAuth();
+
 
 const ticketCounts = ref({
   in_progress: 0,
@@ -44,6 +48,7 @@ const fetchTicketCounts = async () => {
 
 onMounted(fetchTicketCounts);
 
+
 const menuItems = computed(() => [
   {
     path: "/dashboard-support/assigned-tickets",
@@ -59,12 +64,16 @@ const menuItems = computed(() => [
   },
 ]);
 
+
+
 const isActive = (path: string) => {
   if (path === "/dashboard-support") {
     return route.path === "/dashboard-support";
   }
   return route.path.startsWith(path);
 };
+
+
 </script>
 
 <template>
@@ -116,8 +125,8 @@ const isActive = (path: string) => {
             <User class="w-5 h-5 text-gray-600" />
           </div>
           <div class="flex-1">
-            <p class="text-sm font-medium text-gray-800">Admin User</p>
-            <p class="text-xs text-gray-500">admin@example.com</p>
+            <p class="text-sm font-medium text-gray-800">{{ user.username || "Employee" }}</p>
+            <p class="text-xs text-gray-500">{{ user.email || "employee@example.com" }}</p>
           </div>
         </div>
       </div>
