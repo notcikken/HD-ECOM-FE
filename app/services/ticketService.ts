@@ -268,19 +268,35 @@ export const ticketService = {
   },
 
   /**
-   * Resolve ticket with resolution text
+   * Resolve ticket with resolution text via ticket comments
    */
-  async resolveTicket(ticketId: string, resolution: string): Promise<Ticket> {
+  async resolveTicket(ticketId: string, resolution: string): Promise<any> {
     const config = useRuntimeConfig();
-    const response = await $fetch<{ data: Ticket } | Ticket>(
-      `${config.public.apiBase}/api/tickets/${ticketId}/resolve`,
+    const { token } = useAuth();
+
+    const response = await $fetch<{
+      status: number;
+      message: string;
+      data: {
+        ticket_id: number;
+        isi_pesan: string;
+      };
+    }>(
+      `${config.public.apiBase}/api/ticket-comments`,
       {
-        method: "PATCH",
-        body: { resolution },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+          "Content-Type": "application/json",
+        },
+        body: {
+          ticket_id: Number(ticketId),
+          isi_pesan: resolution,
+        },
       }
     );
 
-    return "data" in response ? response.data : response;
+    return response.data;
   },
 
   /**

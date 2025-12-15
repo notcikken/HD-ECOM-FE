@@ -261,12 +261,12 @@ export const useTicketApi = () => {
   };
 
   /**
-   * Resolve ticket with resolution text
+   * Resolve ticket with resolution text via comment
    */
   const resolveTicket = async (
     ticketId: string,
     resolution: string
-  ): Promise<ApiResponse<Ticket>> => {
+  ): Promise<ApiResponse<any>> => {
     try {
       const data = await ticketService.resolveTicket(ticketId, resolution);
       return {
@@ -277,7 +277,7 @@ export const useTicketApi = () => {
     } catch (error: any) {
       return {
         success: false,
-        data: {} as Ticket,
+        data: null,
         message: error?.message || "Failed to resolve ticket",
       };
     }
