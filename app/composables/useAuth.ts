@@ -43,7 +43,7 @@ export const useAuth = () => {
         
         if (role === 0 || role === "admin") {
           redirectTo = "/dashboard";
-        } else if (role === 1 || role === "support") {
+        } else if (role === 3 || role === "support") {
           redirectTo = "/dashboard-support/assigned-tickets";
         }
 

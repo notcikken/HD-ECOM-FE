@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to) => {
     const { user, token } = useAuth();
 
     const tokenValue = token?.value ?? null;
@@ -9,8 +9,8 @@ export default defineNuxtRouteMiddleware((to, from) => {
         return navigateTo("/login");
     }
 
-    // Check if user has support role (role = 1 for support)
-    const isSupport = userValue?.role === "support" || userValue?.role === "1";
+    // Check if user has support role (role = 3 for support)
+    const isSupport = userValue?.role === "3" || userValue?.role === 3;
 
     if (!isSupport) {
         // Return 404 error for non-support users to hide the existence of these pages

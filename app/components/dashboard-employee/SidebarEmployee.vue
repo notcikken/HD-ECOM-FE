@@ -11,8 +11,7 @@ import { useAuth } from "~/composables/useAuth";
 
 
 const route = useRoute();
-const { user } = useAuth();
-
+const { user, fetchUserInfo } = useAuth();
 
 const ticketCounts = ref({
   in_progress: 0,
@@ -46,7 +45,10 @@ const fetchTicketCounts = async () => {
   }
 };
 
-onMounted(fetchTicketCounts);
+onMounted(() => {
+  fetchUserInfo();
+  fetchTicketCounts();
+});
 
 
 const menuItems = computed(() => [
