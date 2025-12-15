@@ -107,9 +107,9 @@ const handleViewTicket = (ticket: Ticket) => {
               <td v-if="showRole" class="px-6 py-4 text-sm">
                 <span
                   class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                  :class="getRoleBadgeClass(ticket.role)"
+                  :class="getRoleBadgeClass(ticket.tipe_pengaduan)"
                 >
-                  {{ ticket.role }}
+                  {{ ticket.tipe_pengaduan }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">

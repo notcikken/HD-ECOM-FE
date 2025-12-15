@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ticket as TicketIcon, TrendingUp, CheckCircle, ChevronDown } from "lucide-vue-next";
+import { Ticket as ChevronDown } from "lucide-vue-next";
 import type { Ticket as TicketType, TicketRole } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard-employee/TicketTableEmployee.vue";
 import { CATEGORY_MAP } from "~/utils/convertTicket";
