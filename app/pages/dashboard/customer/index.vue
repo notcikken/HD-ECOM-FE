@@ -11,7 +11,7 @@ definePageMeta({
   middleware: 'auth',
 });
 
-const { fetchTickets } = useTicketApi();
+const { fetchTickets, fetchTicketCategories } = useTicketApi();
 
 const loading = ref(false);
 const loadingMore = ref(false);
@@ -20,6 +20,7 @@ const tickets = ref<Ticket[]>([]);
 const nextCursor = ref<string | null>(null);
 const hasMore = ref(true);
 const loadMoreButtonRef = ref<HTMLElement | null>(null);
+const categoryMap = ref<Record<number, string>>({});
 
 const filters = ref({
   status: '',
@@ -53,11 +54,17 @@ const loadTickets = async (cursor?: string, append = false) => {
 
     const newTickets = Array.isArray(response.data) ? response.data : [];
 
+    // Map category IDs to names
+    const mappedTickets = newTickets.map((ticket: any) => ({
+      ...ticket,
+      category: categoryMap.value[ticket.id_category] || 'Unknown',
+    }));
+
     // Append or replace tickets based on whether we're loading more
     if (append) {
-      tickets.value = [...tickets.value, ...newTickets];
+      tickets.value = [...tickets.value, ...mappedTickets];
     } else {
-      tickets.value = newTickets;
+      tickets.value = mappedTickets;
     }
 
     // Extract next_cursor from response metadata
@@ -99,7 +106,17 @@ const viewTicket = (id: string) => {
   // TODO: Navigate to ticket detail page
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Fetch categories first to build the map
+  const categoriesResponse = await fetchTicketCategories();
+  if (categoriesResponse.success) {
+    categoryMap.value = categoriesResponse.data.reduce((map, cat) => {
+      map[cat.id_category] = cat.nama_category;
+      return map;
+    }, {} as Record<number, string>);
+  }
+
+  // Then load tickets
   loadTickets();
 });
 </script>
