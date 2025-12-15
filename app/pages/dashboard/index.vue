@@ -208,12 +208,6 @@ const viewTicket = (id: string) => {
               :class="stat.iconColor"
             />
           </div>
-          <span
-            class="text-xs font-semibold px-2 py-1 rounded-full"
-            :class="stat.badgeClass"
-          >
-            {{ stat.change }}
-          </span>
         </div>
         <h3 class="text-2xl font-bold text-gray-800 mb-1">{{ stat.value }}</h3>
         <p class="text-sm text-gray-600">{{ stat.label }}</p>
