@@ -1,30 +1,12 @@
 <script setup lang="ts">
 import { Ticket as ChevronDown } from "lucide-vue-next";
-import type { Ticket as TicketType, TicketRole } from "~/types/ticket.ts";
+import type { Ticket as TicketType, TicketRole, TicketAssignment } from "~/types/ticket.ts";
 import TicketTable from "~/components/dashboard-employee/TicketTableEmployee.vue";
 import { CATEGORY_MAP } from "~/utils/convertTicket";
 
 definePageMeta({
   layout: "employee",
 });
-
-interface TicketAssignment {
-  id_admin: number;
-  id_assignment: number;
-  id_ticket: number;
-  tanggal_ditugaskan: string;
-  ticket: {
-    category_name: string;
-    deskripsi: string;
-    id_ticket: number;
-    judul: string;
-    kode_ticket: string;
-    priority_name: string;
-    status_name: string;
-    tipe_pengaduan: string;
-    username: string;
-  };
-}
 
 const tickets = ref<TicketType[]>([]);
 const visibleTickets = ref<TicketType[]>([]);
