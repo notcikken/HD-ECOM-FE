@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import type { Ticket } from "~/types/ticket";
-import { useTicketApi } from "~/composables/useTicketApi";
-import TicketFilter from "~/components/dashboard/TicketFilter.vue";
-import TicketTable from "~/components/dashboard/TicketTable.vue";
-import { ChevronDown } from "lucide-vue-next";
+import { ref, onMounted } from 'vue';
+import type { Ticket } from '~/types/ticket';
+import { useTicketApi } from '~/composables/useTicketApi';
+import TicketFilter from '~/components/dashboard/TicketFilter.vue';
+import TicketTable from '~/components/dashboard/TicketTable.vue';
+import { ChevronDown } from 'lucide-vue-next';
 
 definePageMeta({
-  layout: "dashboard",
+  layout: 'dashboard',
+  middleware: 'auth',
 });
 
-const { fetchTickets } = useTicketApi();
+const { fetchTickets, fetchTicketCategories } = useTicketApi();
 
 const loading = ref(false);
 const loadingMore = ref(false);
@@ -19,11 +20,12 @@ const tickets = ref<Ticket[]>([]);
 const nextCursor = ref<string | null>(null);
 const hasMore = ref(true);
 const loadMoreButtonRef = ref<HTMLElement | null>(null);
+const categoryMap = ref<Record<number, string>>({});
 
 const filters = ref({
-  status: "",
-  priority: "",
-  category: "",
+  status: '',
+  priority: '',
+  category: '',
 });
 
 const loadTickets = async (cursor?: string, append = false) => {
@@ -36,8 +38,9 @@ const loadTickets = async (cursor?: string, append = false) => {
 
   try {
     const params: Record<string, any> = {
-      role: "seller",
-      status: filters.value.status !== "" ? Number(filters.value.status) : undefined,
+      role: 'seller',
+      status:
+        filters.value.status !== '' ? Number(filters.value.status) : undefined,
       priority: filters.value.priority || undefined,
       category: filters.value.category || undefined,
     };
@@ -50,14 +53,20 @@ const loadTickets = async (cursor?: string, append = false) => {
     const response = await fetchTickets(params);
 
     const newTickets = Array.isArray(response.data) ? response.data : [];
-    
+
+    // Map category IDs to names
+    const mappedTickets = newTickets.map((ticket: any) => ({
+      ...ticket,
+      category: categoryMap.value[ticket.id_category] || 'Unknown',
+    }));
+
     // Append or replace tickets based on whether we're loading more
     if (append) {
-      tickets.value = [...tickets.value, ...newTickets];
+      tickets.value = [...tickets.value, ...mappedTickets];
     } else {
-      tickets.value = newTickets;
+      tickets.value = mappedTickets;
     }
-    
+
     // Extract next_cursor from response metadata
     if (response.meta) {
       nextCursor.value = response.meta.next_cursor || null;
@@ -67,7 +76,7 @@ const loadTickets = async (cursor?: string, append = false) => {
       hasMore.value = false;
     }
   } catch (err) {
-    error.value = "An error occurred while loading tickets";
+    error.value = 'An error occurred while loading tickets';
     console.error(err);
   } finally {
     loading.value = false;
@@ -83,9 +92,9 @@ const loadNextPage = () => {
 
 const resetFilters = () => {
   filters.value = {
-    status: "",
-    priority: "",
-    category: "",
+    status: '',
+    priority: '',
+    category: '',
   };
   nextCursor.value = null;
   hasMore.value = true;
@@ -93,11 +102,21 @@ const resetFilters = () => {
 };
 
 const viewTicket = (id: string) => {
-  console.log("View ticket:", id);
+  console.log('View ticket:', id);
   // TODO: Navigate to ticket detail page
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Fetch categories first to build the map
+  const categoriesResponse = await fetchTicketCategories();
+  if (categoriesResponse.success) {
+    categoryMap.value = categoriesResponse.data.reduce((map, cat) => {
+      map[cat.id_category] = cat.nama_category;
+      return map;
+    }, {} as Record<number, string>);
+  }
+
+  // Then load tickets
   loadTickets();
 });
 </script>
@@ -143,8 +162,8 @@ onMounted(() => {
     </div>
 
     <!-- Pagination Controls -->
-    <div 
-      v-if="hasMore && tickets.length > 0" 
+    <div
+      v-if="hasMore && tickets.length > 0"
       class="mt-6 flex justify-center"
       ref="loadMoreButtonRef"
     >
