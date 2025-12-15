@@ -12,11 +12,13 @@ interface Props {
   tickets: Ticket[];
   loading?: boolean;
   showRole?: boolean;
+  baseRoute?: string; // contoh: "dashboard-employee/all-tickets"
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   loading: false,
   showRole: false,
+  baseRoute: "",
 });
 
 const router = useRouter();
@@ -32,7 +34,16 @@ const formatDate = (date: string) => {
 };
 
 const handleViewTicket = (ticket: Ticket) => {
-  const route = `/dashboard/${ticket.tipe_pengaduan}/${ticket.id_ticket}`;
+  // Jika baseRoute diset, gunakan pola: /{baseRoute}/{kode_ticket}
+  if (props.baseRoute) {
+    const cleanedBase = props.baseRoute.replace(/^\/+|\/+$/g, "");
+    const route = `/${cleanedBase}/${ticket.id_ticket}`;
+    router.push(route);
+    return;
+  }
+
+  // Fallback lama (dashboard-support berdasarkan tipe_pengaduan dan id_ticket)
+  const route = `/dashboard-support/${ticket.tipe_pengaduan}/${ticket.kode_tiket}`;
   router.push(route);
 };
 </script>
@@ -107,9 +118,9 @@ const handleViewTicket = (ticket: Ticket) => {
               <td v-if="showRole" class="px-6 py-4 text-sm">
                 <span
                   class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                  :class="getRoleBadgeClass(ticket.role)"
+                  :class="getRoleBadgeClass(ticket.tipe_pengaduan)"
                 >
-                  {{ ticket.role }}
+                  {{ ticket.tipe_pengaduan }}
                 </span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">

@@ -15,11 +15,6 @@ import { formatTimeToDate, formatTimeToString } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
 
-definePageMeta({
-  layout: "dashboard",
-  middleware: "auth",
-});
-
 const config = useRuntimeConfig();
 const isOpen = ref(false);
 const newMessage = ref("");

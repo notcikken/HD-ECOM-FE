@@ -34,3 +34,21 @@ export interface TicketAttachment {
   };
   download_url: string;
 }
+
+export interface TicketAssignment {
+  id_admin: number;
+  id_assignment: number;
+  id_ticket: number;
+  tanggal_ditugaskan: string;
+  ticket: {
+    category_name: string;
+    deskripsi: string;
+    id_ticket: number;
+    judul: string;
+    kode_ticket: string;
+    priority_name: string;
+    status_name: string;
+    tipe_pengaduan: string;
+    username: string;
+  };
+}
