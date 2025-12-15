@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { Ticket, TrendingUp, CheckCircle } from "lucide-vue-next";
-import type { Ticket as TicketType } from "~/types/ticket.ts";
-import TicketTable from "~/components/dashboard/TicketTable.vue";
-import { useNotification } from "~/composables/useNotification";
-import { computed, ref, onMounted } from "vue";
-import { useTicketApi } from "~/composables/useTicketApi";
+import { Ticket, TrendingUp, CheckCircle } from 'lucide-vue-next';
+import type { Ticket as TicketType } from '~/types/ticket.ts';
+import TicketTable from '~/components/dashboard/TicketTable.vue';
+import { useNotification } from '~/composables/useNotification';
+import { computed, ref, onMounted } from 'vue';
+import { useTicketApi } from '~/composables/useTicketApi';
 
 definePageMeta({
-  layout: "dashboard",
+  layout: 'dashboard',
+  middleware: 'auth',
 });
 
 const { ticketNotifications } = useNotification();
@@ -33,25 +34,25 @@ const loadRecentTickets = async () => {
       description: ticket.deskripsi,
       status:
         ticket.id_status === 1
-          ? "open"
+          ? 'open'
           : ticket.id_status === 2
-          ? "in-progress"
-          : "resolved",
+          ? 'in-progress'
+          : 'resolved',
       priority:
         ticket.id_priority === 0
           ? null
           : ticket.id_priority === 1
-          ? "low"
+          ? 'low'
           : ticket.id_priority === 2
-          ? "medium"
+          ? 'medium'
           : ticket.id_priority === 3
-          ? "high"
-          : "urgent",
-      role: ticket.tipe_pengaduan === "customer" ? "pelanggan" : "penjual",
+          ? 'high'
+          : 'urgent',
+      role: ticket.tipe_pengaduan === 'customer' ? 'pelanggan' : 'penjual',
       createdBy: ticket.username,
       createdAt: ticket.tanggal_dibuat,
       updatedAt: ticket.tanggal_diperbarui,
-      category: categoryMap[ticket.id_category] || "Unknown",
+      category: categoryMap[ticket.id_category] || 'Unknown',
       // Add other fields as needed, defaulting missing ones
       id_ticket: ticket.id_ticket.toString(),
       kode_tiket: ticket.kode_tiket,
@@ -76,40 +77,40 @@ const statistics = computed(() => {
   if (!tn) return [];
   return [
     {
-      label: "Total Tiket",
+      label: 'Total Tiket',
       value: tn.total_tickets.toString(),
-      change: "+12%",
+      change: '+12%',
       icon: Ticket,
-      bgColor: "bg-green-50",
-      iconColor: "text-green-600",
-      badgeClass: "bg-green-100 text-green-700",
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600',
+      badgeClass: 'bg-green-100 text-green-700',
     },
     {
-      label: "Open",
+      label: 'Open',
       value: tn.total_open_tickets.toString(),
-      change: "+8%",
+      change: '+8%',
       icon: Ticket,
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
-      badgeClass: "bg-blue-100 text-blue-700",
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      badgeClass: 'bg-blue-100 text-blue-700',
     },
     {
-      label: "In Progress",
+      label: 'In Progress',
       value: tn.in_progress_tickets.toString(),
-      change: "-5%",
+      change: '-5%',
       icon: TrendingUp,
-      bgColor: "bg-yellow-50",
-      iconColor: "text-yellow-600",
-      badgeClass: "bg-yellow-100 text-yellow-700",
+      bgColor: 'bg-yellow-50',
+      iconColor: 'text-yellow-600',
+      badgeClass: 'bg-yellow-100 text-yellow-700',
     },
     {
-      label: "Resolved",
+      label: 'Resolved',
       value: tn.resolved_tickets.toString(),
-      change: "+15%",
+      change: '+15%',
       icon: CheckCircle,
-      bgColor: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-      badgeClass: "bg-emerald-100 text-emerald-700",
+      bgColor: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
     },
   ];
 });
@@ -120,22 +121,22 @@ const statusDistribution = computed(() => {
   const total = tn.total_tickets;
   return [
     {
-      label: "Open",
+      label: 'Open',
       value: tn.total_open_tickets,
       percentage: Math.round((tn.total_open_tickets / total) * 100),
-      color: "bg-blue-500",
+      color: 'bg-blue-500',
     },
     {
-      label: "In Progress",
+      label: 'In Progress',
       value: tn.in_progress_tickets,
       percentage: Math.round((tn.in_progress_tickets / total) * 100),
-      color: "bg-yellow-500",
+      color: 'bg-yellow-500',
     },
     {
-      label: "Resolved",
+      label: 'Resolved',
       value: tn.resolved_tickets,
       percentage: Math.round((tn.resolved_tickets / total) * 100),
-      color: "bg-green-500",
+      color: 'bg-green-500',
     },
   ];
 });
@@ -147,38 +148,38 @@ const priorityDistribution = computed(() => {
   const total = tn.total_tickets;
   return [
     {
-      label: "Urgent",
+      label: 'Urgent',
       value: pc.critical,
       percentage: Math.round((pc.critical / total) * 100),
-      color: "bg-red-500",
-      dotColor: "bg-red-500",
+      color: 'bg-red-500',
+      dotColor: 'bg-red-500',
     },
     {
-      label: "High",
+      label: 'High',
       value: pc.high,
       percentage: Math.round((pc.high / total) * 100),
-      color: "bg-orange-500",
-      dotColor: "bg-orange-500",
+      color: 'bg-orange-500',
+      dotColor: 'bg-orange-500',
     },
     {
-      label: "Medium",
+      label: 'Medium',
       value: pc.medium,
       percentage: Math.round((pc.medium / total) * 100),
-      color: "bg-yellow-500",
-      dotColor: "bg-yellow-500",
+      color: 'bg-yellow-500',
+      dotColor: 'bg-yellow-500',
     },
     {
-      label: "Low",
+      label: 'Low',
       value: pc.low,
       percentage: Math.round((pc.low / total) * 100),
-      color: "bg-green-500",
-      dotColor: "bg-green-500",
+      color: 'bg-green-500',
+      dotColor: 'bg-green-500',
     },
   ];
 });
 
 const viewTicket = (id: string) => {
-  console.log("View ticket:", id);
+  console.log('View ticket:', id);
   // TODO: Navigate to ticket detail page
 };
 </script>
