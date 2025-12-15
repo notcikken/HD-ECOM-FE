@@ -139,6 +139,7 @@ const viewTicket = (id: string) => {
         :tickets="visibleTickets"
         :loading="loading"
         :show-role="true"
+        base-route="dashboard-support/all-tickets"
         @view-ticket="viewTicket"
       />
     </div>
