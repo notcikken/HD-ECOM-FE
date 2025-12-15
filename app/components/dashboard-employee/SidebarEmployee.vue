@@ -6,23 +6,56 @@ import {
   IdCardLanyard,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 
 const route = useRoute();
 
+const ticketCounts = ref({
+  in_progress: 0,
+  total: 0,
+});
+
+const fetchTicketCounts = async () => {
+  try {
+    const config = useRuntimeConfig();
+    const { token } = useAuth();
+
+    const response = await $fetch<{
+      status: number;
+      message: string;
+      data: {
+        in_progress: number;
+        total: number;
+      };
+    }>(`${config.public.apiBase}/api/ticket-assignments/my-counts`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
+
+    if (response.data) {
+      ticketCounts.value = response.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch ticket counts:", error);
+  }
+};
+
+onMounted(fetchTicketCounts);
 
 const menuItems = computed(() => [
   {
     path: "/dashboard-support/assigned-tickets",
-    label: "Assigned Tickets",
+    label: "Assigned",
     icon: Ticket,
-    badge: null,
+    badge: ticketCounts.value.in_progress > 0 ? ticketCounts.value.in_progress.toString() : null,
   },
   {
     path: "/dashboard-support/all-tickets",
     label: "All Tickets",
     icon: CheckCircle,
-    badge: "12",
+    badge:  null,
   },
 ]);
 

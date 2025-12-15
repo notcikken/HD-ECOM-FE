@@ -77,7 +77,12 @@ const fetchAllAssignedTickets = async () => {
     });
 
     const assignments = response.data.data || [];
-    tickets.value = assignments.map(mapAssignmentToTicket);
+     // Hanya ambil tiket dengan status "In Progress"
+    const activeAssignments = assignments.filter(
+      (a) => a.ticket.status_name === "Resolved"
+    );
+    tickets.value = activeAssignments.map(mapAssignmentToTicket);
+    
     // Inisialisasi tiket yang ditampilkan pertama kali
     visibleTickets.value = [];
     updateVisibleTickets();
