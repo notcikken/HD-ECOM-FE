@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import {
-  User,
-  Ticket,
-  CheckCircle,
-  IdCardLanyard,
-} from "lucide-vue-next";
+import { User, Ticket, CheckCircle, IdCardLanyard } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { computed, ref, onMounted } from "vue";
 import { useAuth } from "~/composables/useAuth";
 
-
 const route = useRoute();
-const { user, fetchUserInfo } = useAuth();
+const { user } = useAuth();
 
 const ticketCounts = ref({
   in_progress: 0,
@@ -45,28 +39,23 @@ const fetchTicketCounts = async () => {
   }
 };
 
-onMounted(() => {
-  fetchUserInfo();
-  fetchTicketCounts();
-});
-
-
 const menuItems = computed(() => [
   {
     path: "/dashboard-support/assigned-tickets",
     label: "Assigned",
     icon: Ticket,
-    badge: ticketCounts.value.in_progress > 0 ? ticketCounts.value.in_progress.toString() : null,
+    badge:
+      ticketCounts.value.in_progress > 0
+        ? ticketCounts.value.in_progress.toString()
+        : null,
   },
   {
     path: "/dashboard-support/all-tickets",
     label: "All Tickets",
     icon: CheckCircle,
-    badge:  null,
+    badge: null,
   },
 ]);
-
-
 
 const isActive = (path: string) => {
   if (path === "/dashboard-support") {
@@ -75,7 +64,9 @@ const isActive = (path: string) => {
   return route.path.startsWith(path);
 };
 
-
+onMounted(() => {
+  fetchTicketCounts();
+});
 </script>
 
 <template>
@@ -85,7 +76,6 @@ const isActive = (path: string) => {
         <div
           class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center"
         >
-          
           <IdCardLanyard class="w-6 h-6 text-white" />
         </div>
         <div>
@@ -127,8 +117,12 @@ const isActive = (path: string) => {
             <User class="w-5 h-5 text-gray-600" />
           </div>
           <div class="flex-1">
-            <p class="text-sm font-medium text-gray-800">{{ user.username || "Employee" }}</p>
-            <p class="text-xs text-gray-500">{{ user.email || "employee@example.com" }}</p>
+            <p class="text-sm font-medium text-gray-800">
+              {{ user.name || "Employee" }}
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ user.email || "employee@example.com" }}
+            </p>
           </div>
         </div>
       </div>
