@@ -5,7 +5,7 @@ import { computed, ref, onMounted } from "vue";
 import { useAuth } from "~/composables/useAuth";
 
 const route = useRoute();
-const { user, logout } = useAuth(); // Add logout to destructured values
+const { user, logout, fetchUserInfo } = useAuth(); // Add logout to destructured values
 
 const ticketCounts = ref({
   in_progress: 0,
@@ -126,10 +126,10 @@ const handleLogout = () => {
           </div>
           <div class="flex-1">
             <p class="text-sm font-medium text-gray-800">
-              {{ user.username || "Employee" }}
+              {{ user.username || "Support" }}
             </p>
             <p class="text-xs text-gray-500">
-              {{ user.email || "employee@example.com" }}
+              {{ user.email || "support@example.com" }}
             </p>
           </div>
         </div>
