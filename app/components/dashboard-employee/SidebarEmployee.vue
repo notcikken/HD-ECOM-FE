@@ -5,7 +5,7 @@ import { computed, ref, onMounted } from "vue";
 import { useAuth } from "~/composables/useAuth";
 
 const route = useRoute();
-const { user, logout, fetchUserInfo } = useAuth(); // Add logout to destructured values
+const { user, logout } = useAuth(); // Add logout to destructured values
 
 const ticketCounts = ref({
   in_progress: 0,
