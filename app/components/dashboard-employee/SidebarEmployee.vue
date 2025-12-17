@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { User, Ticket, CheckCircle, IdCardLanyard } from "lucide-vue-next";
+import { Ticket, CheckCircle, IdCardLanyard, LogOut } from "lucide-vue-next"; // Add LogOut
 import { useRoute } from "vue-router";
 import { computed, ref, onMounted } from "vue";
 import { useAuth } from "~/composables/useAuth";
 
 const route = useRoute();
-const { user } = useAuth();
+const { user, logout } = useAuth(); // Add logout to destructured values
 
 const ticketCounts = ref({
   in_progress: 0,
@@ -67,6 +67,10 @@ const isActive = (path: string) => {
 onMounted(() => {
   fetchTicketCounts();
 });
+
+const handleLogout = () => {
+  logout();
+};
 </script>
 
 <template>
@@ -108,17 +112,21 @@ onMounted(() => {
       </nav>
     </div>
 
-    <div class="flex absolute p-3 bottom-1">
-      <div class="bg-gray-100 rounded-lg p-4">
+    <div class="flex absolute p-3 bottom-1 w-full flex-col gap-3">
+      <!-- User Info -->
+      <div
+        class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 w-full cursor-pointer"
+        @click="handleLogout"
+      >
         <div class="flex items-center space-x-3">
           <div
             class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center"
           >
-            <User class="w-5 h-5 text-gray-600" />
+            <LogOut class="w-5 h-5 text-gray-600 rotate-180" />
           </div>
           <div class="flex-1">
             <p class="text-sm font-medium text-gray-800">
-              {{ user.name || "Employee" }}
+              {{ user.username || "Employee" }}
             </p>
             <p class="text-xs text-gray-500">
               {{ user.email || "employee@example.com" }}
