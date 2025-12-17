@@ -39,7 +39,13 @@ export const useAuth = () => {
 
         // decide redirect path based on role if caller prefers auto-redirect
         const role = userData.role;
-        const redirectTo = role === 0 ? "/dashboard" : "/";
+        let redirectTo = "/";
+        
+        if (role === 0 || role === "admin") {
+          redirectTo = "/dashboard";
+        } else if (role === 3 || role === "support") {
+          redirectTo = "/dashboard-support/assigned-tickets";
+        }
 
         isLoading.value = false;
         return { success: true, redirectTo, response };

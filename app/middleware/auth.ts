@@ -20,8 +20,11 @@ export default defineNuxtRouteMiddleware((to, from) => {
     return;
   } else {
     // For non-admin users, prevent access to dashboard
-    if (to.path.startsWith("/dashboard")) {
-      return navigateTo("/");
-    }
+    // Return 404 error for non-support users to hide the existence of these pages
+        throw createError({
+            statusCode: 404,
+            statusMessage: "Page Not Found",
+            fatal: false,
+        });
   }
 });

@@ -20,6 +20,7 @@ import { useSupportUsers } from "~/composables/useSupportUsers";
 
 definePageMeta({
   layout: "employee",
+  middleware: "support",
 });
 
 const route = useRoute();

@@ -3,9 +3,9 @@ import {
   LayoutDashboard,
   Users,
   Store,
-  User,
   Headphones,
   MessageCircle,
+  LogOut,
 } from "lucide-vue-next";
 import { useRoute } from "vue-router";
 import { useNotification } from "~/composables/useNotification";
@@ -13,6 +13,7 @@ import { computed } from "vue";
 
 const route = useRoute();
 const { notification, ticketNotifications } = useNotification();
+const { user, logout } = useAuth();
 
 // Return an array of conversations that have unread messages
 const totalUnreadConversations = computed(() => {
@@ -31,13 +32,17 @@ const menuItems = computed(() => [
     path: "/dashboard/customer",
     label: "Customer",
     icon: Users,
-    badge: ticketNotifications.value ? String(ticketNotifications.value.customer_open_tickets) : null,
+    badge: ticketNotifications.value
+      ? String(ticketNotifications.value.customer_open_tickets)
+      : null,
   },
   {
     path: "/dashboard/seller",
     label: "Seller",
     icon: Store,
-    badge: ticketNotifications.value ? String(ticketNotifications.value.seller_open_tickets) : null,
+    badge: ticketNotifications.value
+      ? String(ticketNotifications.value.seller_open_tickets)
+      : null,
   },
   {
     path: "/dashboard/chat",
@@ -55,6 +60,10 @@ const isActive = (path: string) => {
     return route.path === "/dashboard";
   }
   return route.path.startsWith(path);
+};
+
+const handleLogout = () => {
+  logout();
 };
 </script>
 
@@ -104,16 +113,23 @@ const isActive = (path: string) => {
     </div>
 
     <div class="flex absolute p-3 bottom-1">
-      <div class="bg-gray-100 rounded-lg p-4">
+      <div
+        class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 w-full cursor-pointer"
+        @click="handleLogout"
+      >
         <div class="flex items-center space-x-3">
           <div
             class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center"
           >
-            <User class="w-5 h-5 text-gray-600" />
+            <LogOut class="w-5 h-5 text-gray-600 rotate-180" />
           </div>
           <div class="flex-1">
-            <p class="text-sm font-medium text-gray-800">Admin User</p>
-            <p class="text-xs text-gray-500">admin@example.com</p>
+            <p class="text-sm font-medium text-gray-800">
+              {{ user?.username || "Super Admin" }}
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ user?.email || "admin@example.com" }}
+            </p>
           </div>
         </div>
       </div>

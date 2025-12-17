@@ -18,7 +18,7 @@ import {
   Zap,
 } from 'lucide-vue-next';
 
-definePageMeta({ title: 'Contact Support', layout: 'default', middleware: "auth" });
+definePageMeta({ title: 'Contact Support', layout: 'default' });
 
 const { fetchMyTickets } = useTicketApi();
 

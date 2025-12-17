@@ -6,6 +6,7 @@ import { CATEGORY_MAP } from "~/utils/convertTicket";
 
 definePageMeta({
   layout: "employee",
+  middleware: "support",
 });
 
 const tickets = ref<TicketType[]>([]);
