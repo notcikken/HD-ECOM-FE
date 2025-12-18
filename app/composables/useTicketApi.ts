@@ -58,9 +58,15 @@ export const useTicketApi = () => {
         queryString ? `?${queryString}` : ""
       }`;
 
-      const response = await $fetch<{ 
-        data: { data: Ticket[]; meta?: { limit?: number; next_cursor?: string | null } } 
-      } | Ticket[]>(url, {
+      const response = await $fetch<
+        | {
+            data: {
+              data: Ticket[];
+              meta?: { limit?: number; next_cursor?: string | null };
+            };
+          }
+        | Ticket[]
+      >(url, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token.value}`,
@@ -68,7 +74,7 @@ export const useTicketApi = () => {
       });
 
       // Handle API response with metadata
-      if (response && typeof response === 'object' && 'data' in response) {
+      if (response && typeof response === "object" && "data" in response) {
         const apiData = response.data;
         return {
           success: true,
@@ -125,7 +131,9 @@ export const useTicketApi = () => {
     }
   };
 
-  const fetchTicketCategories = async (): Promise<ApiResponse<TicketCategory[]>> => {
+  const fetchTicketCategories = async (): Promise<
+    ApiResponse<TicketCategory[]>
+  > => {
     try {
       const data = await ticketService.fetchTicketCategories();
       return {
@@ -172,8 +180,8 @@ export const useTicketApi = () => {
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token.value}`,
-            "Content-Type": "application/json"
+            Authorization: `Bearer ${token.value}`,
+            "Content-Type": "application/json",
           },
           body: ticket,
         }
@@ -309,7 +317,8 @@ export const useTicketApi = () => {
    */
   const assignTicketToSupport = async (
     ticketId: number,
-    adminId: number
+    adminId: number,
+    priorityId?: number
   ): Promise<ApiResponse<any>> => {
     try {
       const config = useRuntimeConfig();
@@ -318,6 +327,7 @@ export const useTicketApi = () => {
       const payload = {
         id_admin: adminId,
         id_ticket: ticketId,
+        priority_id: priorityId,
         tanggal_ditugaskan: new Date().toISOString(),
       };
 
@@ -333,18 +343,15 @@ export const useTicketApi = () => {
         }
       );
 
-      const data = "data" in response ? response.data : response;
-
       return {
         success: true,
-        data,
-        message: "Ticket assigned successfully",
+        data: response.data || response,
       };
     } catch (error: any) {
       return {
         success: false,
         data: null,
-        message: error?.message || "Failed to assign ticket",
+        message: error?.data?.message || "Failed to assign ticket to support",
       };
     }
   };

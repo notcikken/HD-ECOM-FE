@@ -1,7 +1,7 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from "vue";
 import {
   ArrowLeft,
   User,
@@ -9,23 +9,23 @@ import {
   CheckCircle,
   Bell,
   MessageSquare,
-} from 'lucide-vue-next';
-import ActionModal from '~/components/actionModal.vue';
-import type { Ticket } from '~/types/ticket';
-import DetailedInfoCard from '~/components/dashboard/DetailedInfoCard.vue';
-import TicketHeaderCard from '~/components/dashboard/TicketHeaderCard.vue';
-import TicketStepper from '~/components/dashboard/TicketStepper.vue';
-import QuickActionsCard from '~/components/dashboard/QuickActionsCard.vue';
-import { useSupportUsers } from '~/composables/useSupportUsers';
+} from "lucide-vue-next";
+import ActionModal from "~/components/actionModal.vue";
+import type { Ticket } from "~/types/ticket";
+import DetailedInfoCard from "~/components/dashboard/DetailedInfoCard.vue";
+import TicketHeaderCard from "~/components/dashboard/TicketHeaderCard.vue";
+import TicketStepper from "~/components/dashboard/TicketStepper.vue";
+import QuickActionsCard from "~/components/dashboard/QuickActionsCard.vue";
+import { useSupportUsers } from "~/composables/useSupportUsers";
 
 definePageMeta({
-  layout: 'dashboard',
-  middleware: 'auth',
+  layout: "dashboard",
+  middleware: "auth",
 });
 
 const route = useRoute();
 const router = useRouter();
-const { fetchTicketById, assignTicket, assignTicketToSupport, resolveTicket } =
+const { fetchTicketById, assignTicketToSupport, resolveTicket } =
   useTicketApi();
 
 const ticketId = computed(() => route.params.id as string);
@@ -38,11 +38,11 @@ const ticket = ref<Ticket | null>(null);
 const toast = ref<{
   show: boolean;
   message: string;
-  type: 'success' | 'error';
+  type: "success" | "error";
 }>({
   show: false,
-  message: '',
-  type: 'success',
+  message: "",
+  type: "success",
 });
 
 // Modal states
@@ -58,16 +58,16 @@ const {
 
 // Form data
 const assigneeForm = ref({
-  assignedTo: '', // username for display
+  assignedTo: "", // username for display
   userId: 0, // user_id for API
-  priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+  priority_id: 0,
 });
 
 const resolveForm = ref({
-  resolution: '',
+  resolution: "",
 });
 
-const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+const showToast = (message: string, type: "success" | "error" = "success") => {
   toast.value = { show: true, message, type };
   setTimeout(() => {
     toast.value.show = false;
@@ -84,10 +84,10 @@ const loadTicketDetail = async () => {
     if (response.success && response.data) {
       ticket.value = response.data;
     } else {
-      error.value = response.message || 'Ticket not found';
+      error.value = response.message || "Ticket not found";
     }
   } catch (err) {
-    error.value = 'An error occurred while loading ticket';
+    error.value = "An error occurred while loading ticket";
     console.error(err);
   } finally {
     loading.value = false;
@@ -96,7 +96,12 @@ const loadTicketDetail = async () => {
 
 const handleAssignTicket = async () => {
   if (!assigneeForm.value.userId) {
-    showToast('Silakan pilih pegawai support', 'error');
+    showToast("Silakan pilih pegawai support", "error");
+    return;
+  }
+
+  if (!assigneeForm.value.priority_id) {
+    showToast("Silakan pilih prioritas", "error");
     return;
   }
 
@@ -105,24 +110,24 @@ const handleAssignTicket = async () => {
   try {
     const response = await assignTicketToSupport(
       Number(ticketId.value),
-      assigneeForm.value.userId
+      assigneeForm.value.userId,
+      assigneeForm.value.priority_id // Add priority_id parameter
     );
 
     if (response.success) {
-      // Reload ticket data to get updated information
       await loadTicketDetail();
       showAssignModal.value = false;
       assigneeForm.value = {
-        assignedTo: '',
+        assignedTo: "",
         userId: 0,
-        priority: 'medium',
+        priority_id: 0,
       };
-      showToast('Tiket berhasil ditugaskan ke support');
+      showToast("Tiket berhasil ditugaskan ke support");
     } else {
-      showToast(response.message || 'Failed to assign ticket', 'error');
+      showToast(response.message || "Failed to assign ticket", "error");
     }
   } catch (err) {
-    showToast('An error occurred while assigning ticket', 'error');
+    showToast("An error occurred while assigning ticket", "error");
     console.error(err);
   } finally {
     updating.value = false;
@@ -131,7 +136,7 @@ const handleAssignTicket = async () => {
 
 const handleResolveTicket = async () => {
   if (!resolveForm.value.resolution.trim()) {
-    showToast('Silakan masukkan resolusi masalah', 'error');
+    showToast("Silakan masukkan resolusi masalah", "error");
     return;
   }
 
@@ -146,13 +151,13 @@ const handleResolveTicket = async () => {
     if (response.success) {
       ticket.value = response.data;
       showResolveModal.value = false;
-      resolveForm.value.resolution = '';
-      showToast('Tiket berhasil di-resolve dengan solusi yang diberikan');
+      resolveForm.value.resolution = "";
+      showToast("Tiket berhasil di-resolve dengan solusi yang diberikan");
     } else {
-      showToast(response.message || 'Failed to resolve ticket', 'error');
+      showToast(response.message || "Failed to resolve ticket", "error");
     }
   } catch (err) {
-    showToast('An error occurred while resolving ticket', 'error');
+    showToast("An error occurred while resolving ticket", "error");
     console.error(err);
   } finally {
     updating.value = false;
@@ -186,7 +191,7 @@ const handleUserSelection = (event: Event) => {
     }
   } else {
     assigneeForm.value.userId = 0;
-    assigneeForm.value.assignedTo = '';
+    assigneeForm.value.assignedTo = "";
   }
 };
 
@@ -305,7 +310,7 @@ onMounted(() => {
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option :value="0">
-            {{ loadingSupportUsers ? 'Memuat...' : 'Pilih Pegawai Support' }}
+            {{ loadingSupportUsers ? "Memuat..." : "Pilih Pegawai Support" }}
           </option>
           <option
             v-for="user in supportUsers"
@@ -327,13 +332,14 @@ onMounted(() => {
         </label>
         <select
           id="priority"
-          v-model="assigneeForm.priority"
+          v-model.number="assigneeForm.priority_id"
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
         >
-          <option value="low">Low - Tidak Mendesak</option>
-          <option value="medium">Medium - Normal</option>
-          <option value="high">High - Mendesak</option>
-          <option value="urgent">Urgent - Sangat Mendesak</option>
+          <option :value="0">Pilih Prioritas</option>
+          <option :value="1">Low - Tidak Mendesak</option>
+          <option :value="2">Medium - Normal</option>
+          <option :value="3">High - Mendesak</option>
+          <option :value="4">Urgent - Sangat Mendesak</option>
         </select>
       </div>
 
@@ -362,7 +368,7 @@ onMounted(() => {
           :disabled="updating || !assigneeForm.userId || loadingSupportUsers"
           @click="handleAssignTicket"
         >
-          {{ updating ? 'Memproses...' : 'Tugaskan' }}
+          {{ updating ? "Memproses..." : "Tugaskan" }}
         </button>
       </template>
     </ActionModal>
@@ -422,7 +428,7 @@ onMounted(() => {
           :disabled="updating || !resolveForm.resolution.trim()"
           @click="handleResolveTicket"
         >
-          {{ updating ? 'Memproses...' : 'Resolve Tiket' }}
+          {{ updating ? "Memproses..." : "Resolve Tiket" }}
         </button>
       </template>
     </ActionModal>

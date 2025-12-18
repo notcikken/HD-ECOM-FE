@@ -19,13 +19,14 @@ import QuickActionsCard from "~/components/dashboard/QuickActionsCard.vue";
 import { useSupportUsers } from "~/composables/useSupportUsers";
 
 definePageMeta({
-  layout: "employee",
+  layout: "dashboard",
   middleware: "support",
 });
 
 const route = useRoute();
 const router = useRouter();
-const { fetchTicketById, assignTicket, assignTicketToSupport, resolveTicket } = useTicketApi();
+const { fetchTicketById, assignTicketToSupport, resolveTicket } =
+  useTicketApi();
 
 const ticketId = computed(() => route.params.id as string);
 const loading = ref(false);
@@ -49,13 +50,17 @@ const showAssignModal = ref(false);
 const showResolveModal = ref(false);
 
 // Add support users composable
-const { supportUsers, loading: loadingSupportUsers, fetchSupportUsers } = useSupportUsers();
+const {
+  supportUsers,
+  loading: loadingSupportUsers,
+  fetchSupportUsers,
+} = useSupportUsers();
 
 // Form data
 const assigneeForm = ref({
   assignedTo: "", // username for display
   userId: 0, // user_id for API
-  priority: "medium" as "low" | "medium" | "high" | "urgent",
+  priority_id: 0,
 });
 
 const resolveForm = ref({
@@ -95,22 +100,27 @@ const handleAssignTicket = async () => {
     return;
   }
 
+  if (!assigneeForm.value.priority_id) {
+    showToast("Silakan pilih prioritas", "error");
+    return;
+  }
+
   updating.value = true;
 
   try {
     const response = await assignTicketToSupport(
       Number(ticketId.value),
-      assigneeForm.value.userId
+      assigneeForm.value.userId,
+      assigneeForm.value.priority_id // Add priority_id parameter
     );
 
     if (response.success) {
-      // Reload ticket data to get updated information
       await loadTicketDetail();
       showAssignModal.value = false;
       assigneeForm.value = {
         assignedTo: "",
         userId: 0,
-        priority: "medium",
+        priority_id: 0,
       };
       showToast("Tiket berhasil ditugaskan ke support");
     } else {
@@ -170,9 +180,11 @@ const openAssignModal = async () => {
 const handleUserSelection = (event: Event) => {
   const target = event.target as HTMLSelectElement;
   const selectedUserId = Number(target.value);
-  
+
   if (selectedUserId) {
-    const selectedUser = supportUsers.value.find(u => u.user_id === selectedUserId);
+    const selectedUser = supportUsers.value.find(
+      (u) => u.user_id === selectedUserId
+    );
     if (selectedUser) {
       assigneeForm.value.userId = selectedUser.user_id;
       assigneeForm.value.assignedTo = selectedUser.username;
@@ -298,11 +310,11 @@ onMounted(() => {
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option :value="0">
-            {{ loadingSupportUsers ? 'Memuat...' : 'Pilih Pegawai Support' }}
+            {{ loadingSupportUsers ? "Memuat..." : "Pilih Pegawai Support" }}
           </option>
-          <option 
-            v-for="user in supportUsers" 
-            :key="user.user_id" 
+          <option
+            v-for="user in supportUsers"
+            :key="user.user_id"
             :value="user.user_id"
           >
             {{ user.username }}
@@ -320,13 +332,14 @@ onMounted(() => {
         </label>
         <select
           id="priority"
-          v-model="assigneeForm.priority"
+          v-model.number="assigneeForm.priority_id"
           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
         >
-          <option value="low">Low - Tidak Mendesak</option>
-          <option value="medium">Medium - Normal</option>
-          <option value="high">High - Mendesak</option>
-          <option value="urgent">Urgent - Sangat Mendesak</option>
+          <option :value="0">Pilih Prioritas</option>
+          <option :value="1">Low - Tidak Mendesak</option>
+          <option :value="2">Medium - Normal</option>
+          <option :value="3">High - Mendesak</option>
+          <option :value="4">Urgent - Sangat Mendesak</option>
         </select>
       </div>
 
