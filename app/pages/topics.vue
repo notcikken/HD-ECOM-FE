@@ -6,31 +6,53 @@ import { ChevronDown } from "lucide-vue-next";
 const route = useRoute();
 const router = useRouter();
 
-// slug from query ?topic=akun-keamanan or path param if you prefer
-const slug = computed(() =>
-  route.query.topic ? String(route.query.topic) : "akun-keamanan"
-);
-const selectedSubtopic = ref(route.query.sub ? String(route.query.sub) : null);
-watch(
-  () => route.query.sub,
-  (v) => {
-    selectedSubtopic.value = v ? String(v) : null;
-  }
-);
-
 // NEW: track opened question id for accordion
 const openQuestion = ref(null);
 
-function selectSubtopic(slugSub) {
-  selectedSubtopic.value = selectedSubtopic.value === slugSub ? null : slugSub;
+// slug from query ?topic=akun-keamanan or path param if you prefer
+const slug = computed(() =>
+  route.params.slug ? String(route.params.slug) : "akun-keamanan"
+);
+
+const selectedSubtopic = ref(null);
+
+// Question id from FAQ
+const questionFromFaq = computed(() =>
+  route.query.q ? Number(route.query.q) : null
+);
+watch(
+  questionFromFaq,
+  (id) => {
+    if (id) {
+      openQuestion.value = id
+    }
+  },
+  { immediate: true }
+)
+
+const activeTopic = computed(() => String(route.query.topic ?? 'akun-keamanan'));
+const questionId = computed(() => route.query.q ? Number(route.query.q) : null);
+watch(
+  questionId,
+  (id) => {
+    openQuestion.value = id || null
+  },
+  { immediate: true }
+)
+
+function selectTopic(topicSlug) {
   // update query so url reflects selection
   router.replace({
+    path: '/topics',
     query: {
-      ...route.query,
-      topic: slug.value,
-      sub: selectedSubtopic.value || undefined,
+      topic: topicSlug 
     },
   });
+}
+
+function selectSubtopic(slugSub) {
+  selectedSubtopic.value =
+    selectedSubtopic.value === slugSub ? null : slugSub;
 }
 
 function toggleQuestion(id) {
@@ -42,113 +64,97 @@ const topicsData = {
   "akun-keamanan": {
     title: "Akun Saya",
     subtopics: [
-      { title: "Privasi Akun", slug: "privasi-akun" },
-      { title: "Cara Daftar & Login", slug: "cara-daftar-login" },
-      { title: "Seputar Keamanan Akun", slug: "seputar-keamanan-akun" },
-      { title: "Kendala Login", slug: "kendala-login" },
-      { title: "Atur Akun", slug: "atur-akun" },
+      { title: "Akun & Keamanan", slug: "akun-keamanan" },
+      { title: "Pembayaran", slug: "pembayaran" },
+      { title: "Pengiriman", slug: "pengiriman" },
+      { title: "Pengembalian", slug: "pengembalian" },
+      { title: "Promo & Voucher", slug: "promo-voucher" },
+      { title: "Teknis Aplikasi", slug: "teknis-aplikasi" },
+      { title: "Produk", slug: "produk" },
+      { title: "Lainnya", slug: "lainnya" },
     ],
     questions: [
       {
         id: 1,
         question: "Cara Mengubah Email Akun SecondCycle",
-        sub: "privasi-akun",
+        topicSlug: "akun-keamanan",
         answer:
           "Masuk ke Pengaturan > Akun > Ubah Email. Ikuti instruksi verifikasi yang dikirim ke email lama dan baru.",
       },
       {
         id: 2,
-        question: "Bagaimana Cara Mengaktifkan Fitur Simpan Akun?",
-        sub: "seputar-keamanan-akun",
+        question: "Metode pembayaran apa saja?",
+        topicSlug: "pembayaran",
         answer:
-          "Buka Pengaturan > Keamanan > Aktifkan opsi 'Simpan Akun'. Pastikan perangkat Anda aman.",
+          "Kami menerima kartu kredit, transfer bank, dan e-wallet",
       },
       {
         id: 3,
-        question: "Bagaimana Cara Mengaktifkan Fitur Keamanan Akun?",
-        sub: "seputar-keamanan-akun",
+        question: "Saya Belum Terima Pesanan",
+        topicSlug: "pengiriman",
         answer:
-          "Aktifkan 2FA di halaman Keamanan dan gunakan kata sandi yang kuat. Ikuti panduan di layar untuk konfigurasi.",
+          "Periksa status pesanan Anda di halaman riwayat transaksi. Jika sudah melewati estimasi waktu pengiriman, hubungi penjual atau layanan pelanggan untuk penyelesaian lebih lanjut.",
       },
       {
         id: 4,
-        question: "Saya Ingin Tutup Akun",
-        sub: "atur-akun",
+        question: "GoPay Later by PT Multifinance Anak Bangsa",
+        topicSlug: "pembayaran",
         answer:
-          "Hubungi tim dukungan melalui formulir kontak. Siapkan data verifikasi akun.",
+          "GoPay Later adalah layanan kredit digital yang memungkinkan Anda berbelanja sekarang dan bayar nanti dengan tenor pembayaran yang fleksibel hingga 12 bulan.",
       },
       {
         id: 5,
-        question: "Cara Ubah Kata Sandi SecondCycle",
-        sub: "seputar-keamanan-akun",
+        question: "Informasi Penonaktifan Produk Investasi",
+        topicSlug: "lainnya",
         answer:
-          "Masuk ke Pengaturan > Keamanan > Ubah Kata Sandi. Masukkan kata sandi lama dan kata sandi baru.",
+          "Layanan investasi emas dan reksa dana sementara dinonaktifkan untuk peningkatan sistem dan keamanan. Informasi lebih lanjut akan diumumkan melalui aplikasi dan email.",
       },
       {
         id: 6,
         question: "Cara Daftar Akun SecondCycle",
-        sub: "cara-daftar-login",
+        topicSlug: "akun-keamanan",
         answer:
           "Klik tombol Daftar, isi data yang diminta, lalu verifikasi email/nomor HP.",
       },
       {
         id: 7,
         question: "Bagaimana Cara Verifikasi Nomor Handphone?",
-        sub: "privasi-akun",
+        topicSlug: "akun-keamanan",
         answer:
           "Masukkan nomor HP di halaman Profil, lalu masukkan kode OTP yang dikirim via SMS.",
       },
       {
         id: 8,
         question: "Akun SecondCycle Diblokir",
-        sub: "kendala-login",
+        topicSlug: "akun-keamanan",
         answer:
           "Periksa email dari kami untuk alasan blokir atau hubungi layanan pelanggan.",
       },
       {
         id: 9,
         question: "Jaga Keamanan Akun SecondCycle",
-        sub: "seputar-keamanan-akun",
+        topicSlug: "akun-keamanan",
         answer:
           "Jangan bagikan kata sandi, aktifkan 2FA, dan waspada terhadap link phishing.",
       },
       {
         id: 10,
         question: "Saya Ingin Ubah Nomor Handphone yang Tidak Aktif",
-        sub: "privasi-akun",
+        topicSlug: "akun-keamanan",
         answer:
           "Ajukan permintaan perubahan nomor dengan verifikasi identitas melalui pusat bantuan.",
       },
     ],
   },
-
-  pembayaran: {
-    title: "Pembayaran",
-    subtopics: [
-      { title: "Metode Pembayaran", slug: "metode-pembayaran" },
-      { title: "Refund", slug: "refund" },
-    ],
-    questions: [
-      {
-        id: 1,
-        question: "Metode pembayaran apa saja?",
-        sub: "metode-pembayaran",
-        answer:
-          "Kami menerima kartu kredit, transfer bank, dan e-wallet. Metode dapat berbeda per lokasi.",
-      },
-    ],
-  },
 };
 
-const currentTopic = computed(() => {
-  return topicsData[slug.value] ?? { title: "", subtopics: [], questions: [] };
-});
+const currentTopic = computed(() => topicsData['akun-keamanan']);
 
 // filter questions by selected subtopic if any
 const displayedQuestions = computed(() => {
   const list = currentTopic.value.questions || [];
   if (selectedSubtopic.value) {
-    return list.filter((q) => q.sub === selectedSubtopic.value);
+    return list.filter(q => q.topicSlug === selectedSubtopic.value);
   }
   return list;
 });
@@ -201,9 +207,9 @@ const displayedQuestions = computed(() => {
             :key="s.slug"
             :class="[
               'whitespace-nowrap px-4 py-2 mb-1 rounded',
-              selectedSubtopic === s.slug ? 'bg-[#FFF1C1]' : 'bg-white',
+              selectedTopic === s.slug ? 'bg-[#FFF1C1]' : 'bg-white',
             ]"
-            @click="selectSubtopic(s.slug)"
+            @click="selectTopic(s.slug)"
           >
             {{ s.title }}
           </button>
@@ -232,12 +238,12 @@ const displayedQuestions = computed(() => {
         <div class="bg-[#FFF1C1] rounded-lg shadow-sm p-4">
           <ul class="space-y-2">
             <li
-              v-for="(s, i) in currentTopic.subtopics"
-              :key="i"
+              v-for="s in currentTopic.subtopics"
+              :key="s.slug"
               :class="[
                 'cursor-pointer px-3 py-2 rounded',
                 selectedSubtopic === s.slug
-                  ? 'bg-gray-100 font-medium'
+                  ? 'bg-white/40 font-medium'
                   : 'text-gray-600 hover:bg-white/40',
               ]"
               @click="selectSubtopic(s.slug)"
@@ -258,11 +264,12 @@ const displayedQuestions = computed(() => {
           v-if="displayedQuestions.length"
           class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
+
           <!-- Accordion list -->
           <div
             v-for="q in displayedQuestions"
             :key="q.id"
-            class="px-6 py-2 hover:bg-white/40"
+            class="px-6 py-2 pb-3 hover:bg-white/40"
           >
             <button
               type="button"
@@ -274,15 +281,8 @@ const displayedQuestions = computed(() => {
                 q.question
               }}</span>
               <div class="flex items-center space-x-2 shrink-0">
-                <span
-                  class="text-xs px-2 py-1 bg-[#F79E0E]/10 text-[#F79E0E] rounded-full font-medium"
-                >
-                  Detail
-                </span>
-
-                <!-- single icon that rotates when open -->
                 <ChevronDown
-                  class="w-5 h-5 text-gray-400 transform transition-transform duration-200"
+                  class="w-5 h-5 text-gray-400 transform transition-transform duration-300"
                   :class="{ 'rotate-180': openQuestion === q.id }"
                   aria-hidden="true"
                 />
@@ -291,7 +291,7 @@ const displayedQuestions = computed(() => {
 
             <div
               v-show="openQuestion === q.id"
-              class="px-6 pb-4 text-sm text-gray-600"
+              class="text-gray-800 bg-white/60 rounded-xl p-6 border border-orange-100/30"
             >
               {{ q.answer }}
             </div>

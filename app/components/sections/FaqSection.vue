@@ -21,7 +21,7 @@
           :id="`faq-button-${index}`"
           :aria-expanded="openIndex === index"
           :aria-controls="`faq-content-${index}`"
-          class="w-full px-6 lg:px-8 py-6 text-left hover:bg-orange-50/50 focus:bg-orange-50/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F79E0E]/20 focus:ring-inset"
+          class="w-full px-6 lg:px-8 py-6 text-left hover:bg-orange-50/50 transition-colors duration-200"
           @click="toggle(index)"
         >
           <div class="flex items-center justify-between">
@@ -29,12 +29,6 @@
               {{ faq.question }}
             </h3>
             <div class="flex items-center space-x-2 shrink-0">
-              <span
-                v-if="faq.link"
-                class="text-xs px-2 py-1 bg-[#F79E0E]/10 text-[#F79E0E] rounded-full font-medium"
-              >
-                Detail
-              </span>
               <ChevronDown
                 :class="[
                   'w-5 h-5 text-gray-500 transition-transform duration-300',
@@ -60,16 +54,19 @@
                 <p class="text-gray-700 leading-relaxed mb-4">
                   {{ faq.answer }}
                 </p>
-                <div v-if="faq.link" class="flex items-center">
-                  <a
-                    :href="faq.link"
+                <div class="flex items-center">
+                  <NuxtLink
+                    :to="{
+                      path: '/topics',
+                      query: { topic: faq.topicSlug, q: faq.id },
+                    }"
                     class="inline-flex items-center space-x-2 text-[#F79E0E] font-semibold hover:text-orange-600 transition-colors duration-200 group"
                   >
                     <span>Baca selengkapnya</span>
                     <ArrowRight
                       class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
                     />
-                  </a>
+                  </NuxtLink>
                 </div>
               </div>
             </div>
@@ -81,8 +78,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { ChevronDown, ArrowRight } from 'lucide-vue-next';
+import { ref } from "vue";
+import { ChevronDown, ArrowRight } from "lucide-vue-next";
 
 // Reactive state for accordion
 const openIndex = ref(null);
@@ -95,34 +92,30 @@ const toggle = (index) => {
 // Enhanced FAQ data with better structure
 const faqs = [
   {
-    question: 'Pengembalian Dana (Refund) Belum Diterima',
-    answer:
-      'Pengembalian dana akan diproses dalam waktu 3-14 hari kerja tergantung metode pembayaran yang digunakan. Untuk kartu kredit biasanya 3-5 hari kerja, sedangkan transfer bank 1-3 hari kerja.',
-    link: '#refund-guide',
+    id: 1,
+    question: "Cara Mengubah Email Akun SecondCycle",
+    answer: "Masuk ke Pengaturan > Akun > Ubah Email...",
+    topicSlug: "akun-keamanan",
   },
   {
-    question: 'Cara Membatalkan Pesanan di Marketplace',
-    answer:
-      'Pembatalan pesanan dapat dilakukan secara instan jika belum diproses penjual, atau memerlukan persetujuan penjual jika sudah dalam tahap pemrosesan. Anda dapat membatalkan melalui halaman pesanan saya.',
-    link: '#cancel-order',
+    id: 2,
+    question: "Metode pembayaran apa saja?",
+    answer: "Kami menerima kartu kredit, transfer bank, dan e-wallet...",
+    topicSlug: "pembayaran",
   },
   {
-    question: 'Saya Belum Terima Pesanan',
+    id: 3,
+    question: "Saya Belum Terima Pesanan",
     answer:
-      'Periksa status pesanan Anda di halaman riwayat transaksi. Jika sudah melewati estimasi waktu pengiriman, hubungi penjual atau layanan pelanggan untuk penyelesaian lebih lanjut.',
-    link: '#track-order',
+      "Periksa status pesanan Anda di halaman riwayat transaksi...",
+    topicSlug: "pengiriman",
   },
   {
-    question: 'GoPay Later by PT Multifinance Anak Bangsa',
+    id: 4,
+    question: "GoPay Later by PT Multifinance Anak Bangsa",
     answer:
-      'GoPay Later adalah layanan kredit digital yang memungkinkan Anda berbelanja sekarang dan bayar nanti dengan tenor pembayaran yang fleksibel hingga 12 bulan.',
-    link: '#gopay-later',
-  },
-  {
-    question: 'Informasi Penonaktifan Produk Investasi',
-    answer:
-      'Layanan investasi emas dan reksa dana sementara dinonaktifkan untuk peningkatan sistem dan keamanan. Informasi lebih lanjut akan diumumkan melalui aplikasi dan email.',
-    link: '#investment-info',
+      "GoPay Later adalah layanan kredit digital yang memungkinkan Anda berbelanja sekarang dan bayar nanti...",
+    topicSlug: "pembayaran",
   },
 ];
 </script>
