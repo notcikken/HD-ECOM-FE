@@ -52,3 +52,26 @@ export interface TicketAssignment {
     username: string;
   };
 }
+
+export interface TicketFilters {
+  status?: string;
+  priority?: string;
+  category?: string;
+  role?: "pelanggan" | "penjual";
+}
+
+export interface TicketStats {
+  total: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+  urgent: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
+export interface TicketCategory {
+  id_category: number;
+  nama_category: string;
+}

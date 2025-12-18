@@ -1,37 +1,11 @@
-import type { Ticket, TicketPriority } from "~/types/ticket";
-
-interface TicketFilters {
-  status?: string;
-  priority?: string;
-  category?: string;
-  role?: "pelanggan" | "penjual";
-}
-
-interface TicketStats {
-  total: number;
-  open: number;
-  inProgress: number;
-  resolved: number;
-  urgent: number;
-  high: number;
-  medium: number;
-  low: number;
-}
-
-interface TicketCategory {
-  id_category: number;
-  nama_category: string;
-}
-
-interface TicketAttachment {
-  attachment: {
-    id_attachment: number;
-    id_ticket: number;
-    file_path: string;
-    uploaded_at: string;
-  };
-  download_url: string;
-}
+import type {
+  Ticket,
+  TicketPriority,
+  TicketFilters,
+  TicketStats,
+  TicketCategory,
+  TicketAttachment,
+} from "~/types/ticket";
 
 export const ticketService = {
   /**
@@ -108,13 +82,11 @@ export const ticketService = {
   /**
    * Create new ticket
    */
-  async createTicket(
-    ticket: {
-      judul: string;
-      deskripsi: string;
-      id_category: number;
-    }
-  ): Promise<any> {
+  async createTicket(ticket: {
+    judul: string;
+    deskripsi: string;
+    id_category: number;
+  }): Promise<any> {
     const config = useRuntimeConfig();
 
     // Get the auth token from your auth composable
@@ -136,17 +108,14 @@ export const ticketService = {
         tanggal_dibuat: string;
         tanggal_diperbarui: string;
       };
-    }>(
-      `${config.public.apiBase}/api/tickets`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token.value}`,
-          "Content-Type": "application/json"
-        },
-        body: ticket,
-      }
-    );
+    }>(`${config.public.apiBase}/api/tickets`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        "Content-Type": "application/json",
+      },
+      body: ticket,
+    });
 
     return response.data;
   },
@@ -154,16 +123,13 @@ export const ticketService = {
   /**
    * Upload attachments for a ticket
    */
-  async uploadTicketAttachments(
-    ticketId: number,
-    files: File[]
-  ): Promise<any> {
+  async uploadTicketAttachments(ticketId: number, files: File[]): Promise<any> {
     const config = useRuntimeConfig();
     const { token } = useAuth();
 
     // Upload each file separately since the API might expect one file per request
     const results = [];
-    
+
     for (const file of files) {
       const formData = new FormData();
       formData.append("id_ticket", ticketId.toString());
@@ -175,7 +141,7 @@ export const ticketService = {
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token.value}`,
+              Authorization: `Bearer ${token.value}`,
             },
             body: formData,
           }
@@ -203,18 +169,20 @@ export const ticketService = {
   ): Promise<any> {
     // First create the ticket
     const ticket = await this.createTicket(ticketData);
-    
+
     // Then upload attachments if any
     if (attachments.length > 0 && ticket.id_ticket) {
       try {
         await this.uploadTicketAttachments(ticket.id_ticket, attachments);
       } catch (error) {
-        console.error('Failed to upload attachments:', error);
+        console.error("Failed to upload attachments:", error);
         // Re-throw the error so the UI can handle it appropriately
-        throw new Error(`Ticket created but failed to upload attachments: ${error.message}`);
+        throw new Error(
+          `Ticket created but failed to upload attachments: ${error.message}`
+        );
       }
     }
-    
+
     return ticket;
   },
 
@@ -281,20 +249,17 @@ export const ticketService = {
         ticket_id: number;
         isi_pesan: string;
       };
-    }>(
-      `${config.public.apiBase}/api/ticket-comments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-          "Content-Type": "application/json",
-        },
-        body: {
-          ticket_id: Number(ticketId),
-          isi_pesan: resolution,
-        },
-      }
-    );
+    }>(`${config.public.apiBase}/api/ticket-comments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+        "Content-Type": "application/json",
+      },
+      body: {
+        ticket_id: Number(ticketId),
+        isi_pesan: resolution,
+      },
+    });
 
     return response.data;
   },
@@ -304,10 +269,9 @@ export const ticketService = {
    */
   async fetchTicketCategories(): Promise<TicketCategory[]> {
     const config = useRuntimeConfig();
-    const response = await $fetch<{ data: TicketCategory[] } | TicketCategory[]>(
-      `${config.public.apiBase}/api/ticket-categories`,
-      { method: "GET" }
-    );
+    const response = await $fetch<
+      { data: TicketCategory[] } | TicketCategory[]
+    >(`${config.public.apiBase}/api/ticket-categories`, { method: "GET" });
 
     return Array.isArray(response) ? response : response.data;
   },
@@ -319,15 +283,14 @@ export const ticketService = {
     const config = useRuntimeConfig();
     const { token } = useAuth();
 
-    const response = await $fetch<{ data: TicketAttachment[] } | TicketAttachment[]>(
-      `${config.public.apiBase}/api/ticket-attachments/ticket/${ticketId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-        },
-      }
-    );
+    const response = await $fetch<
+      { data: TicketAttachment[] } | TicketAttachment[]
+    >(`${config.public.apiBase}/api/ticket-attachments/ticket/${ticketId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token.value}`,
+      },
+    });
 
     return Array.isArray(response) ? response : response.data;
   },
