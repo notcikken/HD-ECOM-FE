@@ -1,3 +1,11 @@
+<script setup>
+import Navbar from "~/components/layouts/Navbar.vue";
+import Footer from "~/components/layouts/Footer.vue";
+import ChatPopup from "~/components/chat/ChatPopup.vue";
+
+const { token } = useAuth();
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col">
     <!-- Sticky navigation header -->
@@ -16,12 +24,6 @@
     </footer>
 
     <!-- Chat Popup -->
-    <ChatPopup />
+    <ChatPopup v-if="token" />
   </div>
 </template>
-
-<script setup>
-import Navbar from "~/components/layouts/Navbar.vue";
-import Footer from "~/components/layouts/Footer.vue";
-import ChatPopup from "~/components/chat/ChatPopup.vue";
-</script>
