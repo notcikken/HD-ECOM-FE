@@ -91,7 +91,7 @@ const submit = async () => {
             />
           </div>
 
-          <div class="flex items-center justify-between text-sm">
+          <!-- <div class="flex items-center justify-between text-sm">
             <label class="inline-flex items-center gap-2">
               <input
                 type="checkbox"
@@ -104,7 +104,7 @@ const submit = async () => {
             <NuxtLink to="/forgot" class="text-[#F79E0E] hover:underline"
               >Lupa kata sandi?</NuxtLink
             >
-          </div>
+          </div> -->
 
           <div>
             <button
@@ -139,14 +139,14 @@ const submit = async () => {
             </button>
           </div>
 
-          <div class="text-sm text-center text-gray-600">
+          <!-- <div class="text-sm text-center text-gray-600">
             Belum punya akun?
             <NuxtLink
               to="/signup"
               class="text-[#F79E0E] font-medium hover:underline ml-1"
               >Daftar</NuxtLink
             >
-          </div>
+          </div> -->
 
           <p v-if="error" class="text-sm text-red-600 mt-2">{{ error }}</p>
           <p v-if="successMessage" class="text-sm text-green-600 mt-2">
