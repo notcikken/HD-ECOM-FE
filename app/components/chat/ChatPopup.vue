@@ -1,17 +1,9 @@
 <script setup lang="ts">
 // filepath: app/pages/dashboard/chat.vue
 import { ref, nextTick, onMounted, onUnmounted, computed } from "vue";
-import {
-  User,
-  MessageCircle,
-  Paperclip,
-  Send,
-  X,
-  Headphones,
-  Sparkles,
-} from "lucide-vue-next";
+import { MessageCircle, Send, X, Headphones, Sparkles } from "lucide-vue-next";
 import { useWebsocket } from "~/composables/useWebsocket";
-import { formatTimeToDate, formatTimeToString } from "~/utils/formatTime";
+import { formatTimeToDate } from "~/utils/formatTime";
 import { useMessage } from "~/composables/useMessage";
 import { useConversation } from "~/composables/useConversation";
 
@@ -24,9 +16,6 @@ const showQuickReplies = ref(false);
 const isLoadingHistory = ref(false);
 const isLoadingConversation = ref(false);
 const hasConversation = ref(false);
-
-// add a reactive conversations list used by the template
-const conversations = ref<any[]>([]);
 
 const quickReplies = [
   "Halo, saya butuh bantuan",
@@ -276,9 +265,9 @@ watch(
     <transition name="bounce">
       <button
         v-if="!isOpen"
-        @click="toggleChat"
         class="bg-[#F79E0E] hover:bg-[#d96f00] text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
         aria-label="Open chat"
+        @click="toggleChat"
       >
         <MessageCircle class="w-6 h-6" />
         <span
@@ -321,9 +310,9 @@ watch(
           </div>
           <div class="flex items-center space-x-2">
             <button
-              @click="toggleChat"
               class="hover:bg-white/20 p-2 rounded-lg transition-colors"
               aria-label="Close chat"
+              @click="toggleChat"
             >
               <X class="w-5 h-5" />
             </button>
