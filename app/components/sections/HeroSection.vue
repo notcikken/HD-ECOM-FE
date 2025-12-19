@@ -1,22 +1,22 @@
 <script setup>
-import { ref } from 'vue';
-import { Search, X, Hash } from 'lucide-vue-next';
-import { useAuth } from '~/composables/useAuth'; 
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import { Search, X, Hash } from "lucide-vue-next";
+import { useAuth } from "~/composables/useAuth";
 
 // Reactive state
-const query = ref('');
+const query = ref("");
 const isFocused = ref(false);
 
-const { user, fetchUserInfo } = useAuth();
+const router = useRouter();
+
+const { user } = useAuth();
 
 // Search suggestions data
 const suggestions = [
-  'promo terkini',
-  'blm terima refund',
-  'snk biaya jasa aplikasi',
-  'batalkan pesanan',
-  'blm terima pesanan',
-  'status pengiriman',
+  "blm terima refund",
+  "blm terima pesanan",
+  "status pengiriman",
 ];
 
 // Handle blur with delay to allow for suggestion clicks
@@ -26,17 +26,34 @@ function handleBlur() {
   }, 150);
 }
 
+function performSearch() {
+  const q = query.value.trim();
+  if (!q) return;
+
+  router.push({
+    path: "/topics",
+    query: {
+      search: q,
+    },
+  });
+}
+
+function selectSuggestion(item) {
+  query.value = item;
+  performSearch();
+}
+
 const greeting = computed(() => {
-  const hour = new Date().getHours()
-  if (hour >= 4 && hour < 11) return "Selamat Pagi"
-  if (hour >= 11 && hour < 15) return "Selamat Siang"
-  if (hour >= 15 && hour < 18) return "Selamat Sore"
-  return "Selamat Malam"
-})
+  const hour = new Date().getHours();
+  if (hour >= 4 && hour < 11) return "Selamat Pagi";
+  if (hour >= 11 && hour < 15) return "Selamat Siang";
+  if (hour >= 15 && hour < 18) return "Selamat Sore";
+  return "Selamat Malam";
+});
 
 const username = computed(() => {
-  return user.value?.username || 'Sobat';
-})
+  return user.value?.username || "Sobat";
+});
 </script>
 
 <template>
@@ -148,7 +165,8 @@ const username = computed(() => {
                     aria-label="Cari bantuan atau informasi"
                     @focus="isFocused = true"
                     @blur="handleBlur"
-                  >
+                    @keyup.enter="performSearch"
+                  />
                   <button
                     v-if="query"
                     class="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -179,7 +197,7 @@ const username = computed(() => {
                     v-for="item in suggestions"
                     :key="item"
                     class="text-left px-3 py-2 rounded-md border border-[#F79E0E]/20 text-[#F79E0E] font-medium hover:bg-[#F79E0E]/5 hover:border-[#F79E0E]/40 transition-all duration-200 text-sm group"
-                    @click="query = item"
+                    @click="selectSuggestion(item)"
                   >
                     <span class="flex items-center">
                       <Hash
@@ -203,7 +221,7 @@ const username = computed(() => {
               alt="Ilustrasi bantuan pelanggan"
               class="relative w-full max-w-xs lg:max-w-sm xl:max-w-md h-auto object-contain"
               loading="eager"
-            >
+            />
           </div>
         </div>
       </div>
