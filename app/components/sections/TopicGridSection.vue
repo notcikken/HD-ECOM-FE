@@ -12,9 +12,9 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
 <NuxtLink
-  v-for="topic in topics"
-  :key="topic.id"
-  :to="`/topics`"
+  v-for="topic in defaultTopics"
+  :key="topic.slug"
+  :to="{ path: '/topics', query: { topic: topic.slug } }"
   class="group relative bg-[#FFF1C1] hover:bg-white rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-orange-100/50 hover:-translate-y-1 border border-orange-100/50 hover:border-[#F79E0E]/20"
   :aria-label="`Lihat bantuan untuk ${topic.title}`"
   tabindex="0"
@@ -93,53 +93,58 @@ const defaultTopics = [
     title: 'Akun & Keamanan',
     icon: Shield,
     description: 'Kelola akun dan keamanan',
+    slug: 'akun-keamanan',
   },
   {
     id: 2,
     title: 'Pembayaran',
     icon: CreditCard,
     description: 'Metode dan proses pembayaran',
+    slug: 'pembayaran',
   },
   {
     id: 3,
     title: 'Pengiriman',
     icon: Truck,
     description: 'Lacak dan kelola pengiriman',
+    slug: 'pengiriman',
   },
   {
     id: 4,
     title: 'Pengembalian',
     icon: RotateCcw,
     description: 'Proses refund dan retur',
+    slug: 'pengembalian',
   },
   {
     id: 5,
     title: 'Promo & Voucher',
     icon: Tag,
     description: 'Dapatkan penawaran terbaik',
+    slug: 'promo-voucher',
   },
   {
     id: 6,
     title: 'Teknis Aplikasi',
     icon: Smartphone,
     description: 'Bantuan teknis aplikasi',
+    slug: 'teknis-aplikasi',
   },
   {
     id: 7,
     title: 'Produk',
     icon: Package,
     description: 'Informasi produk dan katalog',
+    slug: 'produk',
   },
   {
     id: 8,
     title: 'Lainnya',
     icon: MoreHorizontal,
     description: 'Bantuan umum lainnya',
+    slug: 'lainnya',
   },
 ];
-
-// Reactive topics data
-const topics = ref(props.initialTopics || defaultTopics);
 
 // Emit definition for parent component communication
 defineEmits(['topic-selected']);
