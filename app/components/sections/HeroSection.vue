@@ -14,9 +14,9 @@ const { user } = useAuth();
 
 // Search suggestions data
 const suggestions = [
-  "blm terima refund",
-  "blm terima pesanan",
-  "status pengiriman",
+  "cara mengubah email",
+  "metode pembayaran",
+  "belum terima pesanan",
 ];
 
 // Handle blur with delay to allow for suggestion clicks
