@@ -9,12 +9,9 @@ const router = useRouter();
 // NEW: track opened question id for accordion
 const openQuestion = ref(null);
 
-// slug from query ?topic=akun-keamanan or path param if you prefer
-const slug = computed(() =>
-  route.params.slug ? String(route.params.slug) : "akun-keamanan"
+const selectedTopic = computed(() =>
+  route.query.topic ? String(route.query.topic) : DEFAULT_TOPIC
 );
-
-const selectedSubtopic = ref(null);
 
 // Question id from FAQ
 const questionFromFaq = computed(() =>
@@ -24,139 +21,146 @@ watch(
   questionFromFaq,
   (id) => {
     if (id) {
-      openQuestion.value = id
+      openQuestion.value = id;
     }
   },
   { immediate: true }
-)
+);
 
-const activeTopic = computed(() => String(route.query.topic ?? 'akun-keamanan'));
-const questionId = computed(() => route.query.q ? Number(route.query.q) : null);
+const questionId = computed(() =>
+  route.query.q ? Number(route.query.q) : null
+);
 watch(
   questionId,
   (id) => {
-    openQuestion.value = id || null
+    openQuestion.value = id || null;
   },
   { immediate: true }
-)
+);
 
-function selectTopic(topicSlug) {
-  // update query so url reflects selection
-  router.replace({
-    path: '/topics',
-    query: {
-      topic: topicSlug 
+// sample dataset structured to match screenshot
+const helpCenterData = {
+  topics: [
+    { title: "Akun & Keamanan", slug: "akun-keamanan" },
+    { title: "Pembayaran", slug: "pembayaran" },
+    { title: "Pengiriman", slug: "pengiriman" },
+    { title: "Pengembalian", slug: "pengembalian" },
+    { title: "Promo & Voucher", slug: "promo-voucher" },
+    { title: "Teknis Aplikasi", slug: "teknis-aplikasi" },
+    { title: "Produk", slug: "produk" },
+    { title: "Lainnya", slug: "lainnya" },
+  ],
+  questions: [
+    {
+      id: 1,
+      question: "Cara Mengubah Email Akun SecondCycle",
+      slug: "akun-keamanan",
+      answer:
+        "Masuk ke Pengaturan > Akun > Ubah Email. Ikuti instruksi verifikasi yang dikirim ke email lama dan baru.",
     },
-  });
-}
+    {
+      id: 2,
+      question: "Metode pembayaran apa saja?",
+      slug: "pembayaran",
+      answer: "Kami menerima kartu kredit, transfer bank, dan e-wallet",
+    },
+    {
+      id: 3,
+      question: "Saya Belum Terima Pesanan",
+      slug: "pengiriman",
+      answer:
+        "Periksa status pesanan Anda di halaman riwayat transaksi. Jika sudah melewati estimasi waktu pengiriman, hubungi penjual atau layanan pelanggan untuk penyelesaian lebih lanjut.",
+    },
+    {
+      id: 4,
+      question: "GoPay Later by PT Multifinance Anak Bangsa",
+      slug: "pembayaran",
+      answer:
+        "GoPay Later adalah layanan kredit digital yang memungkinkan Anda berbelanja sekarang dan bayar nanti dengan tenor pembayaran yang fleksibel hingga 12 bulan.",
+    },
+    {
+      id: 5,
+      question: "Informasi Penonaktifan Produk Investasi",
+      slug: "lainnya",
+      answer:
+        "Layanan investasi emas dan reksa dana sementara dinonaktifkan untuk peningkatan sistem dan keamanan. Informasi lebih lanjut akan diumumkan melalui aplikasi dan email.",
+    },
+    {
+      id: 6,
+      question: "Cara Daftar Akun SecondCycle",
+      slug: "akun-keamanan",
+      answer:
+        "Klik tombol Daftar, isi data yang diminta, lalu verifikasi email/nomor HP.",
+    },
+    {
+      id: 7,
+      question: "Bagaimana Cara Verifikasi Nomor Handphone?",
+      slug: "akun-keamanan",
+      answer:
+        "Masukkan nomor HP di halaman Profil, lalu masukkan kode OTP yang dikirim via SMS.",
+    },
+    {
+      id: 8,
+      question: "Akun SecondCycle Diblokir",
+      slug: "akun-keamanan",
+      answer:
+        "Periksa email dari kami untuk alasan blokir atau hubungi layanan pelanggan.",
+    },
+    {
+      id: 9,
+      question: "Jaga Keamanan Akun SecondCycle",
+      slug: "akun-keamanan",
+      answer:
+        "Jangan bagikan kata sandi, aktifkan 2FA, dan waspada terhadap link phishing.",
+    },
+    {
+      id: 10,
+      question: "Saya Ingin Ubah Nomor Handphone yang Tidak Aktif",
+      slug: "akun-keamanan",
+      answer:
+        "Ajukan permintaan perubahan nomor dengan verifikasi identitas melalui pusat bantuan.",
+    },
+  ],
+};
 
-function selectSubtopic(slugSub) {
-  selectedSubtopic.value =
-    selectedSubtopic.value === slugSub ? null : slugSub;
-}
+const DEFAULT_TOPIC = "akun-keamanan";
+
+const currentTopic = computed(() => selectedTopic.value);
+
+watchEffect(() => {
+  const topic = route.query.topic;
+  const validSlugs = helpCenterData.topics.map((t) => t.slug);
+  if (!topic || !validSlugs.includes(String(topic))) {
+    router.replace({
+      path: "/topics",
+      query: { topic: DEFAULT_TOPIC },
+    });
+  }
+});
+
+const selectTopic = (slug) => {
+  router.replace({
+    path: "/topics",
+    query: { ...route.query, topic: slug },
+  });
+};
+
+watch(
+  () => route.query.topic,
+  (val) => {
+    selectedTopic.value = val || currentTopic.value.subtopics?.[0]?.slug;
+  },
+  { immediate: true }
+);
 
 function toggleQuestion(id) {
   openQuestion.value = openQuestion.value === id ? null : id;
 }
 
-// sample dataset structured to match screenshot
-const topicsData = {
-  "akun-keamanan": {
-    title: "Akun Saya",
-    subtopics: [
-      { title: "Akun & Keamanan", slug: "akun-keamanan" },
-      { title: "Pembayaran", slug: "pembayaran" },
-      { title: "Pengiriman", slug: "pengiriman" },
-      { title: "Pengembalian", slug: "pengembalian" },
-      { title: "Promo & Voucher", slug: "promo-voucher" },
-      { title: "Teknis Aplikasi", slug: "teknis-aplikasi" },
-      { title: "Produk", slug: "produk" },
-      { title: "Lainnya", slug: "lainnya" },
-    ],
-    questions: [
-      {
-        id: 1,
-        question: "Cara Mengubah Email Akun SecondCycle",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Masuk ke Pengaturan > Akun > Ubah Email. Ikuti instruksi verifikasi yang dikirim ke email lama dan baru.",
-      },
-      {
-        id: 2,
-        question: "Metode pembayaran apa saja?",
-        topicSlug: "pembayaran",
-        answer:
-          "Kami menerima kartu kredit, transfer bank, dan e-wallet",
-      },
-      {
-        id: 3,
-        question: "Saya Belum Terima Pesanan",
-        topicSlug: "pengiriman",
-        answer:
-          "Periksa status pesanan Anda di halaman riwayat transaksi. Jika sudah melewati estimasi waktu pengiriman, hubungi penjual atau layanan pelanggan untuk penyelesaian lebih lanjut.",
-      },
-      {
-        id: 4,
-        question: "GoPay Later by PT Multifinance Anak Bangsa",
-        topicSlug: "pembayaran",
-        answer:
-          "GoPay Later adalah layanan kredit digital yang memungkinkan Anda berbelanja sekarang dan bayar nanti dengan tenor pembayaran yang fleksibel hingga 12 bulan.",
-      },
-      {
-        id: 5,
-        question: "Informasi Penonaktifan Produk Investasi",
-        topicSlug: "lainnya",
-        answer:
-          "Layanan investasi emas dan reksa dana sementara dinonaktifkan untuk peningkatan sistem dan keamanan. Informasi lebih lanjut akan diumumkan melalui aplikasi dan email.",
-      },
-      {
-        id: 6,
-        question: "Cara Daftar Akun SecondCycle",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Klik tombol Daftar, isi data yang diminta, lalu verifikasi email/nomor HP.",
-      },
-      {
-        id: 7,
-        question: "Bagaimana Cara Verifikasi Nomor Handphone?",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Masukkan nomor HP di halaman Profil, lalu masukkan kode OTP yang dikirim via SMS.",
-      },
-      {
-        id: 8,
-        question: "Akun SecondCycle Diblokir",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Periksa email dari kami untuk alasan blokir atau hubungi layanan pelanggan.",
-      },
-      {
-        id: 9,
-        question: "Jaga Keamanan Akun SecondCycle",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Jangan bagikan kata sandi, aktifkan 2FA, dan waspada terhadap link phishing.",
-      },
-      {
-        id: 10,
-        question: "Saya Ingin Ubah Nomor Handphone yang Tidak Aktif",
-        topicSlug: "akun-keamanan",
-        answer:
-          "Ajukan permintaan perubahan nomor dengan verifikasi identitas melalui pusat bantuan.",
-      },
-    ],
-  },
-};
-
-const currentTopic = computed(() => topicsData['akun-keamanan']);
-
 // filter questions by selected subtopic if any
 const displayedQuestions = computed(() => {
-  const list = currentTopic.value.questions || [];
-  if (selectedSubtopic.value) {
-    return list.filter(q => q.topicSlug === selectedSubtopic.value);
-  }
-  return list;
+  const list = helpCenterData.questions || [];
+  return list.filter((q) => q.slug === selectedTopic.value);
 });
 </script>
 
@@ -203,7 +207,7 @@ const displayedQuestions = computed(() => {
       <div class="overflow-x-auto">
         <div class="flex gap-3">
           <button
-            v-for="s in currentTopic.subtopics"
+            v-for="s in helpCenterData.topics"
             :key="s.slug"
             :class="[
               'whitespace-nowrap px-4 py-2 mb-1 rounded',
@@ -222,31 +226,31 @@ const displayedQuestions = computed(() => {
       <aside
         v-if="
           currentTopic &&
-          currentTopic.subtopics &&
-          currentTopic.subtopics.length
+          helpCenterData.topics &&
+          helpCenterData.topics.length
         "
         class="w-64 hidden lg:block"
       >
         <aside
           v-if="
             currentTopic &&
-            currentTopic.subtopics &&
-            currentTopic.subtopics.length
+            helpCenterData.topics &&
+            helpCenterData.topics.length
           "
           class="w-64 hidden lg:block"
         />
         <div class="bg-[#FFF1C1] rounded-lg shadow-sm p-4">
           <ul class="space-y-2">
             <li
-              v-for="s in currentTopic.subtopics"
+              v-for="s in helpCenterData.topics"
               :key="s.slug"
               :class="[
                 'cursor-pointer px-3 py-2 rounded',
-                selectedSubtopic === s.slug
+                selectedTopic === s.slug
                   ? 'bg-white/40 font-medium'
                   : 'text-gray-600 hover:bg-white/40',
               ]"
-              @click="selectSubtopic(s.slug)"
+              @click="selectTopic(s.slug)"
             >
               {{ s.title }}
             </li>
@@ -264,7 +268,6 @@ const displayedQuestions = computed(() => {
           v-if="displayedQuestions.length"
           class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
-
           <!-- Accordion list -->
           <div
             v-for="q in displayedQuestions"
