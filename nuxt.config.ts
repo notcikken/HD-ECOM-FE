@@ -6,6 +6,19 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/css/main.css"],
 
+  app: {
+    head: {
+      title: "Secondcycle Helpdesk",
+      link: [
+        {
+          rel: "icon",
+          type: "image/x-icon",
+          href: process.env.NUXT_PUBLIC_FAVICON_URL,
+        },
+      ],
+    },
+  },
+
   runtimeConfig: {
     public: {
       authBase: process.env.NUXT_PUBLIC_AUTH_BASE || "http://localhost:8000",
