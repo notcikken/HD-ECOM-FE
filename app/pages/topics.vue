@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ChevronDown } from "lucide-vue-next";
 
@@ -9,6 +9,7 @@ const router = useRouter();
 // NEW: track opened question id for accordion
 const openQuestion = ref(null);
 
+const DEFAULT_TOPIC = "akun-keamanan";
 const selectedTopic = computed(() =>
   route.query.topic ? String(route.query.topic) : DEFAULT_TOPIC
 );
@@ -123,8 +124,6 @@ const helpCenterData = {
   ],
 };
 
-const DEFAULT_TOPIC = "akun-keamanan";
-
 const currentTopic = computed(() => selectedTopic.value);
 
 watchEffect(() => {
@@ -133,7 +132,7 @@ watchEffect(() => {
   if (!topic || !validSlugs.includes(String(topic))) {
     router.replace({
       path: "/topics",
-      query: { topic: DEFAULT_TOPIC },
+      query: { ...route.query, topic: DEFAULT_TOPIC },
     });
   }
 });
@@ -145,23 +144,66 @@ const selectTopic = (slug) => {
   });
 };
 
+// SEARCH STATE
+const searchQuery = ref(route.query.search ? String(route.query.search) : "");
+
 watch(
-  () => route.query.topic,
+  () => route.query.search,
   (val) => {
-    selectedTopic.value = val || currentTopic.value.subtopics?.[0]?.slug;
-  },
-  { immediate: true }
+    searchQuery.value = val ? String(val) : "";
+  }
 );
+
+// daftar pertanyaan default berdasarkan topik aktif
+const questionsByTopic = computed(() =>
+  helpCenterData.questions.filter((q) => q.slug === selectedTopic.value)
+);
+
+const filteredQuestions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return questionsByTopic.value;
+
+  return helpCenterData.questions.filter((item) => {
+    const text = `${item.question} ${item.answer}`.toLowerCase();
+    const topicTitle =
+      helpCenterData.topics
+        .find((t) => t.slug === item.slug)
+        ?.title.toLowerCase() || "";
+    return text.includes(q) || topicTitle.includes(q);
+  });
+});
 
 function toggleQuestion(id) {
   openQuestion.value = openQuestion.value === id ? null : id;
 }
 
-// filter questions by selected subtopic if any
-const displayedQuestions = computed(() => {
-  const list = helpCenterData.questions || [];
-  return list.filter((q) => q.slug === selectedTopic.value);
-});
+watch(
+  filteredQuestions,
+  (questions) => {
+    if (!searchQuery.value || !questions.length) return;
+
+    // hitung slug yang paling sering muncul di hasil
+    const counts = questions.reduce((acc, q) => {
+      acc[q.slug] = (acc[q.slug] || 0) + 1;
+      return acc;
+    }, {});
+
+    const bestSlug = Object.entries(counts).sort(
+      (a, b) => b[1] - a[1]
+    )[0][0];
+
+    if (bestSlug && bestSlug !== selectedTopic.value) {
+      router.replace({
+        path: "/topics",
+        query: {
+          ...route.query,
+          topic: bestSlug,
+        },
+      });
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -171,7 +213,12 @@ const displayedQuestions = computed(() => {
         >Help Center</NuxtLink
       >
       <span class="mx-2">/</span>
-      <span class="text-gray-700">Akun & Keamanan</span>
+      <span class="text-gray-700">
+        {{
+          helpCenterData.topics.find((t) => t.slug === selectedTopic)?.title ||
+          "Akun & Keamanan"
+        }}
+      </span>
     </nav>
 
     <!-- Search Column -->
@@ -193,12 +240,10 @@ const displayedQuestions = computed(() => {
         />
       </svg>
       <input
-        v-model="query"
+        v-model="searchQuery"
         placeholder="Ketik kata kunci (misal: promosi berlangsung)"
         type="text"
         class="w-full outline-none text-gray-700 placeholder-gray-500"
-        @focus="isFocused = true"
-        @blur="handleBlur"
       />
     </div>
 
@@ -225,9 +270,7 @@ const displayedQuestions = computed(() => {
       <!-- Sidebar -->
       <aside
         v-if="
-          currentTopic &&
-          helpCenterData.topics &&
-          helpCenterData.topics.length
+          currentTopic && helpCenterData.topics && helpCenterData.topics.length
         "
         class="w-64 hidden lg:block"
       >
@@ -263,14 +306,29 @@ const displayedQuestions = computed(() => {
         <h1 class="text-2xl font-bold mb-6 text-gray-800">
           Yang sering ditanyakan
         </h1>
+        <p class="text-sm text-gray-500 mb-4">
+          <span v-if="searchQuery">
+            Hasil untuk: "<span class="font-semibold">{{ searchQuery }}</span
+            >"
+          </span>
+          <span v-else>
+            Menampilkan pertanyaan tentang
+            <span class="font-semibold">
+              {{
+                helpCenterData.topics.find((t) => t.slug === selectedTopic)
+                  ?.title
+              }}
+            </span>
+          </span>
+        </p>
 
         <div
-          v-if="displayedQuestions.length"
+          v-if="filteredQuestions.length"
           class="bg-[#FFF1C1] rounded-lg shadow-sm"
         >
           <!-- Accordion list -->
           <div
-            v-for="q in displayedQuestions"
+            v-for="q in filteredQuestions"
             :key="q.id"
             class="px-6 py-2 pb-3 hover:bg-white/40"
           >
@@ -280,9 +338,9 @@ const displayedQuestions = computed(() => {
               class="w-full flex items-center justify-between py-4 text-left"
               @click="toggleQuestion(q.id)"
             >
-              <span class="text-lg font-medium text-gray-800">{{
-                q.question
-              }}</span>
+              <span class="text-lg font-medium text-gray-800">
+                {{ q.question }}
+              </span>
               <div class="flex items-center space-x-2 shrink-0">
                 <ChevronDown
                   class="w-5 h-5 text-gray-400 transform transition-transform duration-300"
