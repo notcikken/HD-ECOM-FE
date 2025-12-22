@@ -13,7 +13,7 @@ export default defineNuxtConfig({
         {
           rel: "icon",
           type: "image/x-icon",
-          href: process.env.NUXT_PUBLIC_FAVICON_URL,
+          href: "/helpdesk.ico",
         },
       ],
     },
