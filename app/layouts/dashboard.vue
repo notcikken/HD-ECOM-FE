@@ -7,7 +7,7 @@ import { useNotification } from "~/composables/useNotification";
 const config = useRuntimeConfig();
 const wsUrl = `${config.public.wsBase}/api/ws`;
 
-const { fetchNotification, notification, updateNotificationFromWebSocket } =
+const { fetchNotification, updateNotificationFromWebSocket } =
   useNotification();
 const ws = getWebsocket(wsUrl);
 
@@ -22,8 +22,6 @@ onMounted(() => {
       updateNotificationFromWebSocket(data.payload);
     }
   });
-
-  console.log("Notification", notification.value);
 });
 
 onUnmounted(() => {

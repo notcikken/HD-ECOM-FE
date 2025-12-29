@@ -103,8 +103,6 @@ const sendAdminMessage = async () => {
     // Send via WebSocket
     await Message(messageText, selectedConversation.value!.id);
 
-    console.log("Message sent successfully", {});
-
     isSending.value = false;
   } catch (err) {
     console.error("Error sending message:", err);

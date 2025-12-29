@@ -35,7 +35,6 @@ onMounted(async () => {
       );
       if (response.success) {
         attachments.value = response.data;
-        console.log("Attachments loaded:", response.data); // Debug log
       }
     } catch (error) {
       console.error("Failed to load attachments:", error);

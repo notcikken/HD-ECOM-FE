@@ -34,20 +34,6 @@ export const useWebsocket = (url: string) => {
     };
     debugLogs.value.push(log);
 
-    // Console output with colors
-    const style = {
-      info: "color: blue",
-      error: "color: red",
-      warning: "color: orange",
-      success: "color: green",
-    };
-
-    console.log(
-      `%c[WebSocket ${type.toUpperCase()}] ${message}`,
-      style[type],
-      data || ""
-    );
-
     // Keep only last 50 logs
     if (debugLogs.value.length > 50) {
       debugLogs.value.shift();

@@ -78,7 +78,6 @@ export const useMessage = () => {
 
   // Add message with deduplication
   const addMessage = (newMsg: UserMessage) => {
-    console.log("Adding message:", newMsg);
     // Check for duplicate from current user
     if (
       newMsg.senderId &&

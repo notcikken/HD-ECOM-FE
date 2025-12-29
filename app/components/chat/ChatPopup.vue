@@ -100,8 +100,6 @@ const loadConversation = async () => {
         try {
           const result = await fetchMessagesHistory({ limit: 50 });
           messages.value = result.messages;
-          console.log("Loaded messages:", messages);
-          console.log("Current user ID:", currentUserId);
         } catch (err) {
           console.error("Error loading messages:", err);
         } finally {
