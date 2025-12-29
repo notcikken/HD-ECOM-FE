@@ -29,15 +29,14 @@ export const useNotification = () => {
 
     const data = resp.data;
     if (data) {
-      const notifications: Notification[] = data.conversation_states.map((n: any) => ({
-        conversationId: n.conversation_id,
-        unreadCount: n.unread_count,
-      }));
-      console.log("Fetched notifications:", notifications);
+      const notifications: Notification[] = data.conversation_states.map(
+        (n: any) => ({
+          conversationId: n.conversation_id,
+          unreadCount: n.unread_count,
+        })
+      );
       notification.value = notifications;
       ticketNotifications.value = data.ticket_notifications;
-      console.log("Notification updated:", notification.value);
-      console.log("Ticket notifications updated:", ticketNotifications.value);
       return notification.value;
     }
     return null;
@@ -72,12 +71,6 @@ export const useNotification = () => {
 
     // Remove notifications with 0 unread count
     notification.value = notification.value.filter((n) => n.unreadCount > 0);
-
-    console.log("Notification updated from WebSocket:", {
-      conversationId,
-      unreadCount,
-      totalNotifications: notification.value.length,
-    });
   };
 
   return {
